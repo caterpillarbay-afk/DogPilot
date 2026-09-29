@@ -829,8 +829,8 @@ function findEmergencyChargingNearby(lat, lon, searchRadiusKm){
 }
 
 function planTripStops(stops){
-  if(!stops || !stops.length || !routeDistanceKm) return [];
-  const byKm = stops.map(s=>({ ...s, realKm: toRealKm(s.km) })).sort((a,b)=>a.realKm-b.realKm);
+  if(!routeDistanceKm) return [];
+  const byKm = (stops || []).map(s=>({ ...s, realKm: toRealKm(s.km) })).sort((a,b)=>a.realKm-b.realKm);
   const kmPerPercent = vehicleCapacityKWh / vehicleConsumptionKWh100; // km pro 1% Akku
 
   let currentKm = 0;
