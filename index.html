@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DogPilot</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  :root{
+    --bg:#0a1615; --panel:#122320; --panel-2:#0e1c1a; --panel-3:#16302c;
+    --accent:#2fd8c4; --accent-dim:#1c8f82; --text:#eef8f6; --text-dim:#93a9a6;
+    --border:rgba(255,255,255,0.08); --danger:#e5566b; --radius:16px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#0a1615; --panel:#122320; --panel-2:#0e1c1a; --panel-3:#16302c;
+      --text:#eef8f6; --text-dim:#93a9a6; --border:rgba(255,255,255,0.08);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%; margin:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; justify-content:center; overflow-x:hidden;
+  }
+  .phone{
+    width:100%; max-width:430px; min-height:100dvh;
+    display:flex; flex-direction:column; position:relative;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px 14px; border-bottom:1px solid var(--border);
+    padding-top:calc(18px + env(safe-area-inset-top,0px));
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand svg{width:38px; height:38px; flex:none;}
+  .brand-text h1{font-size:19px; margin:0; letter-spacing:0.3px;}
+  .brand-text h1 b{color:var(--accent); font-weight:800;}
+  .brand-text p{margin:2px 0 0; font-size:11.5px; color:var(--text-dim);}
+  .header-tag{font-size:10.5px; color:var(--text-dim); text-align:right; line-height:1.4;}
+  main{flex:1; padding:20px 20px 8px; overflow-y:auto;}
+  h2.title{font-size:26px; margin:6px 0 2px; font-weight:700;}
+  p.subtitle{color:var(--text-dim); margin:0 0 18px; font-size:13.5px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px; margin-bottom:16px;
+  }
+  .card-label{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:13px; font-weight:600; color:var(--accent); margin-bottom:14px;
+  }
+  .card-label span.plain{color:var(--text); font-weight:600;}
+  .field-row{display:flex; align-items:flex-end; gap:10px; margin-bottom:12px;}
+  .field{flex:1; min-width:0;}
+  .field label{display:block; font-size:11.5px; color:var(--text-dim); margin-bottom:5px;}
+  .field .box{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+    padding:10px 12px; font-size:15px; font-weight:600;
+  }
+  .field input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+    padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;
+  }
+  .arrow-mid{color:var(--text-dim); padding-bottom:12px;}
+  .btn-row{display:flex; gap:8px; margin-bottom:12px;}
+  .pill-btn{
+    flex:1; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    padding:11px 6px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .pill-btn.active{background:var(--accent); border-color:var(--accent); color:#03211e;}
+  .btn-primary{
+    width:100%; background:var(--accent); color:#03211e; border:none; border-radius:12px;
+    padding:15px; font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .btn-primary:active{opacity:0.85;}
+  .btn-outline{
+    width:100%; background:transparent; color:var(--text); border:1px solid var(--border);
+    border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  .section-head{display:flex; align-items:center; justify-content:space-between; margin:4px 0 12px;}
+  .section-head h3{font-size:13px; letter-spacing:0.4px; margin:0; color:var(--text-dim); font-weight:700;}
+  .section-head a{font-size:12.5px; color:var(--accent); text-decoration:none; cursor:pointer;}
+  .companions{display:flex; gap:10px; margin-bottom:20px;}
+  .comp-card{
+    flex:1; background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:12px; text-align:center;
+  }
+  .comp-card .cap{font-size:11px; color:var(--text-dim); display:block; margin-bottom:8px; text-align:left;}
+  .avatars{display:flex; justify-content:center; gap:-6px;}
+  .avatar{
+    width:44px; height:44px; border-radius:50%; background:var(--panel-3);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+    border:2px solid var(--panel); margin-left:-10px; overflow:hidden; position:relative;
+  }
+  .avatar:first-child{margin-left:0;}
+  .comp-names{margin-top:8px; font-size:12.5px; font-weight:600;}
+  .veh-icon{font-size:30px; margin:4px 0;}
+  .veh-name{font-size:12.5px; font-weight:600;}
+  .charge-icon{font-size:30px; margin:4px 0; color:var(--accent);}
+  .charge-val{font-size:12.5px; font-weight:600;}
+  .photo-slot{cursor:pointer; position:relative;}
+  .photo-slot img{width:100%; height:100%; object-fit:cover; border-radius:inherit;}
+  .veh-photo-wrap{
+    width:64px; height:44px; border-radius:10px; margin:4px auto; overflow:hidden;
+    background:var(--panel-3); display:flex; align-items:center; justify-content:center;
+  }
+  .veh-photo-wrap img{width:100%; height:100%; object-fit:cover;}
+  .edit-badge{
+    position:absolute; bottom:-2px; right:-2px; background:var(--accent); color:#03211e;
+    width:16px; height:16px; border-radius:50%; font-size:10px; display:flex;
+    align-items:center; justify-content:center; border:2px solid var(--panel);
+  }
+  .comp-card .cap{display:flex; align-items:center; justify-content:space-between;}
+  .stops-count{font-size:12px; color:var(--text-dim);}
+  .stop-cards{display:flex; gap:10px; overflow-x:auto; margin-bottom:18px; padding-bottom:2px;}
+  .stop-card{
+    flex:1; min-width:150px; background:var(--panel); border:1px solid var(--border);
+    border-radius:14px; padding:13px; cursor:pointer;
+  }
+  .stop-card:active{border-color:var(--accent);}
+  .stop-card .cap{font-size:11px; color:var(--text-dim); margin-bottom:4px; display:block;}
+  .stop-card .name{font-weight:700; font-size:14.5px; margin-bottom:8px;}
+  .icon-row{display:flex; gap:8px; font-size:15px; margin-bottom:8px; color:var(--accent);}
+  .stop-meta{font-size:11px; color:var(--text-dim);}
+  .bottom-actions{display:flex; gap:10px; margin-bottom:14px;}
+  .bottom-actions .btn-primary{flex:1.3;}
+  .bottom-actions .btn-outline{flex:1;}
+  nav.tabbar{
+    display:flex; border-top:1px solid var(--border); padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--bg);
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; color:var(--text-dim); display:flex; flex-direction:column;
+    align-items:center; gap:4px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  nav.tabbar button.active{color:var(--accent);}
+  nav.tabbar .dash{width:26px; height:3px; border-radius:2px; margin-top:3px; background:transparent;}
+  nav.tabbar button.active .dash{background:var(--accent);}
+  .icon{font-size:20px;}
+
+  /* Stop detail */
+  .back-row{display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:2px;}
+  .back-row .chev{font-size:20px; color:var(--text);}
+  .hero{
+    position:relative; border-radius:var(--radius); overflow:hidden; height:190px; margin:14px 0 16px;
+    background:linear-gradient(160deg,#0c2624,#123330 55%,#0a1a18);
+    border:1px solid var(--border);
+  }
+  .hero .badge{
+    position:absolute; top:12px; left:12px; background:rgba(6,20,18,0.75); backdrop-filter:blur(2px);
+    padding:8px 12px; border-radius:10px; font-size:11px; line-height:1.3;
+  }
+  .hero .badge b{display:block; font-size:14px;}
+  .hero .fav{
+    position:absolute; top:12px; right:12px; background:rgba(6,20,18,0.75); border:1px solid var(--border);
+    padding:8px 12px; border-radius:20px; font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer;
+  }
+  .hero .fav.on{color:var(--danger);}
+  .hero .caption{
+    position:absolute; bottom:12px; right:14px; text-align:right; font-size:11px; color:var(--text-dim);
+  }
+  .hero .caption b{display:block; color:var(--text); font-size:14px;}
+  .hero-art{position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; opacity:0.9;}
+  h2.stop-title{font-size:23px; margin:0 0 2px;}
+  .chips{display:flex; gap:8px; overflow-x:auto; margin:14px 0;}
+  .chip{background:var(--panel-2); border:1px solid var(--border); border-radius:20px; padding:6px 13px; font-size:12px; white-space:nowrap;}
+  .rating-row{display:flex; gap:10px; margin-bottom:16px;}
+  .rating-card{flex:1; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; text-align:center;}
+  .rating-card .icon{display:block; margin-bottom:4px;}
+  .rating-card .val{font-size:19px; font-weight:800;}
+  .rating-card .lbl{font-size:11px; color:var(--text-dim);}
+  .info-list{display:grid; grid-template-columns:1fr 1fr; gap:9px 14px; font-size:13.5px;}
+  .info-list div{display:flex; align-items:center; gap:8px;}
+  .check-row{display:flex; gap:8px; flex-wrap:wrap; font-size:12.5px;}
+  .check-row span{background:var(--panel-2); border-radius:20px; padding:5px 11px; color:var(--accent);}
+  .pause-box{display:flex; align-items:center; gap:14px;}
+  .pause-clock{font-size:26px;}
+  .pause-box .big{font-size:19px; font-weight:800;}
+  .pause-stats{display:flex; gap:18px; margin-top:12px; font-size:12px; color:var(--text-dim);}
+  .pause-stats b{display:block; color:var(--text); font-size:15px; font-weight:700;}
+  .charge-stats{display:flex; justify-content:space-between; margin-top:12px; text-align:center;}
+  .charge-stats div{flex:1;}
+  .charge-stats b{display:block; font-size:16px; font-weight:800;}
+  .charge-stats span{font-size:11px; color:var(--text-dim);}
+  .dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px;}
+  .placeholder{padding:60px 10px; text-align:center; color:var(--text-dim);}
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+    background:var(--panel-3); border:1px solid var(--border); padding:10px 18px; border-radius:20px;
+    font-size:13px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:50;
+  }
+  .toast.show{opacity:1;}
+  .view{display:none;}
+  .map-screen{position:fixed; inset:0; z-index:100; background:var(--bg); display:flex; flex-direction:column;}
+  .map-header{display:flex; align-items:center; gap:10px; padding:14px 16px; padding-top:calc(14px + env(safe-area-inset-top,0px)); border-bottom:1px solid var(--border);}
+  .map-header .chev{font-size:22px; cursor:pointer;}
+  #liveMap{flex:1; width:100%;}
+  .map-status{padding:12px 16px; border-top:1px solid var(--border); background:var(--panel); font-size:13px;}
+  .map-status b{color:var(--accent);}
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip{background:var(--panel); color:var(--text);}
+  .car-icon{font-size:22px; text-align:center; line-height:1;}
+  .view.active{display:block;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="brand">
+<img src="data:image/png;base64,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" alt="DogPilot Logo" style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
+      <div class="brand-text">
+        <h1>DOG<b>PILOT</b></h1>
+        <p>Reise-Co-Pilot für Mensch, Hund &amp; Auto</p>
+      </div>
+    </div>
+    <div class="header-tag">GEMEINSAM<br>WEITER</div>
+  </header>
+
+  <main id="main"></main>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="map-screen" id="mapScreen" style="display:none;">
+    <div class="map-header">
+      <span class="chev" id="mapBackBtn">‹</span>
+      <div>
+        <div style="font-weight:700; font-size:16px;">Fahrt läuft</div>
+        <div style="font-size:12px; color:var(--text-dim);" id="mapRouteLabel"></div>
+      </div>
+    </div>
+    <div id="liveMap"></div>
+    <div class="map-status" id="mapStatus">Suche GPS-Position…</div>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="fahrt"><span class="icon">🚗</span>Fahrt<span class="dash"></span></button>
+    <button class="tab" data-tab="stopps"><span class="icon">📍</span>Stopps<span class="dash"></span></button>
+    <button class="tab" data-tab="profil"><span class="icon">👤</span>Profil<span class="dash"></span></button>
+  </nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const favorites = {};
+const photos = {}; // schoko, fibi, vehicle -> URL
+let delayMin = 0;
+let routeStart = '';
+let routeZiel = '';
+let startBattery = 80;
+const MANDATORY_STOP_MAX_MINUTES = 20; // Sicherheitsfenster – ab wann ein Ladestopp zwingend fällig wird
+let vehicleCapacityKWh = 76.6;         // Audi Q4 45 e-tron, Netto-Kapazität
+let vehicleConsumptionKWh100 = 23;     // realer Verbrauch mit Dachbox + 2 Hunden + 2 Personen + Gepäck (beobachtet: 21–25)
+let desiredMinKw = 150; // gewünschte Mindest-Ladeleistung – bestimmt, welche Ladepunkte als "geeignet" gelten
+
+function getRemainingRangeInfo(){
+  const rangeKm = (startBattery/100) * vehicleCapacityKWh / vehicleConsumptionKWh100 * 100;
+  const avgKmh = (routeDistanceKm && routeDurationMin) ? (routeDistanceKm / (routeDurationMin/60)) : 90;
+  const rangeMin = rangeKm / avgKmh * 60;
+  return { rangeKm, rangeMin, avgKmh };
+}
+let routeDistanceKm = null;
+let routeDurationMin = null;
+let routeApprox = false;
+let routeStraightLineKm = null; // Luftlinie Start-Ziel, zur Umrechnung der Stopp-Positionen auf echte km
+
+function toRealKm(straightLineKm){
+  const scale = (routeDistanceKm && routeStraightLineKm) ? routeDistanceKm / routeStraightLineKm : 1;
+  return Math.round(straightLineKm * scale);
+}
+let activeStop = 'wikingerland';
+
+function photoOr(id, fallbackHtml){
+  return photos[id] ? `<img src="${photos[id]}" alt="">` : fallbackHtml;
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+function renderFahrt(){
+  return `
+  <h2 class="title">Fahrt vorbereiten</h2>
+  <p class="subtitle">Route, Energie und Pausen auf einen Blick.</p>
+
+  <div class="card">
+    <div class="card-label"><span>🧭 ROUTE &amp; PLANUNG</span></div>
+    <div class="field-row">
+      <div class="field"><label>Start</label><input id="startInput" placeholder="Ort oder ganze Adresse" value="${routeStart}"></div>
+      <div class="arrow-mid">→</div>
+      <div class="field"><label>Ziel</label><input id="zielInput" placeholder="Ort oder ganze Adresse" value="${routeZiel}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Strecke</label><div class="box">${routeDistanceKm!=null ? routeDistanceKm+' km'+(routeApprox?' *':'') : '–'}</div></div>
+      <div class="field"><label>Fahrzeit</label><div class="box">${routeDurationMin!=null ? formatDuration(routeDurationMin) : '–'}</div></div>
+      <div class="field"><label>Verzögerung</label><div class="box" id="delayBox">${delayMin} Min</div></div>
+    </div>
+    ${routeApprox ? '<p style="font-size:11px; color:var(--text-dim); margin:-4px 0 12px;">* Luftlinie geschätzt, keine echte Routing-Verbindung erreichbar</p>' : ''}
+    <div class="field-row">
+      <div class="field"><label>Start-Akku (%)</label><input id="batteryInput" type="number" min="0" max="100" value="${startBattery}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
+      <div class="field"><label>Restreichweite</label><div class="box" style="color:var(--text-dim); font-weight:400; font-size:12.5px;">${(()=>{ const r=getRemainingRangeInfo(); return r.rangeMin<=MANDATORY_STOP_MAX_MINUTES ? `⚠️ ≈${Math.round(r.rangeKm)} km` : `✓ ≈${Math.round(r.rangeKm)} km`; })()}</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="pill-btn ${delayMin===0?'active':''}" data-delay="0">Pause jetzt</button>
+      <button class="pill-btn ${delayMin===-15?'active':''}" data-delay="-15">Pause früher</button>
+      <button class="pill-btn ${delayMin===15?'active':''}" data-delay="15">Pause später</button>
+    </div>
+    ${planStatus ? `<div style="background:${planStatus.ok?'rgba(47,216,196,0.12)':'rgba(229,86,107,0.12)'}; border:1px solid ${planStatus.ok?'var(--accent)':'var(--danger)'}; color:${planStatus.ok?'var(--accent)':'var(--danger)'}; border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:12px;">${planStatus.text}</div>` : ''}
+    <button class="btn-primary" id="planBtn">Fahrt planen</button>
+  </div>
+
+  <div class="section-head"><h3>HUND + MENSCH + AUTO</h3><span style="color:var(--text-dim); font-size:11.5px;">Foto antippen zum Ändern</span></div>
+  <div class="companions">
+    <div class="comp-card"><span class="cap">Begleiter</span>
+      <div class="avatars">
+        <div class="avatar" style="position:relative;">
+          <label class="photo-slot" for="photoSchoko" style="display:block;width:100%;height:100%;">${photoOr('schoko','🐕')}</label>
+          <input type="file" accept="image/*" id="photoSchoko" data-photo="schoko" style="display:none;">
+          <span class="edit-badge">✎</span>
+        </div>
+        <div class="avatar" style="position:relative;">
+          <label class="photo-slot" for="photoFibi" style="display:block;width:100%;height:100%;">${photoOr('fibi','🐶')}</label>
+          <input type="file" accept="image/*" id="photoFibi" data-photo="fibi" style="display:none;">
+          <span class="edit-badge">✎</span>
+        </div>
+      </div>
+      <div class="comp-names">Schoko · Fibi</div>
+    </div>
+    <div class="comp-card"><span class="cap">Fahrzeug</span>
+      <div class="veh-photo-wrap" style="position:relative;">
+        <label class="photo-slot" for="photoVehicle" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
+          ${photoOr('vehicle','<span class="veh-icon" style="margin:0;">🚙</span>')}
+        </label>
+        <input type="file" accept="image/*" id="photoVehicle" data-photo="vehicle" style="display:none;">
+        <span class="edit-badge">✎</span>
+      </div>
+      <div class="veh-name">Audi Q4 e-tron</div>
+    </div>
+    <div class="comp-card"><span class="cap">Min. Ladeleistung</span>
+      <div class="charge-icon">⚡</div>
+      <input id="minKwInput" type="number" min="10" max="400" step="10" value="${desiredMinKw}"
+        style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:15px; font-weight:700; color:var(--text); text-align:center; font-family:inherit; margin-top:2px;">
+      <div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">kW – Suchkriterium</div>
+    </div>
+  </div>
+
+  ${(()=>{
+    const preview = (computedStops && computedStops.length) ? planTripStops(computedStops) : [];
+    if(!preview.length){
+      return `<div class="section-head"><h3>LADESTOPPS AUF DER STRECKE</h3></div>
+      <div class="placeholder" style="padding:20px 10px;">${computedStops && computedStops.length ? 'Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.' : 'Noch keine Pausen geplant – zuerst "Fahrt planen" antippen.'}</div>`;
+    }
+    return `<div class="section-head"><h3>LADESTOPPS AUF DER STRECKE</h3><span class="stops-count">${preview.length} Stopp${preview.length===1?'':'s'}</span></div>
+    <div class="stop-cards">
+      ${preview.map((s,i)=>{
+        const eq = new Set([...(s.equipment||[]), ...(s.services||[])]);
+        const icons = ['toilet','motorwayRestaurant','shower','picnicFacilities'].filter(k=>eq.has(k)).map(k=>FACILITY_LABELS[k][0]);
+        const idx = computedStops.findIndex(x=>x.name===s.name && x.km===s.km);
+        const dataStop = s._notfallLadepunkt ? 'emergency' : `c-${idx}`;
+        const hundLabel = s.hund==null ? '–' : s.hund;
+        return `<div class="stop-card" data-stop="${dataStop}">
+          <span class="cap" style="${s._notfallLadepunkt?'color:var(--danger);':(s._rangeExceeded?'color:var(--danger);':'')}">${s._notfallLadepunkt?'🚨 Notfall-Ladestopp':`Stopp ${s._stopNumber}${s._rangeExceeded?' ⚠️ knapp':''}`}</span>
+          <div class="name">${s.name}</div>
+          <div class="icon-row">${icons.map(ic=>`<span>${ic}</span>`).join('')}<span>⚡</span></div>
+          <div class="stop-meta">${s.realKm} km ab ${routeStart} · Hund ${hundLabel} · Laden ${s.laden}</div>
+          <div class="stop-meta" style="margin-top:2px;">${facilityTypeLabel(s)} · ${motorwayAccessLabel(s)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  })()}
+
+  <div class="bottom-actions">
+    <button class="btn-primary" id="startBtn">➤ Fahrt starten</button>
+    <button class="btn-outline" id="seeStopsBtn">☰ Stopps ansehen</button>
+  </div>`;
+}
+
+function renderEmergencyStopDetail(){
+  const s = lastEmergencyStop;
+  if(!s){
+    return `<div class="back-row" id="backBtn"><span class="chev">‹</span><h2 class="stop-title">Stopp im Detail</h2></div>
+    <div class="placeholder">Kein Stopp gefunden.</div>`;
+  }
+  const isFav = !!favorites['emergency'];
+  return `
+  <div class="back-row" id="backBtn"><span class="chev">‹</span><h2 class="stop-title">Notfall-Ladestopp</h2></div>
+  <p class="subtitle">Aus dem Ladesäulenregister – kein Rastplatz, keine Hund/Kaffee-Bewertung verfügbar</p>
+
+  <div class="hero">
+    <div class="badge">ca. ${s._distKm} km<b>von deinem Standort</b></div>
+    <div class="fav ${isFav?'on':''}" id="favBtn">${isFav?'♥':'♡'} Favorit</div>
+    <div class="caption">Nächster erreichbarer<br>Ladepunkt<br><span style="font-weight:400">Autobahn bei diesem Akkustand tabu</span></div>
+    <div class="hero-art" style="font-size:64px;">🚨</div>
+  </div>
+
+  <h2 class="stop-title">${s.name}</h2>
+  <p class="subtitle" style="margin-bottom:14px;">${motorwayAccessLabel(s)}</p>
+
+  <div class="card">
+    <div class="card-label"><span class="plain">⚡ Ladeinfrastruktur</span></div>
+    <div class="charge-stats">
+      <div><b>${Math.round(s.maxKw)} kW</b><span>Max. Ladeleistung</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="plain">ℹ️ Hinweis</span></div>
+    <p style="font-size:13px; color:var(--text-dim); margin:0;">Dieser Stopp stammt direkt aus dem Bundesnetzagentur-Ladesäulenregister, nicht aus den Rastanlagen-Daten. Deshalb liegen keine Hund/Mensch-Bewertungen oder Ausstattungsmerkmale (WC, Picknick etc.) vor.</p>
+  </div>
+  `;
+}
+
+function renderComputedStopDetail(index){
+  const s = computedStops[index];
+  const key = `c-${index}`;
+  const isFav = !!favorites[key];
+  const eq = new Set([...(s.equipment||[]), ...(s.services||[])]);
+  const facts = [...eq].map(k => FACILITY_LABELS[k] || ['•', k]);
+  const remainingKm = routeDistanceKm!=null ? Math.max(0, Math.round(routeDistanceKm - toRealKm(s.km))) : null;
+
+  const dogChecks = [];
+  if(eq.has('picnicFacilities')) dogChecks.push('Ruhige Fläche zum Ausruhen');
+  if(eq.has('freshWater')) dogChecks.push('Wasserstelle vorhanden');
+  if(s.spaces >= 20) dogChecks.push('Große Anlage, wenig Trubel');
+  if(!eq.has('leisureActivities') && !eq.has('picnicFacilities')) dogChecks.push('Nur kurze Gassirunde möglich (keine Grünfläche gemeldet)');
+
+  return `
+  <div class="back-row" id="backBtn"><span class="chev">‹</span><h2 class="stop-title">Stopp im Detail</h2></div>
+  <p class="subtitle">Berechnet aus Ladesäulenregister &amp; SID/ITP-Rastanlagendaten</p>
+
+  <div class="hero">
+    <div class="badge">${remainingKm!=null ? 'ca. '+remainingKm+' km' : 'km '+s.km}<b>${remainingKm!=null ? 'vor '+routeZiel : 'ab '+routeStart}</b></div>
+    <div class="fav ${isFav?'on':''}" id="favBtn">${isFav?'♥':'♡'} Favorit</div>
+    <div class="caption">Echte Daten<br>Bundesnetzagentur + SID<br><span style="font-weight:400">Laden · Ausruhen · Weiterfahren</span></div>
+    <div class="hero-art" style="font-size:64px;">🐕⚡</div>
+  </div>
+
+  <h2 class="stop-title">${s.name}</h2>
+  <p class="subtitle" style="margin-bottom:6px;">Auf der Route ${routeStart} → ${routeZiel}</p>
+  <p class="subtitle" style="margin-bottom:14px; color:var(--text);">${facilityTypeLabel(s)} · ${motorwayAccessLabel(s)}</p>
+
+  <div class="rating-row">
+    <div class="rating-card"><span class="icon">🐾</span><div class="val">${s.hund}</div><div class="lbl">Hund</div></div>
+    <div class="rating-card"><span class="icon">⚡</span><div class="val">${s.laden}</div><div class="lbl">Laden</div></div>
+    <div class="rating-card"><span class="icon">☕</span><div class="val">${s.mensch}</div><div class="lbl">Mensch</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="plain">📋 Ausstattung (Rohdaten)</span></div>
+    <div class="info-list">${facts.length ? facts.map(f=>`<div>${f[0]} ${f[1]}</div>`).join('') : '<div>Keine Ausstattungsdaten vorhanden</div>'}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="plain">🐾 Für deinen Hund</span></div>
+    <div class="check-row">${dogChecks.map(c=>`<span>✓ ${c}</span>`).join('')}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label"><span class="plain">⚡ Ladeinfrastruktur</span><span style="color:var(--text-dim); font-weight:400;">im Umkreis 1 km</span></div>
+    <div class="charge-stats">
+      <div><b>${Math.round(s.maxKw)} kW</b><span>Max. Ladeleistung</span></div>
+      <div><b>${s.nPoints || 0}</b><span>Ladepunkte</span></div>
+      <div><b style="font-size:13px;">${s.betreiber || '–'}</b><span>Hauptbetreiber</span></div>
+    </div>
+  </div>
+
+  <div class="card" id="ocmCard">
+    <div class="card-label"><span class="plain">📡 Betriebsstatus (Open Charge Map)</span></div>
+    ${ocmStatusCache[`${s.lat.toFixed(4)},${s.lon.toFixed(4)}`] ? renderOcmStats(ocmStatusCache[`${s.lat.toFixed(4)},${s.lon.toFixed(4)}`]) : `
+      <p style="font-size:12px; color:var(--text-dim); margin:0 0 10px;">Live-Betriebsstatus laut Open Charge Map (betreiberabhängig, keine garantierte Sekundenaktualität).</p>
+      <button class="btn-outline" id="ocmLoadBtn">Jetzt abfragen</button>
+    `}
+  </div>
+  `;
+}
+
+function renderOcmStats(r){
+  if(r.total === 0) return `<p style="font-size:13px; color:var(--text-dim);">Keine Ladepunkte bei Open Charge Map in der Nähe gemeldet.</p>`;
+  return `<div class="charge-stats">
+    <div><b style="color:#3ddc97;">${r.operational}</b><span>Betriebsbereit</span></div>
+    <div><b style="color:#e5566b;">${r.faulted}</b><span>Gestört</span></div>
+    <div><b style="color:#93a9a6;">${r.unknown}</b><span>Unbekannt</span></div>
+  </div>
+  <p style="font-size:11px; color:var(--text-dim); margin:10px 0 0;">${r.pois} Standort(e) bei Open Charge Map, ${r.total} Ladepunkte gesamt.</p>`;
+}
+
+function ocmInlineLabel(stop){
+  const key = `${stop.lat.toFixed(4)},${stop.lon.toFixed(4)}`;
+  const r = ocmStatusCache[key];
+  if(!r) return `<span style="color:var(--text-dim);">OCM: lädt…</span>`;
+  if(r.total === 0) return `<span style="color:var(--text-dim);">OCM: keine Daten</span>`;
+  return `<span style="color:#3ddc97;">${r.operational} ok</span>`
+    + (r.faulted ? ` · <span style="color:var(--danger);">${r.faulted} gestört</span>` : '')
+    + (r.unknown ? ` · <span style="color:var(--text-dim);">${r.unknown} unbek.</span>` : '');
+}
+
+function renderStopDetail(id){
+  if(id === 'emergency'){
+    return renderEmergencyStopDetail();
+  }
+  if(id && id.startsWith('c-')){
+    return renderComputedStopDetail(parseInt(id.slice(2), 10));
+  }
+  return `<div class="back-row" id="backBtn"><span class="chev">‹</span><h2 class="stop-title">Stopp im Detail</h2></div>
+  <div class="placeholder">Kein Stopp gefunden.</div>`;
+}
+
+// ---------- Echte Datenintegration (Ladesäulenregister CSV + SID/ITP XML) ----------
+
+let importedCharging = null;   // Array von {lat,lon,kw,anzahlLadepunkte,betreiber}
+let importedAreas = null;      // Array von {id,name,lat,lon,equipment,services,spaces}
+let computedStops = null;      // Ergebnis von computeRouteStops
+let lastEmergencyStop = null;  // zuletzt gefundener Notfall-Ladepunkt (kein Rastanlagen-Datensatz)
+let chargingUpdatedAt = null;  // Zeitstempel des letzten Ladesäulenregister-Uploads
+let areasUpdatedAt = null;     // Zeitstempel des letzten Rastanlagen-Uploads
+const DATA_MAX_AGE_DAYS = 30;  // ab diesem Alter wird eine Update-Erinnerung angezeigt
+
+// ---------- Dauerhafte Speicherung der hochgeladenen Dateien (IndexedDB) ----------
+const IDB_NAME = 'dogpilot';
+const IDB_STORE = 'files';
+
+function idbOpen(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  try{
+    const db = await idbOpen();
+    return new Promise((resolve)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = ()=>resolve(true);
+      tx.onerror = ()=>resolve(false);
+    });
+  }catch(e){ return false; }
+}
+async function idbGet(key){
+  try{
+    const db = await idbOpen();
+    return new Promise((resolve)=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>resolve(undefined);
+    });
+  }catch(e){ return undefined; }
+}
+async function idbDelete(key){
+  try{
+    const db = await idbOpen();
+    return new Promise((resolve)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = ()=>resolve(true);
+      tx.onerror = ()=>resolve(false);
+    });
+  }catch(e){ return false; }
+}
+let importBusy = false;
+let datenRoute = { corridorKm: 15 };
+
+// Geokodierung über OpenStreetMap/Nominatim (kostenlos, kein API-Key nötig).
+// Funktioniert nur mit echtem Netzwerkzugriff, also erst nach dem Deployment,
+// nicht in dieser Chat-Vorschau.
+async function geocode(place){
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&q=${encodeURIComponent(place)}`;
+  let res;
+  try{
+    res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+  }catch(networkErr){
+    throw new Error('Keine Netzwerkverbindung – Ortssuche funktioniert erst nach dem Deployment (nicht in dieser Vorschau)');
+  }
+  if(!res.ok) throw new Error('Geocoding fehlgeschlagen');
+  const data = await res.json();
+  if(!data.length) throw new Error(`Ort "${place}" nicht gefunden`);
+  const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+  coords.label = data[0].display_name || place; // gefundene Adresse, zur Bestätigung anzeigbar
+  return coords;
+}
+
+const FACILITY_LABELS = {
+  toilet:['🚻','WC'], shower:['🚿','Dusche'], motorwayRestaurant:['🍽️','Raststätte/Restaurant'],
+  petrolStation:['⛽','Tankstelle'], picnicFacilities:['🧺','Picknickbereich'], playground:['🛝','Spielplatz'],
+  freshWater:['🚰','Frischwasser'], defibrillator:['➕','Defibrillator'], firstAidEquipment:['🩹','Erste-Hilfe'],
+  refuseBin:['🗑️','Mülleimer'], motel:['🛏️','Motel'], police:['🚓','Polizei'],
+  leisureActivities:['🎡','Freizeitangebot'], docstop:['📋','Docstop'], dumpingStation:['🚛','Entsorgungsstation'],
+};
+
+function haversineKm(lat1, lon1, lat2, lon2){
+  const r = 6371;
+  const p1 = lat1*Math.PI/180, p2 = lat2*Math.PI/180;
+  const dphi = (lat2-lat1)*Math.PI/180, dlmb = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dphi/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dlmb/2)**2;
+  return 2*r*Math.asin(Math.sqrt(a));
+}
+function pointToSegmentKm(lat, lon, lat1, lon1, lat2, lon2){
+  const ax=lon1, ay=lat1, bx=lon2, by=lat2, px=lon, py=lat;
+  const abx=bx-ax, aby=by-ay, apx=px-ax, apy=py-ay;
+  const ab2 = abx*abx+aby*aby;
+  const t = ab2===0 ? 0 : Math.max(0, Math.min(1, (apx*abx+apy*aby)/ab2));
+  const cx=ax+t*abx, cy=ay+t*aby;
+  return { dist: haversineKm(lat, lon, cy, cx), t };
+}
+
+function parseChargingCSV(text){
+  const lines = text.split(/\r?\n/);
+  let headerIdx = -1, header = null;
+  for(let i=0;i<lines.length;i++){
+    const cells = lines[i].split(';');
+    if(cells[0] && cells[0].replace(/^\uFEFF/,'').trim() === 'Ladeeinrichtungs-ID'){
+      headerIdx = i; header = cells.map(c=>c.trim()); break;
+    }
+  }
+  if(headerIdx === -1) throw new Error('Header "Ladeeinrichtungs-ID" nicht gefunden');
+  const col = {}; header.forEach((h,i)=>{ col[h]=i; });
+  const points = [];
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const r = lines[i].split(';');
+    if(r.length < header.length || !r[0]) continue;
+    const lat = parseFloat((r[col['Breitengrad']]||'').replace(',','.'));
+    const lon = parseFloat((r[col['Längengrad']]||'').replace(',','.'));
+    const kw = parseFloat((r[col['Nennleistung Ladeeinrichtung [kW]']]||'').replace(',','.'));
+    if(Number.isNaN(lat) || Number.isNaN(lon)) continue;
+    points.push({
+      lat, lon, kw: Number.isNaN(kw) ? 0 : kw,
+      anzahlLadepunkte: parseInt(r[col['Anzahl Ladepunkte']]||'0', 10) || 0,
+      betreiber: r[col['Betreiber']] || '',
+    });
+  }
+  return points;
+}
+
+function parseRestAreasXML(text){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const err = doc.querySelector('parsererror');
+  if(err) throw new Error('XML konnte nicht gelesen werden');
+  const NS = 'http://datex2.eu/schema/2/2_0';
+  const records = doc.getElementsByTagNameNS(NS, 'parkingRecord');
+  const areas = [];
+  for(const rec of records){
+    const id = rec.getAttribute('id') || '';
+    const nameEl = rec.getElementsByTagNameNS(NS,'parkingName')[0];
+    let name = id;
+    if(nameEl){
+      const v = nameEl.getElementsByTagNameNS(NS,'value')[0];
+      if(v && v.textContent) name = v.textContent;
+    }
+    if(/rückbau/i.test(name)) continue; // stillgelegte/im Abriss befindliche Anlage überspringen
+    const latEl = rec.getElementsByTagNameNS(NS,'latitude')[0];
+    const lonEl = rec.getElementsByTagNameNS(NS,'longitude')[0];
+    if(!latEl || !lonEl) continue;
+    const lat = parseFloat(latEl.textContent), lon = parseFloat(lonEl.textContent);
+    if(Number.isNaN(lat) || Number.isNaN(lon)) continue;
+    const equipment = [...rec.getElementsByTagNameNS(NS,'equipmentType')].map(e=>e.textContent).filter(Boolean);
+    const services = [...rec.getElementsByTagNameNS(NS,'serviceFacilityType')].map(e=>e.textContent).filter(Boolean);
+    const spacesEl = rec.getElementsByTagNameNS(NS,'parkingNumberOfSpaces')[0];
+    const spaces = spacesEl ? parseInt(spacesEl.textContent||'0',10) : 0;
+    const distEl = rec.getElementsByTagNameNS(NS,'distanceToThisRoad')[0];
+    const distanceToMotorwayM = distEl ? parseFloat(distEl.textContent) : null;
+    const isAutohof = /autohof|truckstop/i.test(name);
+    areas.push({ id, name, lat, lon, equipment, services, spaces, distanceToMotorwayM, isAutohof });
+  }
+  return areas;
+}
+
+function scoreStop(area, nearbyCharging){
+  const maxKw = nearbyCharging.reduce((m,c)=>Math.max(m,c.kw), 0);
+  const nPoints = nearbyCharging.reduce((s,c)=>s + (c.anzahlLadepunkte||0), 0);
+  const betreiber = nearbyCharging.length
+    ? [...nearbyCharging].sort((a,b)=>b.kw-a.kw)[0].betreiber
+    : null;
+  const scoreLaden = nearbyCharging.length ? Math.min(5, 1 + 4*Math.min(1, maxKw/150)) : 1;
+  const eq = new Set(area.equipment), sv = new Set(area.services);
+  let scoreMensch = 2.5;
+  if(eq.has('toilet')) scoreMensch += 0.8;
+  if(sv.has('motorwayRestaurant')) scoreMensch += 0.8;
+  if(eq.has('shower')) scoreMensch += 0.5;
+  if(eq.has('freshWater')) scoreMensch += 0.4;
+  scoreMensch = Math.min(5, scoreMensch);
+  let scoreHund = 2.8;
+  if(eq.has('picnicFacilities')) scoreHund += 0.7;
+  if(sv.has('leisureActivities')) scoreHund += 0.6;
+  if(eq.has('freshWater')) scoreHund += 0.5;
+  if(area.spaces >= 20) scoreHund += 0.4;
+  scoreHund = Math.min(5, scoreHund);
+  return { hund: Math.round(scoreHund*10)/10, laden: Math.round(scoreLaden*10)/10,
+           mensch: Math.round(scoreMensch*10)/10, maxKw, nPoints, betreiber };
+}
+
+function computeRouteStops(charging, areas, start, end, corridorKm=15, chargeRadiusKm=1){
+  const totalDist = haversineKm(start[0],start[1],end[0],end[1]);
+  const stops = [];
+  for(const a of areas){
+    const { dist, t } = pointToSegmentKm(a.lat, a.lon, start[0], start[1], end[0], end[1]);
+    if(dist > corridorKm) continue;
+    const nearby = charging.filter(c => haversineKm(a.lat,a.lon,c.lat,c.lon) <= chargeRadiusKm);
+    const sc = scoreStop(a, nearby);
+    stops.push({ ...a, km: Math.round(t*totalDist*10)/10, ...sc });
+  }
+  stops.sort((x,y)=>x.km-y.km);
+  return stops;
+}
+
+function readFileAsText(file, encoding){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = ()=>reject(reader.error);
+    if(encoding) reader.readAsText(file, encoding); else reader.readAsText(file);
+  });
+}
+
+const ocmStatusCache = {};
+
+async function loadOcmStatus(lat, lon){
+  const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+  if(ocmStatusCache[key]) return ocmStatusCache[key];
+  const url = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${lat}&longitude=${lon}&distance=1&distanceunit=KM&maxresults=20&compact=true&verbose=false`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('Open Charge Map nicht erreichbar');
+  const data = await res.json();
+  let operational=0, faulted=0, unknown=0, total=0;
+  for(const poi of data){
+    for(const c of (poi.Connections||[])){
+      total++;
+      const id = c.StatusTypeID;
+      if(id===50) operational++;
+      else if(id===30||id===75||id===150) faulted++;
+      else unknown++;
+    }
+  }
+  const result = { operational, faulted, unknown, total, pois: data.length };
+  ocmStatusCache[key] = result;
+  return result;
+}
+
+let routeGeometry = null; // Array von [lat,lon] entlang der echten Fahrstrecke (für die Karte)
+let routeStartCoords = null;
+let routeEndCoords = null;
+
+async function loadRouteInfo(start, end){
+  try{
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('OSRM-Fehler');
+    const data = await res.json();
+    if(!data.routes || !data.routes.length) throw new Error('Keine Route gefunden');
+    routeDistanceKm = Math.round(data.routes[0].distance / 1000);
+    routeDurationMin = Math.round(data.routes[0].duration / 60);
+    routeGeometry = (data.routes[0].geometry?.coordinates || []).map(c => [c[1], c[0]]);
+    routeApprox = false;
+  }catch(err){
+    const d = haversineKm(start[0], start[1], end[0], end[1]);
+    routeDistanceKm = Math.round(d);
+    routeDurationMin = Math.round(d / 90 * 60); // Schätzung: ø 90 km/h
+    routeGeometry = [start, end];
+    routeApprox = true;
+  }
+}
+
+function formatDuration(min){
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}
+
+let planStatus = null; // { ok: bool, text: string } – bleibt sichtbar bis zum nächsten Versuch
+
+async function planTrip(){
+  planStatus = null;
+  if(!routeStart || !routeZiel){
+    planStatus = { ok:false, text:'Bitte Start und Ziel eingeben' };
+    render();
+    return;
+  }
+  planStatus = { ok:true, text:'Suche Orte…' };
+  render();
+  let start, end;
+  try{
+    [start, end] = await Promise.all([geocode(routeStart), geocode(routeZiel)]);
+  }catch(err){
+    planStatus = { ok:false, text: err.message || 'Orte konnten nicht gefunden werden' };
+    render();
+    return;
+  }
+  await loadRouteInfo(start, end);
+  routeStartCoords = start;
+  routeEndCoords = end;
+  routeStraightLineKm = haversineKm(start[0], start[1], end[0], end[1]);
+  if(importedCharging && importedAreas){
+    computedStops = computeRouteStops(importedCharging, importedAreas, start, end, datenRoute.corridorKm);
+    planStatus = { ok:true, text: `${start.label} → ${end.label} · ${computedStops.length} Stopps im Korridor` };
+  } else {
+    computedStops = [];
+    planStatus = { ok:true, text: 'Route berechnet – für Stopps bitte im Profil-Tab die Dateien laden' };
+  }
+  render();
+}
+
+// Empfehlungslogik: primär Hund-Score (Grünfläche/Auslauf – die "DP-Intuition"),
+// außer der Start-Akku ist niedrig – dann muss der ERSTE Stopp ein reiner
+// Lade-Stopp sein, unabhängig vom Hund-Score.
+const TRIGGER_SOC_PERCENT = 15;   // ab diesem Akkustand beginnt die Stopp-Suche
+const TARGET_SOC_AFTER_CHARGE = 80; // angenommener Ladestand nach jedem Ladestopp
+
+// Ganzheitliche Ladeplanung für die komplette Strecke: simuliert den Akkustand
+// von Start bis Ziel, sucht bei Erreichen von TRIGGER_SOC_PERCENT einen Stopp,
+// der Laden + Hund + Kaffee kombiniert (nicht nur die nächste Ladesäule),
+// "lädt" dort auf TARGET_SOC_AFTER_CHARGE und fährt weiter bis zum nächsten
+// Trigger-Punkt oder zum Ziel.
+const EMERGENCY_CHECK_RANGE_KM = 60; // unter dieser Reichweite zuerst lokal (egal ob Autobahn) suchen
+
+function findEmergencyChargingNearby(lat, lon, searchRadiusKm){
+  if(!importedCharging || !importedCharging.length) return null;
+  const candidates = importedCharging
+    .map(c => ({ ...c, distKm: haversineKm(lat, lon, c.lat, c.lon) }))
+    .filter(c => c.distKm <= searchRadiusKm && c.kw > 0);
+  if(!candidates.length) return null;
+  const highPower = candidates.filter(c => c.kw >= desiredMinKw);
+  const pool = highPower.length ? highPower : candidates;
+  return [...pool].sort((a,b)=> a.distKm - b.distKm)[0];
+}
+
+function planTripStops(stops){
+  if(!stops || !stops.length || !routeDistanceKm) return [];
+  const byKm = stops.map(s=>({ ...s, realKm: toRealKm(s.km) })).sort((a,b)=>a.realKm-b.realKm);
+  const kmPerPercent = vehicleCapacityKWh / vehicleConsumptionKWh100; // km pro 1% Akku
+
+  let currentKm = 0;
+  let currentSoc = startBattery;
+  const plan = [];
+  const used = new Set();
+  let guard = 0;
+
+  // Notfall-Check: Reicht der Akku ab Start kaum, wird ZUERST im unmittelbaren Umkreis
+  // gesucht (jeder Ladepunkt aus dem Register, nicht nur Autobahn-Rastanlagen) – die
+  // Autobahn ist bei kritischem Akkustand tabu, ein Supermarkt-Lader um die Ecke zählt mehr.
+  const startRangeKm = Math.max(0, currentSoc - TRIGGER_SOC_PERCENT) * kmPerPercent;
+  if(startRangeKm < EMERGENCY_CHECK_RANGE_KM && routeStartCoords){
+    const searchRadius = Math.max(startRangeKm, 3); // mind. 3 km Suchradius, auch bei ~0 km Reichweite
+    const nearby = findEmergencyChargingNearby(routeStartCoords[0], routeStartCoords[1], searchRadius);
+    if(nearby){
+      plan.push({
+        name: nearby.betreiber ? `Ladepunkt: ${nearby.betreiber}` : 'Ladepunkt in der Nähe',
+        lat: nearby.lat, lon: nearby.lon, realKm: 0,
+        hund: null, mensch: null, laden: nearby.kw>=150 ? 5 : 3, maxKw: nearby.kw,
+        isAutohof: false, distanceToMotorwayM: null, equipment: [], services: [],
+        _stopNumber: 1, _notfallLadepunkt: true, _distKm: Math.round(nearby.distKm*10)/10,
+      });
+      currentSoc = TARGET_SOC_AFTER_CHARGE; // danach wie gewohnt weiterplanen
+      lastEmergencyStop = plan[0];
+    }
+  }
+
+  while(currentKm < routeDistanceKm && guard++ < 15){
+    const reachableKm = currentKm + Math.max(0, currentSoc - TRIGGER_SOC_PERCENT) * kmPerPercent;
+    if(reachableKm >= routeDistanceKm) break; // Ziel ohne weiteren Stopp erreichbar
+
+    const candidates = byKm.filter(s => s.realKm > currentKm && s.realKm <= reachableKm && !used.has(s.name));
+    const withCharging = candidates.filter(s => s.maxKw >= desiredMinKw);
+    let chosen;
+    let rangeExceeded = false;
+
+    if(withCharging.length){
+      // Autohof bevorzugt (falls vorhanden), sonst bester Kombi-Stopp nach Hund+Mensch
+      const autohoefe = withCharging.filter(s => s.isAutohof);
+      const pool = autohoefe.length ? autohoefe : withCharging;
+      chosen = [...pool].sort((a,b)=> (b.hund+b.mensch) - (a.hund+a.mensch))[0];
+    } else if(candidates.length){
+      chosen = [...candidates].sort((a,b)=> b.laden-a.laden)[0];
+    } else {
+      // kein Stopp im sicheren Fenster erreichbar: nächstgelegenen darüber hinaus nehmen (Notfall)
+      chosen = byKm.filter(s=>s.realKm > currentKm && !used.has(s.name)).sort((a,b)=>a.realKm-b.realKm)[0];
+      rangeExceeded = true;
+    }
+    if(!chosen) break;
+
+    used.add(chosen.name);
+    plan.push({ ...chosen, _stopNumber: plan.length+1, _rangeExceeded: rangeExceeded });
+    currentKm = chosen.realKm;
+    currentSoc = TARGET_SOC_AFTER_CHARGE;
+  }
+  return plan;
+}
+
+function formatAge(timestamp){
+  if(!timestamp) return null;
+  const days = Math.floor((Date.now() - timestamp) / (1000*60*60*24));
+  const dateStr = new Date(timestamp).toLocaleDateString('de-DE');
+  return { days, dateStr };
+}
+
+function renderProfil(){
+  const csvAge = formatAge(chargingUpdatedAt);
+  const xmlAge = formatAge(areasUpdatedAt);
+  const csvStale = csvAge && csvAge.days > DATA_MAX_AGE_DAYS;
+  const xmlStale = xmlAge && xmlAge.days > DATA_MAX_AGE_DAYS;
+  const csvName = importedCharging
+    ? `${importedCharging.length.toLocaleString('de-DE')} Ladepunkte geladen${csvAge ? ` · Stand ${csvAge.dateStr} (vor ${csvAge.days} Tagen)` : ''}`
+    : 'Noch keine Datei gewählt';
+  const xmlName = importedAreas
+    ? `${importedAreas.length.toLocaleString('de-DE')} Rastanlagen geladen${xmlAge ? ` · Stand ${xmlAge.dateStr} (vor ${xmlAge.days} Tagen)` : ''}`
+    : 'Noch keine Datei gewählt';
+  return `
+  <h2 class="title">Profil</h2>
+  <p class="subtitle">Deine Angaben zu Hund, Mensch und Fahrzeug.</p>
+  <div class="placeholder" style="padding:24px 10px;">👤 Profilverwaltung folgt in einer späteren Version.</div>
+
+  ${(csvStale || xmlStale) ? `
+  <div class="card" style="border-color:var(--danger); background:rgba(229,86,107,0.1);">
+    <div class="card-label"><span style="color:var(--danger);">⏰ Update fällig</span></div>
+    <p style="font-size:13px; margin:0 0 10px;">${csvStale ? `Ladesäulenregister ist ${csvAge.days} Tage alt. ` : ''}${xmlStale ? `Rastanlagen-Datei ist ${xmlAge.days} Tage alt. ` : ''}Beide Quellen werden monatlich aktualisiert – bitte neue Version laden.</p>
+    <p style="font-size:12px; color:var(--text-dim); margin:0 0 4px;">📄 Ladesäulenregister: <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur.html?nn=659906" target="_blank" style="color:var(--accent);">bundesnetzagentur.de/ladeinfrastruktur</a></p>
+    <p style="font-size:12px; color:var(--text-dim); margin:0;">📄 SID/ITP-Rastanlagen: über dein Mobilithek-Konto (siehe README)</p>
+  </div>
+  ` : ''}
+
+  <div class="section-head"><h3>FAHRZEUG &amp; VERBRAUCH</h3></div>
+  <div class="card">
+    <div class="card-label"><span>Audi Q4 e-tron</span></div>
+    <div class="field-row" style="margin-bottom:0;">
+      <div class="field"><label>Batteriekapazität (kWh, netto)</label><input id="vehicleCapacityInput" type="number" min="10" max="200" step="0.1" value="${vehicleCapacityKWh}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
+      <div class="field"><label>Verbrauch (kWh/100 km)</label><input id="vehicleConsumptionInput" type="number" min="5" max="60" step="0.1" value="${vehicleConsumptionKWh100}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Bestimmt die Restreichweite und damit, ob/wo ein Pflicht-Ladestopp nötig wird. Vorbelegt mit 23 kWh/100 km – beobachteter Realverbrauch mit Dachbox, 2 Hunden in der Box, 2 Personen und voller Zuladung (schwankte auf der Hinfahrt zwischen 21 und 25). Ohne Dachbox/Zuladung entsprechend niedriger ansetzen.</p>
+  </div>
+
+  <div class="section-head"><h3>ECHTE STRECKENDATEN (EINMALIG EINRICHTEN)</h3></div>
+  <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Wird nach dem Hochladen dauerhaft im Browser gespeichert – kein erneuter Upload beim nächsten Öffnen nötig.</p>
+  <div class="card">
+    <div class="card-label"><span>📄 LADESÄULENREGISTER (CSV)</span></div>
+    <label class="btn-outline" for="csvInput" style="display:block; text-align:center; cursor:pointer;">Datei wählen</label>
+    <input type="file" id="csvInput" accept=".csv" style="display:none;">
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">${csvName}</p>
+  </div>
+  <div class="card">
+    <div class="card-label"><span>📄 LKW-RASTANLAGEN (SID/ITP XML)</span></div>
+    <label class="btn-outline" for="xmlInput" style="display:block; text-align:center; cursor:pointer;">Datei wählen</label>
+    <input type="file" id="xmlInput" accept=".xml" style="display:none;">
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">${xmlName}</p>
+  </div>
+  ${(importedCharging || importedAreas) ? `
+  <button class="btn-outline" id="clearDataBtn" style="margin-bottom:16px; color:var(--danger); border-color:var(--danger);">Gespeicherte Dateien löschen</button>
+  ` : ''}
+  <div class="card">
+    <div class="card-label"><span>Korridorbreite</span></div>
+    <select id="corridorSelect" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;">
+      <option value="10" ${datenRoute.corridorKm===10?'selected':''}>10 km</option>
+      <option value="15" ${datenRoute.corridorKm===15?'selected':''}>15 km</option>
+      <option value="25" ${datenRoute.corridorKm===25?'selected':''}>25 km</option>
+    </select>
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Wie weit seitlich der Fahrtstrecke nach Ladesäulen/Rastanlagen gesucht wird (z. B. 15 km bedeutet: bis zu 15 km links und rechts der Route). Größerer Wert = mehr Treffer, aber auch weiter entfernte. Wird beim nächsten "Fahrt planen" verwendet.</p>
+  </div>
+  `;
+}
+
+function attachProfilEvents(){
+  document.getElementById('vehicleCapacityInput').addEventListener('change', (e)=>{
+    const v = parseFloat(e.target.value);
+    if(!Number.isNaN(v) && v > 0){ vehicleCapacityKWh = v; idbSet('vehicleCapacityKWh', v); }
+    render();
+  });
+  document.getElementById('vehicleConsumptionInput').addEventListener('change', (e)=>{
+    const v = parseFloat(e.target.value);
+    if(!Number.isNaN(v) && v > 0){ vehicleConsumptionKWh100 = v; idbSet('vehicleConsumptionKWh100', v); }
+    render();
+  });
+  document.getElementById('csvInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await readFileAsText(file, 'utf-8');
+      importedCharging = parseChargingCSV(text);
+      chargingUpdatedAt = Date.now();
+      idbSet('charging', importedCharging);
+      idbSet('chargingUpdatedAt', chargingUpdatedAt);
+      toast(`${importedCharging.length} Ladepunkte importiert & gespeichert`);
+    }catch(err){ toast('CSV konnte nicht gelesen werden'); }
+    render();
+  });
+  document.getElementById('xmlInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await readFileAsText(file, 'iso-8859-1');
+      importedAreas = parseRestAreasXML(text);
+      areasUpdatedAt = Date.now();
+      idbSet('areas', importedAreas);
+      idbSet('areasUpdatedAt', areasUpdatedAt);
+      toast(`${importedAreas.length} Rastanlagen importiert & gespeichert`);
+    }catch(err){ toast('XML konnte nicht gelesen werden'); }
+    render();
+  });
+  document.getElementById('corridorSelect').addEventListener('change', (e)=>{
+    datenRoute.corridorKm = parseInt(e.target.value, 10);
+  });
+  const clearBtn = document.getElementById('clearDataBtn');
+  if(clearBtn) clearBtn.addEventListener('click', async ()=>{
+    await Promise.all([idbDelete('charging'), idbDelete('areas')]);
+    importedCharging = null;
+    importedAreas = null;
+    computedStops = null;
+    toast('Gespeicherte Dateien gelöscht');
+    render();
+  });
+}
+
+let currentTab = 'fahrt';
+let stopView = false;
+
+function render(){
+  const main = document.getElementById('main');
+  if(stopView){ main.innerHTML = renderStopDetail(activeStop); attachStopEvents(); }
+  else if(currentTab==='fahrt'){ main.innerHTML = renderFahrt(); attachFahrtEvents(); }
+  else if(currentTab==='stopps'){ main.innerHTML = renderStopsList(); attachListEvents(); }
+  else { main.innerHTML = renderProfil(); attachProfilEvents(); }
+
+  document.querySelectorAll('.tab').forEach(b=>{
+    b.classList.toggle('active', !stopView && b.dataset.tab===currentTab);
+  });
+}
+
+function renderStopsList(){
+  if(computedStops && computedStops.length){
+    const plan = planTripStops(computedStops);
+    if(!plan.length){
+      return `<h2 class="title">Stopps</h2><p class="subtitle">${routeStart} → ${routeZiel} · Start-Akku ${startBattery}%</p>
+      <div class="placeholder">Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.</div>`;
+    }
+    return `<h2 class="title">Stopps</h2><p class="subtitle">${routeStart} → ${routeZiel} · ${plan.length} Ladestopp${plan.length===1?'':'s'} nötig (Trigger: ${TRIGGER_SOC_PERCENT}% Akku, Ziel je Ladung: ${TARGET_SOC_AFTER_CHARGE}%)</p>` +
+      plan.map((s)=>{
+        const eq = new Set([...(s.equipment||[]), ...(s.services||[])]);
+        const icons = ['toilet','motorwayRestaurant','shower','picnicFacilities'].filter(k=>eq.has(k)).map(k=>FACILITY_LABELS[k][0]);
+        const badge = s._notfallLadepunkt
+          ? `<span class="cap" style="color:var(--danger);">🚨 Notfall-Ladestopp – Autobahn tabu bei diesem Akkustand</span>`
+          : s._rangeExceeded
+            ? `<span class="cap" style="color:var(--danger);">⚠️ Stopp ${s._stopNumber} – außerhalb sicherer Reichweite!</span>`
+            : `<span class="cap" style="color:var(--accent);">⚡ Stopp ${s._stopNumber} – Laden + Hund + Kaffee</span>`;
+        const idx = computedStops.findIndex(x=>x.name===s.name && x.km===s.km);
+        const dataStop = s._notfallLadepunkt ? 'emergency' : `c-${idx}`;
+        const hundLabel = s.hund==null ? '–' : s.hund;
+        const menschLabel = s.mensch==null ? '–' : s.mensch;
+        return `<div class="stop-card" style="min-width:auto; margin-bottom:12px;" data-stop="${dataStop}">
+          ${badge}
+          <div class="name">${s.name}</div>
+          <div class="icon-row">${icons.map(ic=>`<span>${ic}</span>`).join('')}<span>⚡</span></div>
+          <div class="stop-meta">🐾 ${hundLabel} · ⚡ ${s.laden} (${Math.round(s.maxKw)} kW) · ☕ ${menschLabel} · ${s.realKm} km ab ${routeStart}</div>
+          <div class="stop-meta" style="margin-top:4px;">${facilityTypeLabel(s)} · ${motorwayAccessLabel(s)}</div>
+          ${s._notfallLadepunkt ? '' : `<div class="stop-meta" style="margin-top:4px;">📡 ${ocmInlineLabel(s)}</div>`}
+        </div>`;
+      }).join('');
+  }
+  if(computedStops && computedStops.length === 0){
+    return `<h2 class="title">Stopps</h2><p class="subtitle">Für ${routeStart} → ${routeZiel} liegen keine Daten vor.</p>
+    <div class="placeholder">Bitte im Profil-Tab Ladesäulenregister und Rastanlagen-Datei laden.</div>`;
+  }
+  return `<h2 class="title">Stopps</h2><p class="subtitle">Noch keine Fahrt geplant.</p>
+  <div class="placeholder">Gib im Fahrt-Tab Start und Ziel ein und tippe auf "Fahrt planen", um Stopps zu sehen.</div>`;
+}
+
+function facilityTypeLabel(s){
+  if(s._notfallLadepunkt) return '🚨 Ladepunkt (kein Rastplatz)';
+  return s.isAutohof ? '🏢 Autohof' : '🅿️ Rastplatz';
+}
+function motorwayAccessLabel(s){
+  if(s._notfallLadepunkt) return `📍 ca. ${s._distKm} km von deinem Standort entfernt`;
+  if(s.distanceToMotorwayM==null) return '🛣️ Autobahn-Anbindung unbekannt';
+  if(s.distanceToMotorwayM <= 50) return '🛣️ direkt an der Autobahn';
+  return `🛣️ ca. ${Math.round(s.distanceToMotorwayM)} m abseits (kurzer Umweg)`;
+}
+
+function attachListEvents(){
+  document.querySelectorAll('#main .stop-card').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeStop=c.dataset.stop; stopView=true; render(); });
+  });
+  if(computedStops && computedStops.length){
+    const plan = planTripStops(computedStops);
+    const missing = plan.filter(s => !ocmStatusCache[`${s.lat.toFixed(4)},${s.lon.toFixed(4)}`]);
+    if(missing.length){
+      Promise.all(missing.map(s => loadOcmStatus(s.lat, s.lon).catch(()=>null))).then(()=>{
+        if(currentTab==='stopps' && !stopView) render();
+      });
+    }
+  }
+}
+
+function attachFahrtEvents(){
+  document.querySelectorAll('#main .stop-card').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeStop=c.dataset.stop; stopView=true; render(); });
+  });
+  document.querySelectorAll('#main .pill-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{ delayMin=parseInt(b.dataset.delay,10); render(); });
+  });
+  document.getElementById('planBtn').addEventListener('click', async ()=>{
+    routeStart = document.getElementById('startInput').value.trim();
+    routeZiel = document.getElementById('zielInput').value.trim();
+    await planTrip();
+  });
+  document.getElementById('startInput').addEventListener('change', (e)=>{ routeStart = e.target.value.trim(); });
+  document.getElementById('zielInput').addEventListener('change', (e)=>{ routeZiel = e.target.value.trim(); });
+  document.getElementById('batteryInput').addEventListener('change', (e)=>{
+    const v = parseInt(e.target.value, 10);
+    startBattery = Number.isNaN(v) ? 80 : Math.max(0, Math.min(100, v));
+    render();
+  });
+  document.getElementById('minKwInput').addEventListener('change', (e)=>{
+    const v = parseInt(e.target.value, 10);
+    desiredMinKw = Number.isNaN(v) ? 150 : Math.max(10, Math.min(400, v));
+    idbSet('minKw', desiredMinKw);
+    render();
+  });
+  document.getElementById('startBtn').addEventListener('click', openLiveMap);
+  document.getElementById('seeStopsBtn').addEventListener('click', ()=>{ currentTab='stopps'; render(); });
+
+  document.querySelectorAll('#main input[type="file"]').forEach(input=>{
+    input.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      const target = e.target.dataset.photo;
+      if(!file || !target) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{ photos[target] = reader.result; idbSet('photos', photos); render(); toast('Foto aktualisiert'); };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+function attachStopEvents(){
+  document.getElementById('backBtn').addEventListener('click', ()=>{ stopView=false; render(); });
+  const favBtn = document.getElementById('favBtn');
+  if(favBtn) favBtn.addEventListener('click', ()=>{
+    favorites[activeStop] = !favorites[activeStop];
+    render();
+  });
+  const ocmBtn = document.getElementById('ocmLoadBtn');
+  if(ocmBtn) ocmBtn.addEventListener('click', async ()=>{
+    if(!activeStop || !activeStop.startsWith('c-')) return;
+    const s = computedStops[parseInt(activeStop.slice(2),10)];
+    ocmBtn.textContent = 'Lade…';
+    ocmBtn.disabled = true;
+    try{
+      await loadOcmStatus(s.lat, s.lon);
+      render();
+    }catch(err){
+      toast(err.message || 'Open Charge Map nicht erreichbar (nur nach Deployment nutzbar)');
+      render();
+    }
+  });
+}
+
+document.querySelectorAll('nav .tab').forEach(b=>{
+  b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; stopView=false; render(); });
+});
+
+// ---------- Live-Karte ("Fahrt starten") ----------
+let liveMapInstance = null;
+let liveMarker = null;
+let liveWatchId = null;
+
+function openLiveMap(){
+  if(!routeStartCoords || !routeEndCoords){
+    toast('Bitte zuerst "Fahrt planen" antippen');
+    return;
+  }
+  document.getElementById('mapScreen').style.display = 'flex';
+  document.getElementById('mapRouteLabel').textContent = `${routeStart} → ${routeZiel}`;
+  setTimeout(initLiveMap, 50); // kurz warten, bis der Container sichtbar ist (Leaflet braucht eine Größe)
+}
+
+function closeLiveMap(){
+  document.getElementById('mapScreen').style.display = 'none';
+  if(liveWatchId !== null && navigator.geolocation){
+    navigator.geolocation.clearWatch(liveWatchId);
+    liveWatchId = null;
+  }
+}
+
+function initLiveMap(){
+  if(typeof L === 'undefined'){
+    document.getElementById('mapStatus').textContent = 'Kartenbibliothek konnte nicht geladen werden (kein Netzwerk?).';
+    return;
+  }
+  if(!liveMapInstance){
+    liveMapInstance = L.map('liveMap');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap-Mitwirkende',
+      maxZoom: 19,
+    }).addTo(liveMapInstance);
+  } else {
+    liveMapInstance.eachLayer(layer => {
+      if(!(layer instanceof L.TileLayer)) liveMapInstance.removeLayer(layer);
+    });
+  }
+
+  const bounds = [];
+
+  if(routeGeometry && routeGeometry.length > 1){
+    L.polyline(routeGeometry, { color: '#2fd8c4', weight: 5, opacity: 0.85 }).addTo(liveMapInstance);
+    routeGeometry.forEach(p => bounds.push(p));
+  }
+
+  L.marker(routeStartCoords).addTo(liveMapInstance).bindPopup(`Start: ${routeStart}`);
+  L.marker(routeEndCoords).addTo(liveMapInstance).bindPopup(`Ziel: ${routeZiel}`);
+  bounds.push(routeStartCoords, routeEndCoords);
+
+  if(computedStops && computedStops.length){
+    const plan = planTripStops(computedStops);
+    plan.forEach(s => {
+      const icon = L.divIcon({ className:'', html:'⚡', iconSize:[24,24] });
+      L.marker([s.lat, s.lon], { icon }).addTo(liveMapInstance)
+        .bindPopup(`<b>Stopp ${s._stopNumber}</b><br>${s.name}<br>🐾 ${s.hund} · ⚡ ${s.laden}`);
+      bounds.push([s.lat, s.lon]);
+    });
+  }
+
+  if(bounds.length) liveMapInstance.fitBounds(bounds, { padding:[30,30] });
+  else liveMapInstance.setView(routeStartCoords, 7);
+
+  setTimeout(()=> liveMapInstance.invalidateSize(), 100);
+
+  const statusEl = document.getElementById('mapStatus');
+  if(!navigator.geolocation){
+    statusEl.textContent = 'Live-Standort wird von diesem Browser nicht unterstützt.';
+    return;
+  }
+  statusEl.textContent = 'Suche GPS-Position…';
+  if(liveWatchId !== null) navigator.geolocation.clearWatch(liveWatchId);
+  liveWatchId = navigator.geolocation.watchPosition(
+    (pos)=>{
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      const carIcon = L.divIcon({ className:'car-icon', html:'🚗', iconSize:[26,26] });
+      if(!liveMarker){
+        liveMarker = L.marker([lat, lon], { icon: carIcon, zIndexOffset: 1000 }).addTo(liveMapInstance);
+        liveMapInstance.setView([lat, lon], 12);
+      } else {
+        liveMarker.setLatLng([lat, lon]);
+      }
+      const distToEndKm = haversineKm(lat, lon, routeEndCoords[0], routeEndCoords[1]);
+      statusEl.innerHTML = `📍 Aktuelle Position erfasst · noch ca. <b>${Math.round(distToEndKm)} km</b> Luftlinie bis ${routeZiel}`;
+    },
+    (err)=>{
+      statusEl.textContent = err.code === 1
+        ? 'Standortzugriff abgelehnt – bitte in den Browser-Einstellungen erlauben.'
+        : 'Standort konnte nicht ermittelt werden.';
+    },
+    { enableHighAccuracy:true, maximumAge:5000, timeout:15000 }
+  );
+}
+
+document.getElementById('mapBackBtn').addEventListener('click', closeLiveMap);
+
+render();
+
+// Beim Start automatisch zuvor gespeicherte Dateien & Einstellungen aus IndexedDB laden
+(async ()=>{
+  try{
+    const [c, a, p, cap, cons, minKw, cAt, aAt] = await Promise.all([
+      idbGet('charging'), idbGet('areas'), idbGet('photos'),
+      idbGet('vehicleCapacityKWh'), idbGet('vehicleConsumptionKWh100'), idbGet('minKw'),
+      idbGet('chargingUpdatedAt'), idbGet('areasUpdatedAt'),
+    ]);
+    if(c) importedCharging = c;
+    if(a) importedAreas = a;
+    if(p) Object.assign(photos, p);
+    if(cap) vehicleCapacityKWh = cap;
+    if(cons) vehicleConsumptionKWh100 = cons;
+    if(minKw) desiredMinKw = minKw;
+    if(cAt) chargingUpdatedAt = cAt;
+    if(aAt) areasUpdatedAt = aAt;
+    if(c || a || p || cap || cons || minKw){ render(); toast('Gespeicherte Daten geladen'); }
+  }catch(e){ /* IndexedDB nicht verfügbar - einfach normal weiter mit Upload */ }
+})();
+</script>
+</body>
+</html>
