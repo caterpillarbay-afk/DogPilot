@@ -66,12 +66,6 @@
     padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;
   }
   .arrow-mid{color:var(--text-dim); padding-bottom:12px;}
-  .btn-row{display:flex; gap:8px; margin-bottom:12px;}
-  .pill-btn{
-    flex:1; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
-    padding:11px 6px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
-  }
-  .pill-btn.active{background:var(--accent); border-color:var(--accent); color:#03211e;}
   .btn-primary{
     width:100%; background:var(--accent); color:#03211e; border:none; border-radius:12px;
     padding:15px; font-size:16px; font-weight:700; cursor:pointer;
@@ -101,7 +95,6 @@
   .veh-icon{font-size:30px; margin:4px 0;}
   .veh-name{font-size:12.5px; font-weight:600;}
   .charge-icon{font-size:30px; margin:4px 0; color:var(--accent);}
-  .charge-val{font-size:12.5px; font-weight:600;}
   .photo-slot{cursor:pointer; position:relative;}
   .photo-slot img{width:100%; height:100%; object-fit:cover; border-radius:inherit;}
   .veh-photo-wrap{
@@ -166,8 +159,6 @@
   .hero .caption b{display:block; color:var(--text); font-size:14px;}
   .hero-art{position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; opacity:0.9;}
   h2.stop-title{font-size:23px; margin:0 0 2px;}
-  .chips{display:flex; gap:8px; overflow-x:auto; margin:14px 0;}
-  .chip{background:var(--panel-2); border:1px solid var(--border); border-radius:20px; padding:6px 13px; font-size:12px; white-space:nowrap;}
   .rating-row{display:flex; gap:10px; margin-bottom:16px;}
   .rating-card{flex:1; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; text-align:center;}
   .rating-card .icon{display:block; margin-bottom:4px;}
@@ -177,16 +168,10 @@
   .info-list div{display:flex; align-items:center; gap:8px;}
   .check-row{display:flex; gap:8px; flex-wrap:wrap; font-size:12.5px;}
   .check-row span{background:var(--panel-2); border-radius:20px; padding:5px 11px; color:var(--accent);}
-  .pause-box{display:flex; align-items:center; gap:14px;}
-  .pause-clock{font-size:26px;}
-  .pause-box .big{font-size:19px; font-weight:800;}
-  .pause-stats{display:flex; gap:18px; margin-top:12px; font-size:12px; color:var(--text-dim);}
-  .pause-stats b{display:block; color:var(--text); font-size:15px; font-weight:700;}
   .charge-stats{display:flex; justify-content:space-between; margin-top:12px; text-align:center;}
   .charge-stats div{flex:1;}
   .charge-stats b{display:block; font-size:16px; font-weight:800;}
   .charge-stats span{font-size:11px; color:var(--text-dim);}
-  .dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px;}
   .placeholder{padding:60px 10px; text-align:center; color:var(--text-dim);}
   .toast{
     position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
@@ -246,7 +231,8 @@
 <script>
 const favorites = {};
 const photos = {}; // schoko, fibi, vehicle -> URL
-let delayMin = 0;
+let tomtomApiKey = ''; // eigener, kostenloser Key von developer.tomtom.com (2.500 Anfragen/Tag)
+let routeTrafficDelayMin = null; // Verzögerung durch aktuellen Verkehr laut TomTom, in Minuten
 let routeStart = '';
 let routeZiel = '';
 let startBattery = 80;
@@ -256,7 +242,7 @@ let vehicleConsumptionKWh100 = 23;     // realer Verbrauch mit Dachbox + 2 Hunde
 let desiredMinKw = 150; // gewünschte Mindest-Ladeleistung – bestimmt, welche Ladepunkte als "geeignet" gelten
 
 function getRemainingRangeInfo(){
-  const rangeKm = (startBattery/100) * vehicleCapacityKWh / vehicleConsumptionKWh100 * 100;
+  const rangeKm = (startBattery/100) * vehicleCapacityKWh / getEffectiveConsumptionKWh100() * 100;
   const avgKmh = (routeDistanceKm && routeDurationMin) ? (routeDistanceKm / (routeDurationMin/60)) : 90;
   const rangeMin = rangeKm / avgKmh * 60;
   return { rangeKm, rangeMin, avgKmh };
@@ -270,7 +256,7 @@ function toRealKm(straightLineKm){
   const scale = (routeDistanceKm && routeStraightLineKm) ? routeDistanceKm / routeStraightLineKm : 1;
   return Math.round(straightLineKm * scale);
 }
-let activeStop = 'wikingerland';
+let activeStop = null;
 
 function photoOr(id, fallbackHtml){
   return photos[id] ? `<img src="${photos[id]}" alt="">` : fallbackHtml;
@@ -297,17 +283,15 @@ function renderFahrt(){
     <div class="field-row">
       <div class="field"><label>Strecke</label><div class="box">${routeDistanceKm!=null ? routeDistanceKm+' km'+(routeApprox?' *':'') : '–'}</div></div>
       <div class="field"><label>Fahrzeit</label><div class="box">${routeDurationMin!=null ? formatDuration(routeDurationMin) : '–'}</div></div>
-      <div class="field"><label>Verzögerung</label><div class="box" id="delayBox">${delayMin} Min</div></div>
+      <div class="field"><label>Verkehr</label><div class="box" style="font-size:13px;">${(()=>{
+        if(routeTrafficDelayMin==null) return tomtomApiKey ? '–' : '⚙️ kein Key';
+        return routeTrafficDelayMin > 0 ? `🚦 +${routeTrafficDelayMin} Min` : '✓ frei';
+      })()}</div></div>
     </div>
     ${routeApprox ? '<p style="font-size:11px; color:var(--text-dim); margin:-4px 0 12px;">* Luftlinie geschätzt, keine echte Routing-Verbindung erreichbar</p>' : ''}
     <div class="field-row">
       <div class="field"><label>Start-Akku (%)</label><input id="batteryInput" type="number" min="0" max="100" value="${startBattery}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
       <div class="field"><label>Restreichweite</label><div class="box" style="color:var(--text-dim); font-weight:400; font-size:12.5px;">${(()=>{ const r=getRemainingRangeInfo(); return r.rangeMin<=MANDATORY_STOP_MAX_MINUTES ? `⚠️ ≈${Math.round(r.rangeKm)} km` : `✓ ≈${Math.round(r.rangeKm)} km`; })()}</div></div>
-    </div>
-    <div class="btn-row">
-      <button class="pill-btn ${delayMin===0?'active':''}" data-delay="0">Pause jetzt</button>
-      <button class="pill-btn ${delayMin===-15?'active':''}" data-delay="-15">Pause früher</button>
-      <button class="pill-btn ${delayMin===15?'active':''}" data-delay="15">Pause später</button>
     </div>
     ${planStatus ? `<div style="background:${planStatus.ok?'rgba(47,216,196,0.12)':'rgba(229,86,107,0.12)'}; border:1px solid ${planStatus.ok?'var(--accent)':'var(--danger)'}; color:${planStatus.ok?'var(--accent)':'var(--danger)'}; border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:12px;">${planStatus.text}</div>` : ''}
     <button class="btn-primary" id="planBtn">Fahrt planen</button>
@@ -349,10 +333,10 @@ function renderFahrt(){
   </div>
 
   ${(()=>{
-    const preview = (computedStops && computedStops.length) ? planTripStops(computedStops) : [];
+    const preview = computedStops ? planTripStops(computedStops) : [];
     if(!preview.length){
       return `<div class="section-head"><h3>LADESTOPPS AUF DER STRECKE</h3></div>
-      <div class="placeholder" style="padding:20px 10px;">${computedStops && computedStops.length ? 'Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.' : 'Noch keine Pausen geplant – zuerst "Fahrt planen" antippen.'}</div>`;
+      <div class="placeholder" style="padding:20px 10px;">${computedStops ? 'Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.' : 'Noch keine Pausen geplant – zuerst "Fahrt planen" antippen.'}</div>`;
     }
     return `<div class="section-head"><h3>LADESTOPPS AUF DER STRECKE</h3><span class="stops-count">${preview.length} Stopp${preview.length===1?'':'s'}</span></div>
     <div class="stop-cards">
@@ -564,7 +548,6 @@ async function idbDelete(key){
     });
   }catch(e){ return false; }
 }
-let importBusy = false;
 let datenRoute = { corridorKm: 2 };
 
 // Geokodierung über OpenStreetMap/Nominatim (kostenlos, kein API-Key nötig).
@@ -747,6 +730,26 @@ let routeStartCoords = null;
 let routeEndCoords = null;
 
 async function loadRouteInfo(start, end){
+  routeTrafficDelayMin = null;
+  // Mit eigenem TomTom-Key: echte Route inkl. Live-Verkehr (Distanz, Fahrzeit, Stau-Verzögerung)
+  if(tomtomApiKey){
+    try{
+      const url = `https://api.tomtom.com/routing/1/calculateRoute/${start[0]},${start[1]}:${end[0]},${end[1]}/json?key=${tomtomApiKey}&traffic=true&travelMode=car&routeType=fastest`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('TomTom-Fehler');
+      const data = await res.json();
+      const route = data.routes && data.routes[0];
+      if(!route) throw new Error('Keine Route gefunden');
+      routeDistanceKm = Math.round(route.summary.lengthInMeters / 1000);
+      routeDurationMin = Math.round(route.summary.travelTimeInSeconds / 60);
+      routeTrafficDelayMin = Math.round((route.summary.trafficDelayInSeconds || 0) / 60);
+      routeGeometry = (route.legs || []).flatMap(leg => (leg.points||[]).map(p => [p.latitude, p.longitude]));
+      routeApprox = false;
+      return;
+    }catch(err){
+      // Kein Abbruch – fällt unten auf OSRM zurück (ohne Live-Verkehr)
+    }
+  }
   try{
     const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
     const res = await fetch(url);
@@ -764,6 +767,16 @@ async function loadRouteInfo(start, end){
     routeGeometry = [start, end];
     routeApprox = true;
   }
+}
+
+// Grobe Heuristik (keine Physik-Simulation!): Stop-and-Go im Stau erhöht den
+// Verbrauch. Je größer der Anteil der Fahrzeit, der im Stau verloren geht,
+// desto höher der Aufschlag – gedeckelt bei +15%.
+function getEffectiveConsumptionKWh100(){
+  if(!routeTrafficDelayMin || !routeDurationMin) return vehicleConsumptionKWh100;
+  const delayRatio = routeTrafficDelayMin / routeDurationMin;
+  const bump = Math.min(0.15, delayRatio * 0.5);
+  return vehicleConsumptionKWh100 * (1 + bump);
 }
 
 function formatDuration(min){
@@ -831,7 +844,7 @@ function findEmergencyChargingNearby(lat, lon, searchRadiusKm){
 function planTripStops(stops){
   if(!routeDistanceKm) return [];
   const byKm = (stops || []).map(s=>({ ...s, realKm: toRealKm(s.km) })).sort((a,b)=>a.realKm-b.realKm);
-  const kmPerPercent = vehicleCapacityKWh / vehicleConsumptionKWh100; // km pro 1% Akku
+  const kmPerPercent = vehicleCapacityKWh / getEffectiveConsumptionKWh100(); // km pro 1% Akku
 
   let currentKm = 0;
   let currentSoc = startBattery;
@@ -932,6 +945,13 @@ function renderProfil(){
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Bestimmt die Restreichweite und damit, ob/wo ein Pflicht-Ladestopp nötig wird. Vorbelegt mit 23 kWh/100 km – beobachteter Realverbrauch mit Dachbox, 2 Hunden in der Box, 2 Personen und voller Zuladung (schwankte auf der Hinfahrt zwischen 21 und 25). Ohne Dachbox/Zuladung entsprechend niedriger ansetzen.</p>
   </div>
 
+  <div class="section-head"><h3>LIVE-VERKEHR (OPTIONAL)</h3></div>
+  <div class="card">
+    <div class="card-label"><span>TomTom API-Key</span></div>
+    <input id="tomtomKeyInput" type="text" placeholder="einfügen für Live-Verkehr" value="${tomtomApiKey}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px; font-weight:600; color:var(--text); font-family:inherit;">
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Kostenlos (2.500 Anfragen/Tag, keine Kreditkarte) unter <a href="https://developer.tomtom.com" target="_blank" style="color:var(--accent);">developer.tomtom.com</a> registrieren, "Routing API"-Key erstellen und hier einfügen. Ohne Key funktioniert die Planung weiter wie bisher (OSRM, ohne Live-Stauinfo) – Verbrauch/Reichweite werden dann nicht an Stau angepasst.</p>
+  </div>
+
   <div class="section-head"><h3>ECHTE STRECKENDATEN (EINMALIG EINRICHTEN)</h3></div>
   <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Wird nach dem Hochladen dauerhaft im Browser gespeichert – kein erneuter Upload beim nächsten Öffnen nötig.</p>
   <div class="card">
@@ -970,6 +990,11 @@ function attachProfilEvents(){
     const v = parseFloat(e.target.value);
     if(!Number.isNaN(v) && v > 0){ vehicleConsumptionKWh100 = v; idbSet('vehicleConsumptionKWh100', v); }
     render();
+  });
+  document.getElementById('tomtomKeyInput').addEventListener('change', (e)=>{
+    tomtomApiKey = e.target.value.trim();
+    idbSet('tomtomApiKey', tomtomApiKey);
+    toast(tomtomApiKey ? 'TomTom-Key gespeichert' : 'TomTom-Key entfernt');
   });
   document.getElementById('csvInput').addEventListener('change', async (e)=>{
     const file = e.target.files[0];
@@ -1027,9 +1052,13 @@ function render(){
 }
 
 function renderStopsList(){
-  if(computedStops && computedStops.length){
+  if(computedStops){
     const plan = planTripStops(computedStops);
     if(!plan.length){
+      if(!importedCharging || !importedAreas){
+        return `<h2 class="title">Stopps</h2><p class="subtitle">Für ${routeStart} → ${routeZiel} liegen keine Daten vor.</p>
+        <div class="placeholder">Bitte im Profil-Tab Ladesäulenregister und Rastanlagen-Datei laden.</div>`;
+      }
       return `<h2 class="title">Stopps</h2><p class="subtitle">${routeStart} → ${routeZiel} · Start-Akku ${startBattery}%</p>
       <div class="placeholder">Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.</div>`;
     }
@@ -1056,10 +1085,6 @@ function renderStopsList(){
         </div>`;
       }).join('');
   }
-  if(computedStops && computedStops.length === 0){
-    return `<h2 class="title">Stopps</h2><p class="subtitle">Für ${routeStart} → ${routeZiel} liegen keine Daten vor.</p>
-    <div class="placeholder">Bitte im Profil-Tab Ladesäulenregister und Rastanlagen-Datei laden.</div>`;
-  }
   return `<h2 class="title">Stopps</h2><p class="subtitle">Noch keine Fahrt geplant.</p>
   <div class="placeholder">Gib im Fahrt-Tab Start und Ziel ein und tippe auf "Fahrt planen", um Stopps zu sehen.</div>`;
 }
@@ -1079,7 +1104,7 @@ function attachListEvents(){
   document.querySelectorAll('#main .stop-card').forEach(c=>{
     c.addEventListener('click', ()=>{ activeStop=c.dataset.stop; stopView=true; render(); });
   });
-  if(computedStops && computedStops.length){
+  if(computedStops){
     const plan = planTripStops(computedStops);
     const missing = plan.filter(s => !ocmStatusCache[`${s.lat.toFixed(4)},${s.lon.toFixed(4)}`]);
     if(missing.length){
@@ -1093,9 +1118,6 @@ function attachListEvents(){
 function attachFahrtEvents(){
   document.querySelectorAll('#main .stop-card').forEach(c=>{
     c.addEventListener('click', ()=>{ activeStop=c.dataset.stop; stopView=true; render(); });
-  });
-  document.querySelectorAll('#main .pill-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{ delayMin=parseInt(b.dataset.delay,10); render(); });
   });
   document.getElementById('planBtn').addEventListener('click', async ()=>{
     routeStart = document.getElementById('startInput').value.trim();
@@ -1208,12 +1230,12 @@ function initLiveMap(){
   L.marker(routeEndCoords).addTo(liveMapInstance).bindPopup(`Ziel: ${routeZiel}`);
   bounds.push(routeStartCoords, routeEndCoords);
 
-  if(computedStops && computedStops.length){
+  if(computedStops){
     const plan = planTripStops(computedStops);
     plan.forEach(s => {
-      const icon = L.divIcon({ className:'', html:'⚡', iconSize:[24,24] });
+      const icon = L.divIcon({ className:'', html: s._notfallLadepunkt ? '🚨' : '⚡', iconSize:[24,24] });
       L.marker([s.lat, s.lon], { icon }).addTo(liveMapInstance)
-        .bindPopup(`<b>Stopp ${s._stopNumber}</b><br>${s.name}<br>🐾 ${s.hund} · ⚡ ${s.laden}`);
+        .bindPopup(`<b>${s._notfallLadepunkt ? 'Notfall-Ladestopp' : 'Stopp '+s._stopNumber}</b><br>${s.name}<br>⚡ ${s.laden}${s.hund!=null ? ' · 🐾 '+s.hund : ''}`);
       bounds.push([s.lat, s.lon]);
     });
   }
@@ -1259,10 +1281,10 @@ render();
 // Beim Start automatisch zuvor gespeicherte Dateien & Einstellungen aus IndexedDB laden
 (async ()=>{
   try{
-    const [c, a, p, cap, cons, minKw, cAt, aAt] = await Promise.all([
+    const [c, a, p, cap, cons, minKw, cAt, aAt, ttKey] = await Promise.all([
       idbGet('charging'), idbGet('areas'), idbGet('photos'),
       idbGet('vehicleCapacityKWh'), idbGet('vehicleConsumptionKWh100'), idbGet('minKw'),
-      idbGet('chargingUpdatedAt'), idbGet('areasUpdatedAt'),
+      idbGet('chargingUpdatedAt'), idbGet('areasUpdatedAt'), idbGet('tomtomApiKey'),
     ]);
     if(c) importedCharging = c;
     if(a) importedAreas = a;
@@ -1272,7 +1294,8 @@ render();
     if(minKw) desiredMinKw = minKw;
     if(cAt) chargingUpdatedAt = cAt;
     if(aAt) areasUpdatedAt = aAt;
-    if(c || a || p || cap || cons || minKw){ render(); toast('Gespeicherte Daten geladen'); }
+    if(ttKey) tomtomApiKey = ttKey;
+    if(c || a || p || cap || cons || minKw || ttKey){ render(); toast('Gespeicherte Daten geladen'); }
   }catch(e){ /* IndexedDB nicht verfügbar - einfach normal weiter mit Upload */ }
 })();
 </script>
