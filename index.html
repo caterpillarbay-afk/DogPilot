@@ -342,7 +342,7 @@ function renderFahrt(){
     </div>
     <div class="comp-card"><span class="cap">Min. Ladeleistung</span>
       <div class="charge-icon">⚡</div>
-      <input id="minKwInput" type="number" min="10" max="400" step="10" value="${desiredMinKw}"
+      <input id="minKwInput" type="number" min="100" max="400" step="10" value="${desiredMinKw}"
         style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:15px; font-weight:700; color:var(--text); text-align:center; font-family:inherit; margin-top:2px;">
       <div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">kW – Suchkriterium</div>
     </div>
@@ -565,7 +565,7 @@ async function idbDelete(key){
   }catch(e){ return false; }
 }
 let importBusy = false;
-let datenRoute = { corridorKm: 15 };
+let datenRoute = { corridorKm: 2 };
 
 // Geokodierung über OpenStreetMap/Nominatim (kostenlos, kein API-Key nötig).
 // Funktioniert nur mit echtem Netzwerkzugriff, also erst nach dem Deployment,
@@ -952,11 +952,10 @@ function renderProfil(){
   <div class="card">
     <div class="card-label"><span>Korridorbreite</span></div>
     <select id="corridorSelect" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;">
-      <option value="10" ${datenRoute.corridorKm===10?'selected':''}>10 km</option>
-      <option value="15" ${datenRoute.corridorKm===15?'selected':''}>15 km</option>
-      <option value="25" ${datenRoute.corridorKm===25?'selected':''}>25 km</option>
+      <option value="2" ${datenRoute.corridorKm===2?'selected':''}>2 km</option>
+      <option value="5" ${datenRoute.corridorKm===5?'selected':''}>5 km</option>
     </select>
-    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Wie weit seitlich der Fahrtstrecke nach Ladesäulen/Rastanlagen gesucht wird (z. B. 15 km bedeutet: bis zu 15 km links und rechts der Route). Größerer Wert = mehr Treffer, aber auch weiter entfernte. Wird beim nächsten "Fahrt planen" verwendet.</p>
+    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Wie weit seitlich der Fahrtstrecke nach Ladesäulen/Rastanlagen gesucht wird (z. B. 5 km bedeutet: bis zu 5 km links und rechts der Route). Wird beim nächsten "Fahrt planen" verwendet.</p>
   </div>
   `;
 }
@@ -1112,7 +1111,7 @@ function attachFahrtEvents(){
   });
   document.getElementById('minKwInput').addEventListener('change', (e)=>{
     const v = parseInt(e.target.value, 10);
-    desiredMinKw = Number.isNaN(v) ? 150 : Math.max(10, Math.min(400, v));
+    desiredMinKw = Number.isNaN(v) ? 150 : Math.max(100, Math.min(400, v));
     idbSet('minKw', desiredMinKw);
     render();
   });
