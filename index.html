@@ -1300,6 +1300,13 @@ render();
     if(c || a || p || cap || cons || minKw || ttKey){ render(); toast('Gespeicherte Daten geladen'); }
   }catch(e){ /* IndexedDB nicht verfügbar - einfach normal weiter mit Upload */ }
 })();
+
+// Service Worker registrieren - Voraussetzung für "App installieren" auf Android
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
