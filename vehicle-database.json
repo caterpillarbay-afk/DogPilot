@@ -1,90 +1,5 @@
 [
   {
-    "marke": "15",
-    "modell": "IX XDRIVE 40",
-    "verbrauchKWh100": 20.4
-  },
-  {
-    "marke": "45",
-    "modell": "500",
-    "verbrauchKWh100": 13.8
-  },
-  {
-    "marke": "46",
-    "modell": "MUSTANG MACH-E",
-    "verbrauchKWh100": 17.9
-  },
-  {
-    "marke": "108",
-    "modell": "ENYAQ 60",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "108",
-    "modell": "ENYAQ 80",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "122",
-    "modell": "C40",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "122",
-    "modell": "EX30",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "122",
-    "modell": "EX40",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "122",
-    "modell": "XC40",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "180",
-    "modell": "MACAN 4",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "180",
-    "modell": "MACAN TURBO",
-    "verbrauchKWh100": 19.7
-  },
-  {
-    "marke": "211",
-    "modell": "Q4 40 E-TRON",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "211",
-    "modell": "Q4 45 E-TRON",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "211",
-    "modell": "Q4 50 E-TRON",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "267",
-    "modell": "AVENGER",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "894",
-    "modell": "KORANDO E-MOTION OR KORANDO EV",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "894",
-    "modell": "TORRES EVX",
-    "verbrauchKWh100": 18.7
-  },
-  {
     "marke": "ABARTH",
     "modell": "500",
     "verbrauchKWh100": 17.9
@@ -313,11 +228,6 @@
     "marke": "AUDI",
     "modell": "SQ8 SPORTBACK E-TRON",
     "verbrauchKWh100": 26.8
-  },
-  {
-    "marke": "B",
-    "modell": "E-C4",
-    "verbrauchKWh100": 15.2
   },
   {
     "marke": "BMW",
@@ -1295,11 +1205,6 @@
     "verbrauchKWh100": 18.4
   },
   {
-    "marke": "FISKER GROUP",
-    "modell": "OCEAN",
-    "verbrauchKWh100": 18.3
-  },
-  {
     "marke": "FORD",
     "modell": "CAPRI",
     "verbrauchKWh100": 14.4
@@ -1630,14 +1535,9 @@
     "verbrauchKWh100": 21.8
   },
   {
-    "marke": "LUCID MOTORS",
+    "marke": "LUCID",
     "modell": "AIR",
     "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "LUCID USA INC",
-    "modell": "AIR",
-    "verbrauchKWh100": 15.7
   },
   {
     "marke": "LYNK & CO",
@@ -2920,14 +2820,9 @@
     "verbrauchKWh100": 30
   },
   {
-    "marke": "ROLLS ROYCE",
-    "modell": "SPECTRE",
-    "verbrauchKWh100": 22.2
-  },
-  {
     "marke": "ROLLS-ROYCE",
     "modell": "SPECTRE",
-    "verbrauchKWh100": 24.6
+    "verbrauchKWh100": 23.4
   },
   {
     "marke": "SEAT",
@@ -2950,7 +2845,7 @@
     "verbrauchKWh100": 17.3
   },
   {
-    "marke": "SERES DFSK SOKON AITO",
+    "marke": "SERES",
     "modell": "SERES 5 AITO M5 SERES 5 MAX",
     "verbrauchKWh100": 17.3
   },
@@ -3528,11 +3423,6 @@
     "marke": "XPENG",
     "modell": "P7P7I",
     "verbrauchKWh100": 19.2
-  },
-  {
-    "marke": "YODO YUN",
-    "modell": "YUDO 3",
-    "verbrauchKWh100": 14.8
   },
   {
     "marke": "YUDO",
