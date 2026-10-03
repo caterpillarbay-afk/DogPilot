@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Erzeugt vehicle-database.json aus den offenen EEA-CO2-Monitoringdaten (Discodata).
 // Quelle: https://discodata.eea.europa.eu – Datenbank [CO2Emission], Schema [latest].
-// Die neueste Tabelle co2cars_<Jahr><F|P>v<Version> wird automatisch erkannt
-// (endgültige Daten "F" vor vorläufigen "P"); schlägt sie fehl, wird die nächstältere probiert.
+// Die neueste Tabelle co2cars_<Jahr><F|P>v<Version> wird durch Ausprobieren gefunden
+// (Discodata erlaubt keine Abfrage der Tabellenliste): neuere Jahre zuerst, endgültige
+// Daten "F" vor vorläufigen "P", höchste Version zuerst. Schlägt sie fehl, gilt FALLBACK_TABLE.
 // Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-vehicle-database.mjs
 // Ausgabe: vehicle-database.json im Repo-Root (neben index.html)
 
@@ -12,6 +13,8 @@ import { dirname, join } from 'node:path';
 
 const ENDPOINT = 'https://discodata.eea.europa.eu/sql';
 const FALLBACK_TABLE = 'co2cars_2023Fv28';
+const FALLBACK_YEAR = 2023;
+const MAX_TABLE_VERSION = 60;
 const PAGE_SIZE = 1000;
 const MIN_COUNT = 5;
 // Plausibilitätsgrenzen für kWh/100 km – außerhalb davon sind es Meldefehler in den Rohdaten
@@ -33,10 +36,6 @@ WHERE Ft = 'electric' AND [z (Wh/km)] IS NOT NULL
   AND Mk IS NOT NULL AND Cn IS NOT NULL
 GROUP BY UPPER(LTRIM(RTRIM(Mk))), UPPER(LTRIM(RTRIM(Cn)))
 ORDER BY Mk, Cn`;
-
-const TABLES_QUERY = `
-SELECT TABLE_NAME FROM [CO2Emission].INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA = 'latest' AND TABLE_NAME LIKE 'co2cars[_]%'`;
 
 async function fetchPage(query, p) {
   const url = `${ENDPOINT}?query=${encodeURIComponent(query)}&p=${p}&nrOfHits=${PAGE_SIZE}`;
@@ -66,21 +65,40 @@ async function fetchAll(query) {
   }
 }
 
-// Tabellen nach Jahr (neueste zuerst), dann endgültig vor vorläufig, dann Version
-async function candidateTables() {
-  let names = [];
+// Existiert die Tabelle? Einzelversuch ohne Wiederholung, Fehler = gibt es nicht.
+async function tableExists(table) {
+  const query = `SELECT TOP 1 Mk FROM [CO2Emission].[latest].[${table}]`;
   try {
-    names = (await fetchPage(TABLES_QUERY, 1)).map(r => r.TABLE_NAME);
-  } catch (err) {
-    console.warn(`Tabellenliste nicht abrufbar (${err.message}) – nutze ${FALLBACK_TABLE}`);
+    const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(query)}&p=1&nrOfHits=1`);
+    if (!res.ok) return false;
+    const body = await res.json();
+    return !body.errors && Array.isArray(body.results);
+  } catch {
+    return false;
   }
-  const parsed = names
-    .map(name => ({ name, m: /^co2cars_(\d{4})([FP])v(\d+)$/.exec(name) }))
-    .filter(t => t.m)
-    .map(({ name, m }) => ({ name, year: +m[1], final: m[2] === 'F', version: +m[3] }))
-    .sort((a, b) => b.year - a.year || b.final - a.final || b.version - a.version)
-    .map(t => t.name);
-  return [...new Set([...parsed, FALLBACK_TABLE])];
+}
+
+// Höchste vorhandene Version einer Jahr/Status-Kombination (10 Anfragen parallel)
+async function newestVersion(year, status) {
+  for (let hi = MAX_TABLE_VERSION; hi >= 1; hi -= 10) {
+    const names = [];
+    for (let v = hi; v > hi - 10 && v >= 1; v--) names.push(`co2cars_${year}${status}v${v}`);
+    const found = await Promise.all(names.map(tableExists));
+    const idx = found.indexOf(true);
+    if (idx >= 0) return names[idx];
+  }
+  return null;
+}
+
+async function candidateTables() {
+  const tables = [];
+  for (let year = new Date().getFullYear(); year > FALLBACK_YEAR; year--) {
+    for (const status of ['F', 'P']) {
+      const name = await newestVersion(year, status);
+      if (name) { console.log(`Gefunden: ${name}`); tables.push(name); }
+    }
+  }
+  return [...tables, FALLBACK_TABLE];
 }
 
 let rows = [], sourceTable = null;
