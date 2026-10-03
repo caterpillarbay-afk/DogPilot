@@ -241,6 +241,11 @@ let startBattery = 80;
 const MANDATORY_STOP_MAX_MINUTES = 20; // Sicherheitsfenster – ab wann ein Ladestopp zwingend fällig wird
 let vehicleCapacityKWh = 76.6;         // Audi Q4 45 e-tron, Netto-Kapazität
 let vehicleConsumptionKWh100 = 23;     // realer Verbrauch mit Dachbox + 2 Hunden + 2 Personen + Gepäck (beobachtet: 21–25)
+// Fahrzeugdatenbank (vehicle-database.json, aus EEA-CO2-Monitoringdaten – siehe scripts/build-vehicle-database.mjs)
+let vehicleDb = null;            // [{marke, modell, verbrauchKWh100}]
+let vehicleDbStatus = 'idle';    // idle | loading | ok | missing
+let vehicleModel = null;         // gewähltes Fahrzeug {marke, modell} oder null = manuell
+let vehicleMarkeFilter = '';     // im Marken-Dropdown gewählt, Modell noch offen
 let desiredMinKw = 150; // gewünschte Mindest-Ladeleistung – bestimmt, welche Ladepunkte als "geeignet" gelten
 
 function getRemainingRangeInfo(){
@@ -905,6 +910,52 @@ function planTripStops(stops){
   return plan;
 }
 
+function loadVehicleDb(){
+  if(vehicleDbStatus !== 'idle') return;
+  vehicleDbStatus = 'loading';
+  fetch('vehicle-database.json')
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data=>{
+      if(!Array.isArray(data) || !data.length) throw new Error('leer');
+      vehicleDb = data; vehicleDbStatus = 'ok';
+    })
+    .catch(()=>{ vehicleDbStatus = 'missing'; })
+    .finally(()=>{ if(!stopView && currentTab==='profil') render(); });
+}
+
+function escapeAttr(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderVehicleSelect(){
+  const selectStyle = 'width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;';
+  if(vehicleDbStatus === 'idle' || vehicleDbStatus === 'loading'){
+    return `<p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Fahrzeugliste wird geladen …</p>`;
+  }
+  if(vehicleDbStatus === 'missing'){
+    return `<p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Fahrzeugliste nicht verfügbar – Verbrauch bitte manuell eintragen.</p>`;
+  }
+  const marke = vehicleMarkeFilter || (vehicleModel && vehicleModel.marke) || '';
+  const marken = [...new Set(vehicleDb.map(v=>v.marke))];
+  const modelle = marke ? vehicleDb.filter(v=>v.marke===marke) : [];
+  const selModell = vehicleModel && vehicleModel.marke===marke ? vehicleModel.modell : '';
+  return `
+    <div class="field-row">
+      <div class="field"><label>Marke</label>
+        <select id="vehicleMarkeSelect" style="${selectStyle}">
+          <option value="">– manuell –</option>
+          ${marken.map(m=>`<option value="${escapeAttr(m)}" ${m===marke?'selected':''}>${escapeAttr(m)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Modell</label>
+        <select id="vehicleModellSelect" style="${selectStyle}" ${marke?'':'disabled'}>
+          <option value="">${marke ? 'Modell wählen' : '–'}</option>
+          ${modelle.map(v=>`<option value="${escapeAttr(v.modell)}" ${v.modell===selModell?'selected':''}>${escapeAttr(v.modell)} · ${v.verbrauchKWh100.toLocaleString('de-DE')} kWh</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+}
+
 function formatAge(timestamp){
   if(!timestamp) return null;
   const days = Math.floor((Date.now() - timestamp) / (1000*60*60*24));
@@ -923,6 +974,7 @@ function renderProfil(){
   const xmlName = importedAreas
     ? `${importedAreas.length.toLocaleString('de-DE')} Rastanlagen geladen${xmlAge ? ` · Stand ${xmlAge.dateStr} (vor ${xmlAge.days} Tagen)` : ''}`
     : 'Noch keine Datei gewählt';
+  loadVehicleDb();
   return `
   <h2 class="title">Profil</h2>
   <p class="subtitle">Deine Angaben zu Hund, Mensch und Fahrzeug.</p>
@@ -939,12 +991,14 @@ function renderProfil(){
 
   <div class="section-head"><h3>FAHRZEUG &amp; VERBRAUCH</h3></div>
   <div class="card">
-    <div class="card-label"><span>Audi Q4 e-tron</span></div>
+    <div class="card-label"><span>${vehicleModel ? escapeAttr(`${vehicleModel.marke} ${vehicleModel.modell}`) : 'Audi Q4 e-tron'}</span></div>
+    ${renderVehicleSelect()}
     <div class="field-row" style="margin-bottom:0;">
       <div class="field"><label>Batteriekapazität (kWh, netto)</label><input id="vehicleCapacityInput" type="number" min="10" max="200" step="0.1" value="${vehicleCapacityKWh}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
       <div class="field"><label>Verbrauch (kWh/100 km)</label><input id="vehicleConsumptionInput" type="number" min="5" max="60" step="0.1" value="${vehicleConsumptionKWh100}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; font-weight:600; color:var(--text); font-family:inherit;"></div>
     </div>
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Bestimmt die Restreichweite und damit, ob/wo ein Pflicht-Ladestopp nötig wird. Vorbelegt mit 23 kWh/100 km – beobachteter Realverbrauch mit Dachbox, 2 Hunden in der Box, 2 Personen und voller Zuladung (schwankte auf der Hinfahrt zwischen 21 und 25). Ohne Dachbox/Zuladung entsprechend niedriger ansetzen.</p>
+    <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0;">Bei Auswahl eines Modells wird der offizielle WLTP-Durchschnitt (EU-Zulassungsdaten 2023, EEA) übernommen. Realverbrauch mit Hunden/Gepäck liegt meist höher – Wert danach gern manuell anpassen.</p>
   </div>
 
   <div class="section-head"><h3>LIVE-VERKEHR (OPTIONAL)</h3></div>
@@ -983,6 +1037,25 @@ function renderProfil(){
 }
 
 function attachProfilEvents(){
+  const markeSel = document.getElementById('vehicleMarkeSelect');
+  if(markeSel) markeSel.addEventListener('change', (e)=>{
+    vehicleMarkeFilter = e.target.value;
+    if(!vehicleMarkeFilter && vehicleModel){ vehicleModel = null; idbSet('vehicleModel', null); }
+    render();
+  });
+  const modellSel = document.getElementById('vehicleModellSelect');
+  if(modellSel) modellSel.addEventListener('change', (e)=>{
+    const marke = markeSel.value;
+    const entry = vehicleDb.find(v=>v.marke===marke && v.modell===e.target.value);
+    if(!entry) return;
+    vehicleModel = { marke: entry.marke, modell: entry.modell };
+    vehicleMarkeFilter = '';
+    vehicleConsumptionKWh100 = entry.verbrauchKWh100;
+    idbSet('vehicleModel', vehicleModel);
+    idbSet('vehicleConsumptionKWh100', vehicleConsumptionKWh100);
+    toast(`${entry.marke} ${entry.modell}: ${entry.verbrauchKWh100.toLocaleString('de-DE')} kWh/100 km übernommen`);
+    render();
+  });
   document.getElementById('vehicleCapacityInput').addEventListener('change', (e)=>{
     const v = parseFloat(e.target.value);
     if(!Number.isNaN(v) && v > 0){ vehicleCapacityKWh = v; idbSet('vehicleCapacityKWh', v); }
@@ -1283,10 +1356,11 @@ render();
 // Beim Start automatisch zuvor gespeicherte Dateien & Einstellungen aus IndexedDB laden
 (async ()=>{
   try{
-    const [c, a, p, cap, cons, minKw, cAt, aAt, ttKey] = await Promise.all([
+    const [c, a, p, cap, cons, minKw, cAt, aAt, ttKey, vModel] = await Promise.all([
       idbGet('charging'), idbGet('areas'), idbGet('photos'),
       idbGet('vehicleCapacityKWh'), idbGet('vehicleConsumptionKWh100'), idbGet('minKw'),
       idbGet('chargingUpdatedAt'), idbGet('areasUpdatedAt'), idbGet('tomtomApiKey'),
+      idbGet('vehicleModel'),
     ]);
     if(c) importedCharging = c;
     if(a) importedAreas = a;
@@ -1297,7 +1371,8 @@ render();
     if(cAt) chargingUpdatedAt = cAt;
     if(aAt) areasUpdatedAt = aAt;
     if(ttKey) tomtomApiKey = ttKey;
-    if(c || a || p || cap || cons || minKw || ttKey){ render(); toast('Gespeicherte Daten geladen'); }
+    if(vModel) vehicleModel = vModel;
+    if(c || a || p || cap || cons || minKw || ttKey || vModel){ render(); toast('Gespeicherte Daten geladen'); }
   }catch(e){ /* IndexedDB nicht verfügbar - einfach normal weiter mit Upload */ }
 })();
 
