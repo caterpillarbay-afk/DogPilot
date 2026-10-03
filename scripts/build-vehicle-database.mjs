@@ -90,7 +90,10 @@ function cleanModell(cn){
       .replace(/\s*\/\s*\/\s*/g, ' ')           // "MODEL Y / / RWD" → "MODEL Y RWD"
       .replace(/(\d)\s*KW\b/g, '$1 KW')         // "150KW" → "150 KW"
       .replace(/\bE[\s-]?TRON\b/g, 'E-TRON')     // "E TRON"/"ETRON" → "E-TRON"
+      .replace(/\bID\.?\s*(\d|BUZZ)(?=[A-Z])/g, 'ID.$1 ') // "ID3PRO" → "ID.3 PRO"
       .replace(/\bID\.?\s*(\d|BUZZ)\b/g, 'ID.$1') // "ID3"/"ID 3"/"ID. 3" → "ID.3"
+      .replace(/([A-Z])(\d+ KW)\b/g, '$1 $2')     // "PRO107 KW" → "PRO 107 KW"
+      .replace(/^UP\s*!?$/, 'UP!')                // "UP"/"UP !" → "UP!"
   );
 }
 
