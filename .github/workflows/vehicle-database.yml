@@ -1,9 +1,13 @@
 name: Fahrzeugdatenbank aktualisieren
 
-# Ruft die EEA-CO2-Monitoringdaten ab und committet vehicle-database.json.
-# Läuft bei Änderungen am Generator-Skript und lässt sich manuell starten
-# (GitHub → Actions → "Fahrzeugdatenbank aktualisieren" → Run workflow).
+# Ruft die EEA-CO2-Monitoringdaten ab (neueste verfügbare Tabelle) und committet
+# vehicle-database.json, falls sich etwas geändert hat.
+# - automatisch am 1. jedes Monats (die EEA veröffentlicht neue Jahresdaten unregelmäßig)
+# - bei Änderungen am Generator-Skript
+# - manuell: GitHub → Actions → "Fahrzeugdatenbank aktualisieren" → Run workflow
 on:
+  schedule:
+    - cron: '17 4 1 * *'
   workflow_dispatch:
   push:
     paths:
@@ -13,6 +17,9 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: vehicle-database-${{ github.ref }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,12 +28,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/build-vehicle-database.mjs
+      - name: Daten abrufen
+        run: node scripts/build-vehicle-database.mjs | tee build.log
       - name: Commit vehicle-database.json
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add vehicle-database.json
           if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
-          git commit -m "Fahrzeugdatenbank aus EEA-Daten aktualisiert"
+          SUMMARY=$(grep -o '[0-9]* Modelle aus [A-Za-z0-9_]*' build.log || echo "neue Daten")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fahrzeugdatenbank aktualisiert: $SUMMARY"
           git push

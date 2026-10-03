@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Erzeugt vehicle-database.json aus den offenen EEA-CO2-Monitoringdaten (Discodata).
-// Quelle: https://discodata.eea.europa.eu – Tabelle [CO2Emission].[latest].[co2cars_2023Fv28]
+// Quelle: https://discodata.eea.europa.eu – Datenbank [CO2Emission], Schema [latest].
+// Die neueste Tabelle co2cars_<Jahr><F|P>v<Version> wird automatisch erkannt
+// (endgültige Daten "F" vor vorläufigen "P"); schlägt sie fehl, wird die nächstältere probiert.
 // Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-vehicle-database.mjs
 // Ausgabe: vehicle-database.json im Repo-Root (neben index.html)
 
@@ -9,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ENDPOINT = 'https://discodata.eea.europa.eu/sql';
+const FALLBACK_TABLE = 'co2cars_2023Fv28';
 const PAGE_SIZE = 1000;
 const MIN_COUNT = 5;
 // Plausibilitätsgrenzen für kWh/100 km – außerhalb davon sind es Meldefehler in den Rohdaten
@@ -20,19 +23,23 @@ const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'vehicle-databas
 // Bereinigung und der Filter n >= MIN_COUNT folgen in JS (siehe cleanMarke/cleanModell),
 // weil sich viele Schreibvarianten erst danach zu einem Modell zusammenfassen.
 // ORDER BY sorgt für stabile Paginierung.
-const QUERY = `
+const vehicleQuery = table => `
 SELECT UPPER(LTRIM(RTRIM(Mk))) AS Mk,
        UPPER(LTRIM(RTRIM(Cn))) AS Cn,
        AVG(CAST([z (Wh/km)] AS FLOAT)) AS verbrauch_wh_km,
        COUNT(*) AS n
-FROM [CO2Emission].[latest].[co2cars_2023Fv28]
+FROM [CO2Emission].[latest].[${table}]
 WHERE Ft = 'electric' AND [z (Wh/km)] IS NOT NULL
   AND Mk IS NOT NULL AND Cn IS NOT NULL
 GROUP BY UPPER(LTRIM(RTRIM(Mk))), UPPER(LTRIM(RTRIM(Cn)))
 ORDER BY Mk, Cn`;
 
-async function fetchPage(p) {
-  const url = `${ENDPOINT}?query=${encodeURIComponent(QUERY)}&p=${p}&nrOfHits=${PAGE_SIZE}`;
+const TABLES_QUERY = `
+SELECT TABLE_NAME FROM [CO2Emission].INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = 'latest' AND TABLE_NAME LIKE 'co2cars[_]%'`;
+
+async function fetchPage(query, p) {
+  const url = `${ENDPOINT}?query=${encodeURIComponent(query)}&p=${p}&nrOfHits=${PAGE_SIZE}`;
   for (let attempt = 1; ; attempt++) {
     try {
       const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -49,13 +56,47 @@ async function fetchPage(p) {
   }
 }
 
-const rows = [];
-for (let p = 1; ; p++) {
-  const page = await fetchPage(p);
-  rows.push(...page);
-  console.log(`Seite ${p}: ${page.length} Zeilen`);
-  if (page.length < PAGE_SIZE) break;
+async function fetchAll(query) {
+  const rows = [];
+  for (let p = 1; ; p++) {
+    const page = await fetchPage(query, p);
+    rows.push(...page);
+    console.log(`Seite ${p}: ${page.length} Zeilen`);
+    if (page.length < PAGE_SIZE) return rows;
+  }
 }
+
+// Tabellen nach Jahr (neueste zuerst), dann endgültig vor vorläufig, dann Version
+async function candidateTables() {
+  let names = [];
+  try {
+    names = (await fetchPage(TABLES_QUERY, 1)).map(r => r.TABLE_NAME);
+  } catch (err) {
+    console.warn(`Tabellenliste nicht abrufbar (${err.message}) – nutze ${FALLBACK_TABLE}`);
+  }
+  const parsed = names
+    .map(name => ({ name, m: /^co2cars_(\d{4})([FP])v(\d+)$/.exec(name) }))
+    .filter(t => t.m)
+    .map(({ name, m }) => ({ name, year: +m[1], final: m[2] === 'F', version: +m[3] }))
+    .sort((a, b) => b.year - a.year || b.final - a.final || b.version - a.version)
+    .map(t => t.name);
+  return [...new Set([...parsed, FALLBACK_TABLE])];
+}
+
+let rows = [], sourceTable = null;
+for (const table of await candidateTables()) {
+  console.log(`Versuche Tabelle ${table} …`);
+  try {
+    rows = await fetchAll(vehicleQuery(table));
+  } catch (err) {
+    console.warn(`${table}: ${err.message}`);
+    continue;
+  }
+  if (rows.length) { sourceTable = table; break; }
+  console.warn(`${table}: keine Elektro-Einträge`);
+}
+if (!sourceTable) throw new Error('Keine nutzbare EEA-Tabelle gefunden.');
+console.log(`Quelle: ${sourceTable}`);
 
 // Herstellernamen, die in den Rohdaten in mehreren Schreibweisen vorkommen
 const MARKE_ALIAS = {
@@ -124,4 +165,4 @@ const vehicles = [...groups.values()]
 if (!vehicles.length) throw new Error('Keine Fahrzeuge erhalten – Abfrage/Tabelle prüfen.');
 
 await writeFile(OUT, JSON.stringify(vehicles, null, 2) + '\n');
-console.log(`${vehicles.length} Modelle → ${OUT}`);
+console.log(`${vehicles.length} Modelle aus ${sourceTable} → ${OUT}`);
