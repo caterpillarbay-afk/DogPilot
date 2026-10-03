@@ -1,283 +1,298 @@
 [
   {
-    "marke": "ABARTH",
+    "marke": "15",
+    "modell": "IX XDRIVE 40",
+    "verbrauchKWh100": 20.4
+  },
+  {
+    "marke": "45",
     "modell": "500",
-    "verbrauchKWh100": 17.5
+    "verbrauchKWh100": 13.8
+  },
+  {
+    "marke": "46",
+    "modell": "MUSTANG MACH-E",
+    "verbrauchKWh100": 17.9
+  },
+  {
+    "marke": "108",
+    "modell": "ENYAQ 60",
+    "verbrauchKWh100": 16
+  },
+  {
+    "marke": "108",
+    "modell": "ENYAQ 80",
+    "verbrauchKWh100": 16
+  },
+  {
+    "marke": "122",
+    "modell": "C40",
+    "verbrauchKWh100": 16.6
+  },
+  {
+    "marke": "122",
+    "modell": "EX30",
+    "verbrauchKWh100": 17.1
+  },
+  {
+    "marke": "122",
+    "modell": "EX40",
+    "verbrauchKWh100": 17.1
+  },
+  {
+    "marke": "122",
+    "modell": "XC40",
+    "verbrauchKWh100": 17
+  },
+  {
+    "marke": "180",
+    "modell": "MACAN 4",
+    "verbrauchKWh100": 19
+  },
+  {
+    "marke": "180",
+    "modell": "MACAN TURBO",
+    "verbrauchKWh100": 19.7
+  },
+  {
+    "marke": "211",
+    "modell": "Q4 40 E-TRON",
+    "verbrauchKWh100": 18.9
+  },
+  {
+    "marke": "211",
+    "modell": "Q4 45 E-TRON",
+    "verbrauchKWh100": 18.9
+  },
+  {
+    "marke": "211",
+    "modell": "Q4 50 E-TRON",
+    "verbrauchKWh100": 18.9
+  },
+  {
+    "marke": "267",
+    "modell": "AVENGER",
+    "verbrauchKWh100": 15.6
+  },
+  {
+    "marke": "894",
+    "modell": "KORANDO E-MOTION OR KORANDO EV",
+    "verbrauchKWh100": 18.1
+  },
+  {
+    "marke": "894",
+    "modell": "TORRES EVX",
+    "verbrauchKWh100": 18.7
   },
   {
     "marke": "ABARTH",
-    "modell": "500E",
-    "verbrauchKWh100": 18.2
+    "modell": "500",
+    "verbrauchKWh100": 17.9
   },
   {
     "marke": "ABARTH",
     "modell": "600E",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "AION",
-    "modell": "AION V",
-    "verbrauchKWh100": 16.5
+    "verbrauchKWh100": 17.8
   },
   {
     "marke": "AIWAYS",
     "modell": "U5",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 17
   },
   {
     "marke": "ALFA ROMEO",
     "modell": "ALFA ROMEO JUNIOR",
-    "verbrauchKWh100": 15.6
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "ALFA ROMEO",
     "modell": "JUNIOR",
-    "verbrauchKWh100": 15.6
+    "verbrauchKWh100": 15.1
   },
   {
     "marke": "ALPINE",
     "modell": "A290",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "ALPINE",
-    "modell": "A390",
-    "verbrauchKWh100": 20.2
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 AV E-TRON",
-    "verbrauchKWh100": 14.8
+    "verbrauchKWh100": 16.5
   },
   {
     "marke": "AUDI",
     "modell": "A6 AV E-TRON PERFORMANCE",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 AV E-TRON QUATTRO",
     "verbrauchKWh100": 16.7
   },
   {
     "marke": "AUDI",
-    "modell": "A6 AVANT E-TRON",
-    "verbrauchKWh100": 15.9
+    "modell": "A6 AVANT E-TRON PERFORMANCE",
+    "verbrauchKWh100": 16.4
   },
   {
     "marke": "AUDI",
-    "modell": "A6 AVANT E-TRON QUATTRO",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 E-TRON",
-    "verbrauchKWh100": 14.4
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 E-TRON QUATTRO",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 SB E-TRON",
-    "verbrauchKWh100": 13.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 SB E-TRON PERFORMANCE",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 SB E-TRON QUATTRO",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "AUDI",
-    "modell": "A6 SPORTBACK E-TRON",
-    "verbrauchKWh100": 14.8
+    "modell": "E-TRON 55",
+    "verbrauchKWh100": 24.5
   },
   {
     "marke": "AUDI",
     "modell": "E-TRON GT",
-    "verbrauchKWh100": 18.9
+    "verbrauchKWh100": 20.9
+  },
+  {
+    "marke": "AUDI",
+    "modell": "E-TRON GT QUATTRO",
+    "verbrauchKWh100": 20.4
+  },
+  {
+    "marke": "AUDI",
+    "modell": "E-TRON SPORTBACK 55",
+    "verbrauchKWh100": 23.9
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4",
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "AUDI",
     "modell": "Q4 35 E-TRON",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 40 E-TRON",
-    "verbrauchKWh100": 13.6
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 45 E-TRON",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 50 E-TRON",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 55 E-TRON",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 E-TRON",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK 35 E-TRON",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK 40 E-TRON",
-    "verbrauchKWh100": 12.6
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK 45 E-TRON",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK 50 E-TRON",
-    "verbrauchKWh100": 17.9
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK 55 E-TRON",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q4 SPORTBACK E-TRON",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 E-TRON",
-    "verbrauchKWh100": 21.8
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 E-TRON PERFORMANCE",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 E-TRON QUATTRO",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SB E-TRON",
-    "verbrauchKWh100": 12.2
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SB E-TRON PERFORMANCE",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SB E-TRON QUATTRO",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SPORTBACK E-TRON",
-    "verbrauchKWh100": 22.2
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SUV E-TRON",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SUV E-TRON PERFORMANC",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "AUDI",
-    "modell": "Q6 SUV E-TRON PERFORMANCE",
     "verbrauchKWh100": 17.7
   },
   {
     "marke": "AUDI",
+    "modell": "Q4 40 E-TRON",
+    "verbrauchKWh100": 17.5
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 45 E-TRON",
+    "verbrauchKWh100": 17.2
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 50 E-TRON",
+    "verbrauchKWh100": 18.3
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 55 E-TRON",
+    "verbrauchKWh100": 17.7
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 E-TRON",
+    "verbrauchKWh100": 17
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK 35 E-TRON",
+    "verbrauchKWh100": 16.7
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK 40 E-TRON",
+    "verbrauchKWh100": 17.2
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK 45 E-TRON",
+    "verbrauchKWh100": 16.8
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK 50 E-TRON",
+    "verbrauchKWh100": 18.1
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK 55 E-TRON",
+    "verbrauchKWh100": 17.3
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q4 SPORTBACK E-TRON",
+    "verbrauchKWh100": 16.5
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q6 E-TRON",
+    "verbrauchKWh100": 18.2
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q6 E-TRON QUATTRO",
+    "verbrauchKWh100": 18
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q6 SUV E-TRON",
+    "verbrauchKWh100": 16.9
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q6 SUV E-TRON PERFORMANC",
+    "verbrauchKWh100": 17.3
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q6 SUV E-TRON PERFORMANCE",
+    "verbrauchKWh100": 17.9
+  },
+  {
+    "marke": "AUDI",
     "modell": "Q6 SUV E-TRON QUATTRO",
-    "verbrauchKWh100": 18.4
+    "verbrauchKWh100": 18.6
   },
   {
     "marke": "AUDI",
     "modell": "Q8 50 E-TRON",
-    "verbrauchKWh100": 21.5
+    "verbrauchKWh100": 21.6
   },
   {
     "marke": "AUDI",
     "modell": "Q8 55 E-TRON",
-    "verbrauchKWh100": 22.9
+    "verbrauchKWh100": 22.6
   },
   {
     "marke": "AUDI",
-    "modell": "Q8 E-TRON DAKAR",
-    "verbrauchKWh100": 27
+    "modell": "Q8 E-TRON",
+    "verbrauchKWh100": 22.1
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q8 E-TRON 55",
+    "verbrauchKWh100": 22
+  },
+  {
+    "marke": "AUDI",
+    "modell": "Q8 E-TRON SPORTBACK",
+    "verbrauchKWh100": 21.3
   },
   {
     "marke": "AUDI",
     "modell": "Q8 SPORTBACK 50 E-TRON",
-    "verbrauchKWh100": 21.4
+    "verbrauchKWh100": 21.2
   },
   {
     "marke": "AUDI",
     "modell": "Q8 SPORTBACK 55 E-TRON",
-    "verbrauchKWh100": 22.4
+    "verbrauchKWh100": 22.2
   },
   {
     "marke": "AUDI",
     "modell": "RS E-TRON GT",
-    "verbrauchKWh100": 19.1
+    "verbrauchKWh100": 21
   },
   {
     "marke": "AUDI",
     "modell": "RS E-TRON GT PERFORMANCE",
-    "verbrauchKWh100": 20.1
+    "verbrauchKWh100": 20.5
   },
   {
     "marke": "AUDI",
     "modell": "S E-TRON GT",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 19.2
   },
   {
     "marke": "AUDI",
     "modell": "S6 AV E-TRON",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "S6 AVANT E-TRON",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "S6 SB E-TRON",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "AUDI",
-    "modell": "S6 SPORTBACK E-TRON",
-    "verbrauchKWh100": 16.4
+    "verbrauchKWh100": 17
   },
   {
     "marke": "AUDI",
@@ -286,368 +301,263 @@
   },
   {
     "marke": "AUDI",
-    "modell": "SQ6 SB E-TRON",
-    "verbrauchKWh100": 17.7
-  },
-  {
-    "marke": "AUDI",
     "modell": "SQ6 SUV E-TRON",
-    "verbrauchKWh100": 18.1
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "AUDI",
     "modell": "SQ8 E-TRON",
-    "verbrauchKWh100": 25.4
+    "verbrauchKWh100": 27.3
   },
   {
     "marke": "AUDI",
     "modell": "SQ8 SPORTBACK E-TRON",
-    "verbrauchKWh100": 27
+    "verbrauchKWh100": 26.8
   },
   {
-    "marke": "B M W",
-    "modell": "I4 EDRIVE35",
-    "verbrauchKWh100": 15.7
-  },
-  {
-    "marke": "B M W",
-    "modell": "IX XDRIVE45",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "B M W",
-    "modell": "IX1 EDRIVE20",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "B M W",
-    "modell": "IX1 XDRIVE30",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "B M W",
-    "modell": "IX2 EDRIVE 20",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "B M W",
-    "modell": "IX2 EDRIVE20",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "5 SERIE",
-    "verbrauchKWh100": 17.3
+    "marke": "B",
+    "modell": "E-C4",
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "BMW",
     "modell": "I4",
-    "verbrauchKWh100": 31.3
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE 35",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE 40",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE35",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE35 AUT.",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE35 GRAN COUPE",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE35 GRAN COUPE G26 HA0",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE40",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE40 AUT.",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE40 GRAN COUPE",
-    "verbrauchKWh100": 15.7
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 EDRIVE40 GRAN COUPE G26 HA0",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M50",
-    "verbrauchKWh100": 19.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M50 XDRIVE",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M50 XDRIVE AUT.",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M50 XDRIVE GRAN COUPE G26 X",
-    "verbrauchKWh100": 19.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M60 XDRIVE",
-    "verbrauchKWh100": 17.9
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M60 XDRIVE AUT.",
-    "verbrauchKWh100": 18.3
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 M60 XDRIVE GRAN COUPE",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 XDRIVE40",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 XDRIVE40 AUT.",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "BMW",
-    "modell": "I4 XDRIVE40 GRAN COUPE G26 XE2",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE 40",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE 40 AUT.",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE40",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE40 LIMOUSINE",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE40 LIMOUSINE G60 HA0",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE40 TOURING",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I5 EDRIVE40 TOURING G61 HA0",
     "verbrauchKWh100": 17.4
   },
   {
     "marke": "BMW",
-    "modell": "I5 M60 XDRIVE",
-    "verbrauchKWh100": 19
+    "modell": "I4 EDRIVE 35",
+    "verbrauchKWh100": 16.2
   },
   {
     "marke": "BMW",
-    "modell": "I5 M60 XDRIVE LIMOUSINE",
-    "verbrauchKWh100": 18.5
+    "modell": "I4 EDRIVE 40",
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "BMW",
-    "modell": "I5 M60 XDRIVE LIMOUSINE G60 XE",
-    "verbrauchKWh100": 19.7
+    "modell": "I4 EDRIVE35",
+    "verbrauchKWh100": 16.2
   },
   {
     "marke": "BMW",
-    "modell": "I5 M60 XDRIVE TOURING",
-    "verbrauchKWh100": 19.1
+    "modell": "I4 EDRIVE35 AUT.",
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "BMW",
-    "modell": "I5 M60 XDRIVE TOURING G61 XE2",
-    "verbrauchKWh100": 20
+    "modell": "I4 EDRIVE35 GRAN COUPE G26 HA0",
+    "verbrauchKWh100": 16.4
   },
   {
     "marke": "BMW",
-    "modell": "I5 TOURING EDRIVE 40 AUT.",
+    "modell": "I4 EDRIVE40",
+    "verbrauchKWh100": 16.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "I4 EDRIVE40 AUT.",
     "verbrauchKWh100": 17
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE 40",
-    "verbrauchKWh100": 17.8
+    "modell": "I4 EDRIVE40 GRAN COUPE G26 HA0",
+    "verbrauchKWh100": 16.8
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE 40 AUT.",
-    "verbrauchKWh100": 17.6
+    "modell": "I4 M50",
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE40",
+    "modell": "I4 M50 AUT.",
+    "verbrauchKWh100": 19.2
+  },
+  {
+    "marke": "BMW",
+    "modell": "I4 M50 XDRIVE",
+    "verbrauchKWh100": 18.9
+  },
+  {
+    "marke": "BMW",
+    "modell": "I4 M50 XDRIVE GRAN COUPE G26 X",
+    "verbrauchKWh100": 19.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "I4 XDRIVE40",
+    "verbrauchKWh100": 17.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "I4 XDRIVE40 GRAN COUPE G26 XE2",
+    "verbrauchKWh100": 18
+  },
+  {
+    "marke": "BMW",
+    "modell": "I5",
+    "verbrauchKWh100": 16.9
+  },
+  {
+    "marke": "BMW",
+    "modell": "I5 / TOURING / EDRIVE 40 AUT.",
+    "verbrauchKWh100": 17.5
+  },
+  {
+    "marke": "BMW",
+    "modell": "I5 EDRIVE 40",
     "verbrauchKWh100": 17.3
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE40 LIMOUSINE",
+    "modell": "I5 EDRIVE 40 AUT.",
+    "verbrauchKWh100": 16.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "I5 EDRIVE40",
     "verbrauchKWh100": 17.2
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE40 LIMOUSINE G60 XE2",
-    "verbrauchKWh100": 18.4
+    "modell": "I5 EDRIVE40 LIMOUSINE G60 HA0",
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "BMW",
-    "modell": "I5 XDRIVE40 TOURING",
-    "verbrauchKWh100": 17.9
+    "modell": "I5 EDRIVE40 TOURING G61 HA0",
+    "verbrauchKWh100": 17.5
   },
   {
     "marke": "BMW",
-    "modell": "I7",
-    "verbrauchKWh100": 19.7
+    "modell": "I5 M60 XDRIVE",
+    "verbrauchKWh100": 19.8
   },
   {
     "marke": "BMW",
-    "modell": "I7 EDRIVE 50",
-    "verbrauchKWh100": 19.7
-  },
-  {
-    "marke": "BMW",
-    "modell": "I7 EDRIVE50",
+    "modell": "I5 M60 XDRIVE LIMOUSINE G60 XE",
     "verbrauchKWh100": 19.6
   },
   {
     "marke": "BMW",
-    "modell": "I7 M70 XDRIVE",
-    "verbrauchKWh100": 20.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "I7 XDRIVE 60",
-    "verbrauchKWh100": 19.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "I7 XDRIVE60",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "BMW",
-    "modell": "I7 XDRIVE60 G70 XE2",
-    "verbrauchKWh100": 19.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX",
+    "modell": "I5 M60 XDRIVE TOURING G61 XE2",
     "verbrauchKWh100": 19.7
   },
   {
     "marke": "BMW",
-    "modell": "IX M60",
-    "verbrauchKWh100": 22
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX M70 XDRIVE",
-    "verbrauchKWh100": 21.5
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX M70 XDRIVE I20",
-    "verbrauchKWh100": 22.2
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE 40",
-    "verbrauchKWh100": 20.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE 45",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE 50",
-    "verbrauchKWh100": 20.8
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE 60",
-    "verbrauchKWh100": 19.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE40",
-    "verbrauchKWh100": 20.2
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE40 I20 XE2",
-    "verbrauchKWh100": 20.6
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX XDRIVE45",
+    "modell": "I5 XDRIVE 40",
     "verbrauchKWh100": 18.5
   },
   {
     "marke": "BMW",
-    "modell": "IX XDRIVE45 AUT.",
-    "verbrauchKWh100": 18.7
+    "modell": "I5 XDRIVE40",
+    "verbrauchKWh100": 18.6
   },
   {
     "marke": "BMW",
-    "modell": "IX XDRIVE45 I20",
-    "verbrauchKWh100": 18.9
+    "modell": "I5 XDRIVE40 LIMOUSINE G60 XE2",
+    "verbrauchKWh100": 18.5
+  },
+  {
+    "marke": "BMW",
+    "modell": "I5 XDRIVE40 TOURING",
+    "verbrauchKWh100": 18.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7",
+    "verbrauchKWh100": 19.6
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 EDRIVE 50",
+    "verbrauchKWh100": 19.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 EDRIVE50",
+    "verbrauchKWh100": 19.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 EDRIVE50 LIMOUSINE G70 HA0",
+    "verbrauchKWh100": 19.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 M70 XDRIVE",
+    "verbrauchKWh100": 21.4
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 M70 XDRIVE LIMOUSINE G70 XE",
+    "verbrauchKWh100": 21.4
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 XDRIVE 60",
+    "verbrauchKWh100": 19.3
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 XDRIVE60",
+    "verbrauchKWh100": 19.2
+  },
+  {
+    "marke": "BMW",
+    "modell": "I7 XDRIVE60 G70 XE2",
+    "verbrauchKWh100": 19.2
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX",
+    "verbrauchKWh100": 20.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX M60",
+    "verbrauchKWh100": 23
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX M60 I20 XE2",
+    "verbrauchKWh100": 22.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE 40",
+    "verbrauchKWh100": 20.5
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE 50",
+    "verbrauchKWh100": 21
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE40",
+    "verbrauchKWh100": 20.3
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE40 AUT.",
+    "verbrauchKWh100": 20.8
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE40 I20 XE2",
+    "verbrauchKWh100": 20.4
   },
   {
     "marke": "BMW",
     "modell": "IX XDRIVE50",
-    "verbrauchKWh100": 20.5
+    "verbrauchKWh100": 20.7
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX XDRIVE50 AUT.",
+    "verbrauchKWh100": 20.9
   },
   {
     "marke": "BMW",
@@ -656,18 +566,18 @@
   },
   {
     "marke": "BMW",
-    "modell": "IX XDRIVE60",
-    "verbrauchKWh100": 19.2
+    "modell": "IX1",
+    "verbrauchKWh100": 16.4
   },
   {
     "marke": "BMW",
-    "modell": "IX XDRIVE60 AUT.",
-    "verbrauchKWh100": 19.5
+    "modell": "IX1 / EDRIVE20 / AUT.",
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "BMW",
-    "modell": "IX XDRIVE60 I20",
-    "verbrauchKWh100": 19.5
+    "modell": "IX1 / XDRIVE30 / AUT.",
+    "verbrauchKWh100": 17.5
   },
   {
     "marke": "BMW",
@@ -677,12 +587,7 @@
   {
     "marke": "BMW",
     "modell": "IX1 EDRIVE20",
-    "verbrauchKWh100": 15.7
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX1 EDRIVE20 AUT.",
-    "verbrauchKWh100": 16
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "BMW",
@@ -691,38 +596,33 @@
   },
   {
     "marke": "BMW",
-    "modell": "IX1 XDRIVE 30",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "BMW",
     "modell": "IX1 XDRIVE30",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX1 XDRIVE30 AUT.",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "BMW",
-    "modell": "IX1 XDRIVE30 U11 XE2",
     "verbrauchKWh100": 17.5
   },
   {
     "marke": "BMW",
-    "modell": "IX2 EDRIVE 20 AUT.",
-    "verbrauchKWh100": 21.8
+    "modell": "IX1 XDRIVE30 U11 XE2",
+    "verbrauchKWh100": 17.4
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX2",
+    "verbrauchKWh100": 16.5
+  },
+  {
+    "marke": "BMW",
+    "modell": "IX2 / XDRIVE 30 / AUT.",
+    "verbrauchKWh100": 17.4
   },
   {
     "marke": "BMW",
     "modell": "IX2 EDRIVE20",
-    "verbrauchKWh100": 14.9
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "BMW",
     "modell": "IX2 EDRIVE20 U10 HB0",
-    "verbrauchKWh100": 16.2
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "BMW",
@@ -731,13 +631,8 @@
   },
   {
     "marke": "BMW",
-    "modell": "IX2 XDRIVE 30 AUT.",
-    "verbrauchKWh100": 24.8
-  },
-  {
-    "marke": "BMW",
     "modell": "IX2 XDRIVE30",
-    "verbrauchKWh100": 16
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "BMW",
@@ -747,57 +642,32 @@
   {
     "marke": "BMW",
     "modell": "IX3",
-    "verbrauchKWh100": 18.6
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "BMW",
-    "modell": "IX3 50 XDRIVE",
-    "verbrauchKWh100": 16.5
+    "modell": "IX3 AUT.",
+    "verbrauchKWh100": 18.3
   },
   {
     "marke": "BMW",
     "modell": "IX3 G08 HA0",
-    "verbrauchKWh100": 17.8
+    "verbrauchKWh100": 18.1
   },
   {
     "marke": "BMW",
     "modell": "X2 IX2 EDRIVE20 U10 HB0",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "BMW AG",
-    "modell": "IX3 50 XDRIVE",
-    "verbrauchKWh100": 18.8
-  },
-  {
-    "marke": "BYD",
-    "modell": "ATTO 2",
-    "verbrauchKWh100": 18.6
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "BYD",
     "modell": "ATTO 3",
-    "verbrauchKWh100": 16.7
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "BYD",
     "modell": "BYD ATTO 2",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD ATTO 3",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD D0LPH1N SURF",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD DOLPHI",
-    "verbrauchKWh100": 15.9
+    "verbrauchKWh100": 16
   },
   {
     "marke": "BYD",
@@ -806,58 +676,43 @@
   },
   {
     "marke": "BYD",
-    "modell": "BYD DOLPHIN SURF",
-    "verbrauchKWh100": 14.1
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD DOLPHIN-DOLPHIN-BYD DOLPHI",
+    "modell": "BYD DOLPHIN DOLPHIN BYD DOLPHI",
     "verbrauchKWh100": 15.9
   },
   {
     "marke": "BYD",
-    "modell": "BYD DOLPHINA SURF",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "BYD",
     "modell": "BYD SEAL",
-    "verbrauchKWh100": 16.9
+    "verbrauchKWh100": 17.4
   },
   {
     "marke": "BYD",
-    "modell": "BYD SEAL U",
-    "verbrauchKWh100": 20.3
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD SEAL U DM-I",
-    "verbrauchKWh100": 20.4
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD SEAL U-SEAL U",
-    "verbrauchKWh100": 20.4
-  },
-  {
-    "marke": "BYD",
-    "modell": "BYD SEAL- SEAL- HALO 1-HALO 2-",
+    "modell": "BYD SEAL SEAL HALO 1 HALO 2",
     "verbrauchKWh100": 18.2
   },
   {
     "marke": "BYD",
-    "modell": "BYD SEALION 7",
+    "modell": "BYD SEAL U",
     "verbrauchKWh100": 20.4
   },
   {
     "marke": "BYD",
-    "modell": "DOLPHIN",
-    "verbrauchKWh100": 21.7
+    "modell": "BYD SEAL U SEAL U",
+    "verbrauchKWh100": 20.5
   },
   {
     "marke": "BYD",
-    "modell": "DOLPHIN SURF",
-    "verbrauchKWh100": 17.7
+    "modell": "BYD SEALION 7",
+    "verbrauchKWh100": 21.9
+  },
+  {
+    "marke": "BYD",
+    "modell": "DOLPHIN",
+    "verbrauchKWh100": 16
+  },
+  {
+    "marke": "BYD",
+    "modell": "E6",
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "BYD",
@@ -866,13 +721,8 @@
   },
   {
     "marke": "BYD",
-    "modell": "SEA LION 7",
-    "verbrauchKWh100": 21.9
-  },
-  {
-    "marke": "BYD",
     "modell": "SEAL",
-    "verbrauchKWh100": 16.7
+    "verbrauchKWh100": 17.8
   },
   {
     "marke": "BYD",
@@ -882,7 +732,7 @@
   {
     "marke": "BYD",
     "modell": "SEAL U",
-    "verbrauchKWh100": 28.9
+    "verbrauchKWh100": 19.5
   },
   {
     "marke": "BYD",
@@ -892,17 +742,17 @@
   {
     "marke": "BYD",
     "modell": "SEALION 7",
-    "verbrauchKWh100": 29.8
+    "verbrauchKWh100": 21.5
   },
   {
     "marke": "BYD",
     "modell": "TANG",
-    "verbrauchKWh100": 24
+    "verbrauchKWh100": 23.9
   },
   {
     "marke": "BYD",
     "modell": "TANG EV",
-    "verbrauchKWh100": 24
+    "verbrauchKWh100": 23.9
   },
   {
     "marke": "CADILLAC",
@@ -910,94 +760,114 @@
     "verbrauchKWh100": 22.5
   },
   {
-    "marke": "CHANGAN",
-    "modell": "CHANGAN DEEPAL S05",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "CHANGAN",
-    "modell": "CHANGAN DEEPAL S07",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "CHERY- EXEED- FOWNIX-",
-    "modell": "E5- E5 EV- E5 E+- OMODA5 EV- O",
-    "verbrauchKWh100": 16.8
+    "marke": "CITROEN",
+    "modell": "A-BERLINGO",
+    "verbrauchKWh100": 20.3
   },
   {
     "marke": "CITROEN",
-    "modell": "BERLINGO 100 ELEK. L1",
-    "verbrauchKWh100": 18.2
+    "modell": "A-C3",
+    "verbrauchKWh100": 17
   },
   {
     "marke": "CITROEN",
-    "modell": "BERLINGO 100 ELEK. L2",
-    "verbrauchKWh100": 18.6
+    "modell": "A-C4",
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "CITROEN",
-    "modell": "C3 83 ELEKT.",
-    "verbrauchKWh100": 16.8
+    "modell": "A-C4 X",
+    "verbrauchKWh100": 15.1
   },
   {
     "marke": "CITROEN",
-    "modell": "C3 AIRCROSS 83 ELEKT.",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "C4 115 ELEKT.",
+    "modell": "C4",
     "verbrauchKWh100": 14.9
   },
   {
     "marke": "CITROEN",
-    "modell": "C5 AIRCROSS",
-    "verbrauchKWh100": 17.3
+    "modell": "C4 / 100 / ELEKT.",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "C4X ELECTRICO 115 KW - 54KWH MAX (SOLO STOCK)",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "C4X ELECTRICO 115 KW - 54KWH PLUS",
+    "verbrauchKWh100": 14.7
   },
   {
     "marke": "CITROEN",
     "modell": "E-BERLINGO",
-    "verbrauchKWh100": 19.3
+    "verbrauchKWh100": 19.6
   },
   {
     "marke": "CITROEN",
-    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA M SHINE",
+    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA M FEEL",
+    "verbrauchKWh100": 19.7
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA M LIVE PACK",
     "verbrauchKWh100": 20
   },
   {
     "marke": "CITROEN",
-    "modell": "E-BERLINGO TALLA M ELECTRICO 50 KWH MAX",
-    "verbrauchKWh100": 18.3
+    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA M SHINE",
+    "verbrauchKWh100": 20.1
   },
   {
     "marke": "CITROEN",
-    "modell": "E-BERLINGO TALLA M ELECTRICO 50 KWH PLUS",
-    "verbrauchKWh100": 18.1
+    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA XL FEEL",
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "CITROEN",
-    "modell": "E-BERLINGO TALLA XL ELECTRICO 50 KWH MAX",
-    "verbrauchKWh100": 18.6
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "E-BERLINGO TALLA XL ELECTRICO 50 KWH PLUS",
-    "verbrauchKWh100": 18.5
+    "modell": "E-BERLINGO ELECTRICO 50 KWH TALLA XL SHINE",
+    "verbrauchKWh100": 20.6
   },
   {
     "marke": "CITROEN",
     "modell": "E-C3",
-    "verbrauchKWh100": 16.4
+    "verbrauchKWh100": 17
   },
   {
     "marke": "CITROEN",
     "modell": "E-C3 AIRCROSS",
-    "verbrauchKWh100": 19.1
+    "verbrauchKWh100": 18.3
   },
   {
     "marke": "CITROEN",
     "modell": "E-C4",
-    "verbrauchKWh100": 14.8
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 100 KW- 50KWH BUSINESS EDITION",
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 100 KW- 50KWH BUSINESS EDITION (SOLO",
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 100 KW- 50KWH MAX",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 100 KW- 50KWH MAX (SOLO STOCK)",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 100 KW- 50KWH PLUS",
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "CITROEN",
@@ -1006,48 +876,83 @@
   },
   {
     "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH BUSINESS EDITION",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH BUSINESS EDITION (SO",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH MAX",
+    "verbrauchKWh100": 14.9
+  },
+  {
+    "marke": "CITROEN",
     "modell": "E-C4 ELECTRICO 115 KW - 54KWH MAX (SOLO STOCK)",
     "verbrauchKWh100": 14.9
   },
   {
     "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH PLUS",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH PLUS (SOLO STOCK)",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "E-C4 ELECTRICO 115 KW - 54KWH YOU",
+    "verbrauchKWh100": 14.8
+  },
+  {
+    "marke": "CITROEN",
     "modell": "E-C4 X",
-    "verbrauchKWh100": 14.6
+    "verbrauchKWh100": 15
   },
   {
     "marke": "CITROEN",
-    "modell": "E-JUMPY COMBI TALLA M ELECTRICO 100 KW BATERIA 50K",
-    "verbrauchKWh100": 24
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "E-JUMPY COMBI TALLA M ELECTRICO 100 KW BATERIA 75K",
-    "verbrauchKWh100": 24
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "E-SPACETOURER",
-    "verbrauchKWh100": 34
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "E-SPACETOURER PLUS TALLA M ELECTRICO 100 KW BATERIA",
-    "verbrauchKWh100": 24.3
+    "modell": "E-SPACETOURER TALLA M 75 KWH BUSINESS",
+    "verbrauchKWh100": 26.7
   },
   {
     "marke": "CITROEN",
     "modell": "JUMPY",
-    "verbrauchKWh100": 24.3
+    "verbrauchKWh100": 25.8
   },
   {
     "marke": "CITROEN",
-    "modell": "JUMPY SPACE TOURER 100 ELEK. L3",
-    "verbrauchKWh100": 24.4
+    "modell": "JUMPY I SPACETOURER",
+    "verbrauchKWh100": 26.9
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "JUMPY SPACE TOURER",
+    "verbrauchKWh100": 26.9
   },
   {
     "marke": "CITROEN",
     "modell": "JUMPY SPACETOURER",
-    "verbrauchKWh100": 24.2
+    "verbrauchKWh100": 24.9
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO C4X ELECTRICO 100 KW - 50KWH PLUS",
+    "verbrauchKWh100": 15.1
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO C4X ELECTRICO 100 KW - 50KWH YOU",
+    "verbrauchKWh100": 14.9
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO C4X ELECTRICO 100 KW FEEL",
+    "verbrauchKWh100": 15
   },
   {
     "marke": "CITROEN",
@@ -1057,42 +962,12 @@
   {
     "marke": "CITROEN",
     "modell": "NUEVO C4X ELECTRICO 100 KW SHINE",
-    "verbrauchKWh100": 15.1
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO C5 AIRCROSS ELECTRICO 154 KW 210 CV - 73KWH",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 AIRCROSS ELECTRICO 113CV MAX",
-    "verbrauchKWh100": 18.3
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 AIRCROSS ELECTRICO 113CV MAX AU",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 AIRCROSS ELECTRICO 113CV PLUS",
-    "verbrauchKWh100": 18.2
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 AIRCROSS ELECTRICO 113CV PLUS A",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 AIRCROSS ELECTRICO 113CV YOU",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO BUSINESS",
-    "verbrauchKWh100": 16.5
+    "modell": "NUEVO C4X ELECTRICO 115 KW - 54KWH MAX",
+    "verbrauchKWh100": 14.9
   },
   {
     "marke": "CITROEN",
@@ -1101,33 +976,18 @@
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO MAX (SOLO STOCK)",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO PLUS",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO PLUS (SOLO STOCK)",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "CITROEN",
     "modell": "NUEVO CITROEN E-C3 ELECTRICO YOU",
-    "verbrauchKWh100": 17.1
+    "verbrauchKWh100": 16.5
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO YOU (SOLO STOCK)",
-    "verbrauchKWh100": 17.2
+    "modell": "NUEVO E-BERLINGO ELECTRICO 50 KWH TALLA M FEEL",
+    "verbrauchKWh100": 19.5
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO CITROEN E-C3 ELECTRICO YOU PACK PLUS",
-    "verbrauchKWh100": 16.7
+    "modell": "NUEVO E-BERLINGO ELECTRICO 50 KWH TALLA M SHINE",
+    "verbrauchKWh100": 19.7
   },
   {
     "marke": "CITROEN",
@@ -1151,13 +1011,43 @@
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO E-C4 ELECTRICO 100 KW - 50KWH YOU",
-    "verbrauchKWh100": 15.5
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW C SERIES",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW FEEL",
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW FEEL (SOLO STOCK)",
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW FEEL PACK",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW FEEL PACK (SOLO STOCK)",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW SHINE",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "NUEVO E-C4 ELECTRICO 100 KW SHINE (SOLO STOCK)",
+    "verbrauchKWh100": 15.3
   },
   {
     "marke": "CITROEN",
     "modell": "NUEVO E-C4 ELECTRICO 100 KW- 50KWH PLUS",
-    "verbrauchKWh100": 15.3
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "CITROEN",
@@ -1167,7 +1057,7 @@
   {
     "marke": "CITROEN",
     "modell": "NUEVO E-C4 ELECTRICO 115 KW - 54KWH MAX",
-    "verbrauchKWh100": 15
+    "verbrauchKWh100": 14.9
   },
   {
     "marke": "CITROEN",
@@ -1176,73 +1066,83 @@
   },
   {
     "marke": "CITROEN",
-    "modell": "NUEVO E-C4X ELECTRICO 100 KW - 50KWH PLUS",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO E-C4X ELECTRICO 115 KW - 54KWH BUSINESS EDIT",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "CITROEN",
-    "modell": "NUEVO E-C4X ELECTRICO 115 KW - 54KWH MAX",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "CITROEN",
     "modell": "NUEVO E-JUMPY COMBI TALLA M ELECTRICO 100 KW BATER",
     "verbrauchKWh100": 24
   },
   {
     "marke": "CITROEN",
-    "modell": "SPACE TOURER",
-    "verbrauchKWh100": 24.5
+    "modell": "NUEVO E-SPACETOURER PLUS TALLA M ELECTRICO 100 KW B",
+    "verbrauchKWh100": 24.2
   },
   {
     "marke": "CITROEN",
     "modell": "SPACETOURER",
+    "verbrauchKWh100": 25.8
+  },
+  {
+    "marke": "CITROEN",
+    "modell": "SPACETOURER IJUMPY I DISPATCH",
     "verbrauchKWh100": 24.5
   },
   {
     "marke": "CUPRA",
     "modell": "BORN",
-    "verbrauchKWh100": 28.8
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 150 KW 58 62 KWH",
+    "modell": "BORN 150 KW 58-62 KWH",
     "verbrauchKWh100": 15.5
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 150 KW 60 63 KWH",
+    "modell": "BORN 150 KW 58/62 KWH",
+    "verbrauchKWh100": 15.5
+  },
+  {
+    "marke": "CUPRA",
+    "modell": "BORN 170 KW 58-62 KWH",
     "verbrauchKWh100": 15.7
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 170 KW 58 62 KWH",
+    "modell": "BORN 170 KW 58/62 KWH",
     "verbrauchKWh100": 15.6
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 170 KW 60 63 KWH",
+    "modell": "BORN 170 KW 60-63 KWH",
+    "verbrauchKWh100": 15.7
+  },
+  {
+    "marke": "CUPRA",
+    "modell": "BORN 170 KW 60/63 KWH",
+    "verbrauchKWh100": 15.7
+  },
+  {
+    "marke": "CUPRA",
+    "modell": "BORN 170 KW 77-82 KWH",
     "verbrauchKWh100": 16
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 170 KW 77 82 KWH",
+    "modell": "BORN 170 KW 77/82 KWH",
     "verbrauchKWh100": 16.1
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 170 KW 79 84 KWH",
-    "verbrauchKWh100": 16.1
+    "modell": "BORN 170 KW 77/82KWH",
+    "verbrauchKWh100": 16
   },
   {
     "marke": "CUPRA",
-    "modell": "BORN 240 KW 79 84 KWH",
-    "verbrauchKWh100": 15.5
+    "modell": "BORN 240 KW 79-84 KWH",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "CUPRA",
+    "modell": "BORN 240 KW 79/84 KWH",
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "CUPRA",
@@ -1252,62 +1152,42 @@
   {
     "marke": "DACIA",
     "modell": "SPRING",
-    "verbrauchKWh100": 13.1
-  },
-  {
-    "marke": "DEEPAL",
-    "modell": "DEEPAL S05",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "DEEPAL",
-    "modell": "DEEPAL S07",
-    "verbrauchKWh100": 18.8
-  },
-  {
-    "marke": "DEEPAL",
-    "modell": "DEEPAL S07-S07-DEEPAL_S07-DEEP",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "DEEPAL",
-    "modell": "S05- DEEPAL S05",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "DFM",
-    "modell": "E70",
-    "verbrauchKWh100": 15.9
+    "verbrauchKWh100": 13.9
   },
   {
     "marke": "DFSK",
     "modell": "SERES 3",
-    "verbrauchKWh100": 18.6
+    "verbrauchKWh100": 19.6
   },
   {
-    "marke": "DFSK MOTOR CO. LTD",
-    "modell": "SERES 3",
-    "verbrauchKWh100": 17.7
+    "marke": "DFSK",
+    "modell": "SERES 3 (S)",
+    "verbrauchKWh100": 19.8
   },
   {
-    "marke": "DFSK, SERES, SOKON",
+    "marke": "DFSK",
     "modell": "SERES 5",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "DONG FENG",
-    "modell": "BOX",
-    "verbrauchKWh100": 14.8
+    "verbrauchKWh100": 24.2
   },
   {
     "marke": "DONGFENG",
     "modell": "BOX",
-    "verbrauchKWh100": 17.3
+    "verbrauchKWh100": 19.1
+  },
+  {
+    "marke": "DR",
+    "modell": "DR EQ1",
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "DS",
     "modell": "DS 3",
-    "verbrauchKWh100": 15.6
+    "verbrauchKWh100": 15.5
+  },
+  {
+    "marke": "DS",
+    "modell": "DS 3 CROSSBACK",
+    "verbrauchKWh100": 16.1
   },
   {
     "marke": "DS",
@@ -1316,107 +1196,57 @@
   },
   {
     "marke": "DS",
+    "modell": "DS3 CROSSBACK",
+    "verbrauchKWh100": 16.2
+  },
+  {
+    "marke": "DS",
     "modell": "DS4",
     "verbrauchKWh100": 15.3
   },
   {
     "marke": "DS",
-    "modell": "N 4",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "DS",
-    "modell": "N 8",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "DS",
-    "modell": "N4",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "DS AUTOMOBILES",
-    "modell": "DS 3",
+    "modell": "NUEVO DS 3 ETENSE OPERA",
     "verbrauchKWh100": 15.6
   },
   {
-    "marke": "DS AUTOMOBILES",
-    "modell": "N 4",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "DS AUTOMOBILES",
-    "modell": "N 8",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "DS AUTOMOBILES",
-    "modell": "N 8 AWD LONG RANGE ETOILE",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "DS AUTOMOBILES",
-    "modell": "N 8 FWD ETOILE",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "DS AUTOMOBILES",
-    "modell": "NO 8",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "EXLANTIX",
-    "modell": "ES",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "EXLANTIX",
-    "modell": "ET",
-    "verbrauchKWh100": 21.5
+    "marke": "ELARIS",
+    "modell": "ELARIS PIO",
+    "verbrauchKWh100": 14.8
   },
   {
     "marke": "FAW",
     "modell": "E-HS9",
-    "verbrauchKWh100": 23.6
+    "verbrauchKWh100": 23.4
   },
   {
     "marke": "FAW",
-    "modell": "HONGQI EH7",
-    "verbrauchKWh100": 17.4
+    "modell": "EHS9",
+    "verbrauchKWh100": 21.9
   },
   {
     "marke": "FAW",
-    "modell": "HONGQI EHS7",
-    "verbrauchKWh100": 19.8
-  },
-  {
-    "marke": "FAW",
-    "modell": "HONGQI EHS7 85 KWH 2WD",
-    "verbrauchKWh100": 19.7
+    "modell": "HONGQI E-HS9",
+    "verbrauchKWh100": 21.8
   },
   {
     "marke": "FIAT",
     "modell": "500",
-    "verbrauchKWh100": 13.8
+    "verbrauchKWh100": 13.6
   },
   {
     "marke": "FIAT",
-    "modell": "500 E",
-    "verbrauchKWh100": 14.6
+    "modell": "500 / E",
+    "verbrauchKWh100": 14.4
   },
   {
     "marke": "FIAT",
     "modell": "500E",
-    "verbrauchKWh100": 14.9
+    "verbrauchKWh100": 14.3
   },
   {
     "marke": "FIAT",
     "modell": "600",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "FIAT",
-    "modell": "600 E",
     "verbrauchKWh100": 15.2
   },
   {
@@ -1426,63 +1256,48 @@
   },
   {
     "marke": "FIAT",
-    "modell": "ABARTH 600E",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "FIAT",
     "modell": "E-DOBLO",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 19.7
   },
   {
     "marke": "FIAT",
     "modell": "FIAT 500",
+    "verbrauchKWh100": 14.1
+  },
+  {
+    "marke": "FIAT",
+    "modell": "FIAT 500E",
     "verbrauchKWh100": 14.3
   },
   {
     "marke": "FIAT",
     "modell": "FIAT E-DOBLO",
-    "verbrauchKWh100": 18.6
-  },
-  {
-    "marke": "FIAT",
-    "modell": "FIAT PANDA",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "FIAT",
-    "modell": "FIAT ULYSSE",
-    "verbrauchKWh100": 24.9
-  },
-  {
-    "marke": "FIAT",
-    "modell": "GRANDE PANDA",
-    "verbrauchKWh100": 31.9
-  },
-  {
-    "marke": "FIAT",
-    "modell": "GRANDE PANDA E",
-    "verbrauchKWh100": 16.8
+    "verbrauchKWh100": 18.8
   },
   {
     "marke": "FIAT",
     "modell": "PANDA",
-    "verbrauchKWh100": 14.2
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "FIAT",
     "modell": "SCUDO",
-    "verbrauchKWh100": 25.5
+    "verbrauchKWh100": 24.9
   },
   {
     "marke": "FIAT",
     "modell": "ULYSSE",
-    "verbrauchKWh100": 24.6
+    "verbrauchKWh100": 25.5
   },
   {
     "marke": "FISKER",
     "modell": "OCEAN",
     "verbrauchKWh100": 18.4
+  },
+  {
+    "marke": "FISKER GROUP",
+    "modell": "OCEAN",
+    "verbrauchKWh100": 18.3
   },
   {
     "marke": "FORD",
@@ -1491,127 +1306,32 @@
   },
   {
     "marke": "FORD",
-    "modell": "CAPRI 210 RWD",
-    "verbrauchKWh100": 13.8
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI 250 AWD",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI 250 AWD 4X4",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI ER AWD",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI ER AWD PREMIUM",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI ER PREMIUM",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI ER RWD",
-    "verbrauchKWh100": 13.9
-  },
-  {
-    "marke": "FORD",
     "modell": "CAPRI PREMIUM",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI PREMIUM ER AWD",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI SELECT",
-    "verbrauchKWh100": 14.2
-  },
-  {
-    "marke": "FORD",
-    "modell": "CAPRI SR RWD",
-    "verbrauchKWh100": 15.7
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "FORD",
     "modell": "E-TRANSIT",
-    "verbrauchKWh100": 37.6
+    "verbrauchKWh100": 33.7
   },
   {
     "marke": "FORD",
     "modell": "EXPLORER",
-    "verbrauchKWh100": 15
+    "verbrauchKWh100": 15.1
   },
   {
     "marke": "FORD",
-    "modell": "EXPLORER 125 RWD",
-    "verbrauchKWh100": 16.5
+    "modell": "EXPLORER / 210 RWD 4X2",
+    "verbrauchKWh100": 14
   },
   {
     "marke": "FORD",
-    "modell": "EXPLORER 210 RWD",
-    "verbrauchKWh100": 14.5
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER 210 RWD 4X2",
-    "verbrauchKWh100": 14.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER 250 AWD",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER 250 AWD 4X4",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER ER AWD",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER ER AWD PREMIUM",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER ER PREMIUM",
-    "verbrauchKWh100": 15.4
+    "modell": "EXPLORER / 250 AWD 4X4",
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "FORD",
     "modell": "EXPLORER PREMIUM",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER SELECT",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER SR RWD",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "EXPLORER STYLE",
     "verbrauchKWh100": 16.4
   },
   {
@@ -1621,158 +1341,73 @@
   },
   {
     "marke": "FORD",
-    "modell": "MACH -E PREMIUM",
-    "verbrauchKWh100": 19.3
+    "modell": "MACH-E",
+    "verbrauchKWh100": 17.7
   },
   {
     "marke": "FORD",
     "modell": "MACH-E GT",
-    "verbrauchKWh100": 21
+    "verbrauchKWh100": 21.2
   },
   {
     "marke": "FORD",
     "modell": "MACH-E PREMIUM",
-    "verbrauchKWh100": 17.9
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "FORD",
     "modell": "MUSTANG MACH-E",
-    "verbrauchKWh100": 18.6
+    "verbrauchKWh100": 18.4
   },
   {
     "marke": "FORD",
-    "modell": "MUSTANG MACH-E 221 ERB 4X2",
-    "verbrauchKWh100": 17.3
+    "modell": "MUSTANG MACH-E / 221 SRB 4X2",
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "FORD",
-    "modell": "MUSTANG MACH-E 290 ERB AWD",
-    "verbrauchKWh100": 19.3
+    "modell": "MUSTANG MACH-E / 275 ERB 4X4",
+    "verbrauchKWh100": 18.8
+  },
+  {
+    "marke": "FORD",
+    "modell": "MUSTANG MACH-E AWD",
+    "verbrauchKWh100": 19.2
   },
   {
     "marke": "FORD",
     "modell": "MUSTANG MACH-E GT",
-    "verbrauchKWh100": 21.1
+    "verbrauchKWh100": 20.9
+  },
+  {
+    "marke": "FORD",
+    "modell": "MUSTANG MACH-E PREMIUM",
+    "verbrauchKWh100": 18.1
   },
   {
     "marke": "FORD",
     "modell": "MUSTANG-MACH-E",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "FORD",
-    "modell": "PUMA",
-    "verbrauchKWh100": 13.1
-  },
-  {
-    "marke": "FORD",
-    "modell": "PUMA BEV 123.50 1SA",
-    "verbrauchKWh100": 13.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "PUMA GEN-E",
-    "verbrauchKWh100": 32.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "PUMA GEN-E PREMIUM",
-    "verbrauchKWh100": 13.8
-  },
-  {
-    "marke": "FORD",
-    "modell": "PUMA GEN-E SOUND EDITION",
-    "verbrauchKWh100": 13.9
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER ACTIVE",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER BEV 100 1SA",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER TIT.",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER TITANIUM",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO COURIER TREND",
-    "verbrauchKWh100": 17.3
+    "verbrauchKWh100": 17.9
   },
   {
     "marke": "FORD",
     "modell": "TOURNEO CUSTOM",
-    "verbrauchKWh100": 25.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "TOURNEO CUSTOM TIT.",
-    "verbrauchKWh100": 24.9
+    "verbrauchKWh100": 25.3
   },
   {
     "marke": "FORD",
     "modell": "TRANSIT",
-    "verbrauchKWh100": 35.1
+    "verbrauchKWh100": 34.6
   },
   {
     "marke": "FORD",
     "modell": "TRANSIT CUSTOM",
-    "verbrauchKWh100": 23.4
-  },
-  {
-    "marke": "FORD",
-    "modell": "TRANSIT CUSTOM TREND",
-    "verbrauchKWh100": 23.4
-  },
-  {
-    "marke": "FORTHING",
-    "modell": "S50EVK",
-    "verbrauchKWh100": 16.2
+    "verbrauchKWh100": 23.7
   },
   {
     "marke": "FORTHING",
     "modell": "SX5G EV",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "GAC",
-    "modell": "AION V",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "GAC- AION",
-    "modell": "AION V",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "GEELY",
-    "modell": "001",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "GEELY",
-    "modell": "GEELY E5- GEELY EX5- GEELY E05",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "GEELY",
-    "modell": "GEELY EX5 BEV AUT.",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 17.9
   },
   {
     "marke": "GEELY",
@@ -1780,44 +1415,34 @@
     "verbrauchKWh100": 16.5
   },
   {
-    "marke": "GEELY",
-    "modell": "X",
-    "verbrauchKWh100": 16.5
-  },
-  {
     "marke": "GREAT WALL",
     "modell": "ORA 03",
     "verbrauchKWh100": 16.7
   },
   {
     "marke": "GREAT WALL",
-    "modell": "ORA FUNKY CAT",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "GREAT WALL MOTOR CO. LTD.",
-    "modell": "ORA 03",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "GREAT WALL MOTOR CO. LTD.",
     "modell": "ORA 07",
-    "verbrauchKWh100": 16.9
+    "verbrauchKWh100": 17.1
   },
   {
-    "marke": "GREAT WALL MOTOR CO. LTD.",
+    "marke": "GREAT WALL",
     "modell": "ORA FUNKY CAT",
-    "verbrauchKWh100": 16.5
+    "verbrauchKWh100": 16.6
   },
   {
-    "marke": "GREAT WALL MOTOR CO. LTD.",
+    "marke": "GREAT WALL",
     "modell": "ORA FUNKY CAT GT",
     "verbrauchKWh100": 16.8
   },
   {
     "marke": "HONDA",
+    "modell": "E NY1",
+    "verbrauchKWh100": 18.2
+  },
+  {
+    "marke": "HONDA",
     "modell": "E:NY1",
-    "verbrauchKWh100": 20.1
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "HONDA",
@@ -1830,219 +1455,74 @@
     "verbrauchKWh100": 18.2
   },
   {
-    "marke": "HYUNDAI",
-    "modell": "INSTER",
-    "verbrauchKWh100": 15.3
+    "marke": "HONDA",
+    "modell": "HONDA E",
+    "verbrauchKWh100": 17.7
   },
   {
     "marke": "HYUNDAI",
-    "modell": "INSTER 71.1 KW EV",
-    "verbrauchKWh100": 14.3
+    "modell": "G80 GENESIS G80",
+    "verbrauchKWh100": 19.1
   },
   {
     "marke": "HYUNDAI",
-    "modell": "INSTER 84.5 KW EV",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ 5",
+    "modell": "GV60 GENESIS GV60",
     "verbrauchKWh100": 18.6
   },
   {
     "marke": "HYUNDAI",
-    "modell": "IONIQ 5 N",
-    "verbrauchKWh100": 21.2
+    "modell": "GV70 GENESIS GV70",
+    "verbrauchKWh100": 19.3
   },
   {
     "marke": "HYUNDAI",
-    "modell": "IONIQ 6",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ 9",
-    "verbrauchKWh100": 20.2
+    "modell": "INSTER",
+    "verbrauchKWh100": 14.8
   },
   {
     "marke": "HYUNDAI",
     "modell": "IONIQ5",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ5 73.9 KW+165.4 KW 4WD EV N-LINE",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ5 168.1 KW 2WD EV",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ5 168.1 KW 2WD EV N-LINE",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ5 IONIQ5 N",
-    "verbrauchKWh100": 19.4
+    "verbrauchKWh100": 17.4
   },
   {
     "marke": "HYUNDAI",
     "modell": "IONIQ5 N",
-    "verbrauchKWh100": 21.1
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ5 N 175 KW+303 KW 4WD EV",
     "verbrauchKWh100": 21.2
   },
   {
     "marke": "HYUNDAI",
-    "modell": "IONIQ5- IONIQ5 N",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "HYUNDAI",
     "modell": "IONIQ6",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ6 73.9 KW+165.4 KW 4WD EV",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ6 168.1 KW 2WD EV",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "IONIQ9",
-    "verbrauchKWh100": 20.6
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KAUAI",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 99 EV",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 115 EV",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 150 EV",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 150 EV N-LINE",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 160 EV",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA 160 EV N-LINE",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA KAUAI",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA- KAUAI",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA, KAUAI",
     "verbrauchKWh100": 15.2
   },
   {
     "marke": "HYUNDAI",
-    "modell": "KONA,KAUAI",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "HYUNDAI",
-    "modell": "KONA. KAUAI",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "HYUNDAI, GENESIS",
-    "modell": "G80",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "HYUNDAI, GENESIS",
-    "modell": "GV60",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "HYUNDAI, GENESIS",
-    "modell": "GV60, GENESIS GV60",
-    "verbrauchKWh100": 21.9
-  },
-  {
-    "marke": "HYUNDAI, GENESIS",
-    "modell": "GV70",
-    "verbrauchKWh100": 19.5
-  },
-  {
-    "marke": "HYUNDAI, GENESIS",
-    "modell": "GV70, GENESIS GV70",
-    "verbrauchKWh100": 19.2
+    "modell": "KONA KAUAI",
+    "verbrauchKWh100": 15
   },
   {
     "marke": "JAC",
     "modell": "E-JS4",
-    "verbrauchKWh100": 18
+    "verbrauchKWh100": 17.9
   },
   {
     "marke": "JAC",
     "modell": "E30X",
-    "verbrauchKWh100": 17.8
+    "verbrauchKWh100": 15.7
   },
   {
-    "marke": "JAECOO",
-    "modell": "E5",
-    "verbrauchKWh100": 16.5
+    "marke": "JAC",
+    "modell": "ES4",
+    "verbrauchKWh100": 18
   },
   {
-    "marke": "JAECOO",
-    "modell": "JAECOO E5",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "JAECOO",
-    "modell": "JAECOO5 EV",
-    "verbrauchKWh100": 14.8
+    "marke": "JAGUAR",
+    "modell": "I PACE",
+    "verbrauchKWh100": 23.2
   },
   {
     "marke": "JAGUAR",
     "modell": "I-PACE",
-    "verbrauchKWh100": 23.9
+    "verbrauchKWh100": 23.6
   },
   {
     "marke": "JAGUAR",
@@ -2050,39 +1530,24 @@
     "verbrauchKWh100": 23.5
   },
   {
-    "marke": "JEEP",
-    "modell": "AVENGER",
-    "verbrauchKWh100": 14.8
+    "marke": "JAGUAR",
+    "modell": "JAGUAR I-PACE EV320 S AWD",
+    "verbrauchKWh100": 22.9
   },
   {
     "marke": "JEEP",
-    "modell": "AVENGER E",
+    "modell": "AVENGER",
     "verbrauchKWh100": 15.6
   },
   {
     "marke": "JEEP",
-    "modell": "COMPASS",
-    "verbrauchKWh100": 18.5
+    "modell": "AVENGER / E / 4X2 FWD",
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "JEEP",
-    "modell": "JUNIOR AVENGER",
-    "verbrauchKWh100": 10.9
-  },
-  {
-    "marke": "KG MOBILITY",
-    "modell": "KG MOBILITY TORRES EVX",
-    "verbrauchKWh100": 19.1
-  },
-  {
-    "marke": "KG MOBILITY",
-    "modell": "TORRES EVX",
-    "verbrauchKWh100": 21.2
-  },
-  {
-    "marke": "KG MOBILITY",
-    "modell": "TORRES EVX 2WD",
-    "verbrauchKWh100": 18.7
+    "modell": "JUNIOR / AVENGER",
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "KGM",
@@ -2090,184 +1555,19 @@
     "verbrauchKWh100": 18.7
   },
   {
-    "marke": "KIA",
-    "modell": "E - NIRO 150",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV 6",
-    "verbrauchKWh100": 23.1
+    "marke": "KGM",
+    "modell": "TORRES EVX 2WD",
+    "verbrauchKWh100": 18.7
   },
   {
     "marke": "KIA",
     "modell": "EV3",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 AIR 56,7KWH AT FWD 204",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 AIR 56,7KWH AT FWD 204 HP",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 AIR 81,4KWH AT FWD 204",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 AIR 81,4KWH AT FWD 204 MY2",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 BIZ 81,4KWH AT FWD 204",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 BIZ 81,4KWH AT FWD 204 BIZ",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 EARTH 81,4KWH AT FWD 204",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 EARTH PLUS 81,4KWH AT FWD",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 GT-LINE 81,4KWH AT FWD 204",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 LONG RANGE 2WD",
     "verbrauchKWh100": 15.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV3 STANDARD RANGE 2WD",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV4",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV4HB EARTH PLUS 81,4KWH AT FW",
-    "verbrauchKWh100": 15.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV4HB GT-LINE 81,4KWH AT FWD 2",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV4SE EARTH PLUS 81,4KWH AT FW",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV4SE GT-LINE 81,4KWH AT FWD 2",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV5",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV5 1ST EDITION 81,4KWH AT FWD",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV5 GT-LINE 81,4KWH AT FWD 216",
-    "verbrauchKWh100": 17.8
   },
   {
     "marke": "KIA",
     "modell": "EV6",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 AIR 84,0KWH AT AWD 326",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 AIR 84,0KWH AT RWD 229",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 AIR BIZ 84,0KWH AT RWD 229",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 AIR PLUS 84,0KWH AT AWD 32",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 AIR PLUS 84,0KWH AT RWD 22",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 EV LONG RANGE 2WD",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT",
-    "verbrauchKWh100": 20.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT 84,0KWH AT AWD GT 601 S",
-    "verbrauchKWh100": 20.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT-LINE 77,4KWH AT AWD 326",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT-LINE 84,0KWH AT AWD 326",
-    "verbrauchKWh100": 17.7
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT-LINE 84,0KWH AT RWD 229",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT-LINE PREMIUM 77,4KWH AT",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV6 GT-LINE PREMIUM 84,0KWH AT",
-    "verbrauchKWh100": 17.5
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "KIA",
@@ -2276,63 +1576,8 @@
   },
   {
     "marke": "KIA",
-    "modell": "EV9 6 GT-LINE 100KWH AT AWD 38",
-    "verbrauchKWh100": 22.1
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV9 7 EARTH 100KWH AT AWD 384",
-    "verbrauchKWh100": 22
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV9 7 EARTH 100KWH AT RWD 203",
-    "verbrauchKWh100": 20.1
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV9 7 GT-LINE 100KWH AT AWD 38",
-    "verbrauchKWh100": 22
-  },
-  {
-    "marke": "KIA",
-    "modell": "EV9 GT",
-    "verbrauchKWh100": 21.7
-  },
-  {
-    "marke": "KIA",
     "modell": "NIRO",
-    "verbrauchKWh100": 19.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "NIROEV GOLD E-MOTOR 64,8KWH AT",
     "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "NIROEV PLATIN E-MOTOR 64,8KWH",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "NIROEV SILBER E-MOTOR 64,8KWH",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "KIA",
-    "modell": "PV5",
-    "verbrauchKWh100": 18.8
-  },
-  {
-    "marke": "KIA",
-    "modell": "PV5 5S EARTH 71,2KWH AT 163 P1",
-    "verbrauchKWh100": 19.3
-  },
-  {
-    "marke": "KIA",
-    "modell": "PV5 5S EARTH PLUS 71,2KWH AT 1",
-    "verbrauchKWh100": 19.3
   },
   {
     "marke": "KIA",
@@ -2342,47 +1587,27 @@
   {
     "marke": "LANCIA",
     "modell": "YPSILON",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "LEAPMOTOR",
-    "modell": "B10",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "LEAPMOTOR",
-    "modell": "B10 E",
-    "verbrauchKWh100": 17.3
+    "verbrauchKWh100": 14.5
   },
   {
     "marke": "LEAPMOTOR",
     "modell": "C10",
-    "verbrauchKWh100": 17.7
+    "verbrauchKWh100": 19.8
   },
   {
     "marke": "LEAPMOTOR",
-    "modell": "C10 E",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "LEAPMOTOR",
-    "modell": "T03",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "LEAPMOTOR",
-    "modell": "T03 E",
+    "modell": "LEAPMOTOR",
     "verbrauchKWh100": 16.3
   },
   {
     "marke": "LEAPMOTOR",
-    "modell": "T03D",
-    "verbrauchKWh100": 16.1
+    "modell": "T03",
+    "verbrauchKWh100": 16.2
   },
   {
     "marke": "LEXUS",
     "modell": "LEXUS RZ300E",
-    "verbrauchKWh100": 15.5
+    "verbrauchKWh100": 15.7
   },
   {
     "marke": "LEXUS",
@@ -2395,159 +1620,99 @@
     "verbrauchKWh100": 16.7
   },
   {
-    "marke": "LEXUS",
-    "modell": "RZ450E",
-    "verbrauchKWh100": 8.2
-  },
-  {
-    "marke": "LEXUS",
-    "modell": "UX300E",
-    "verbrauchKWh100": 16.8
-  },
-  {
     "marke": "LOTUS",
     "modell": "ELETRE",
-    "verbrauchKWh100": 25.7
+    "verbrauchKWh100": 24.6
   },
   {
     "marke": "LOTUS",
     "modell": "EMEYA",
-    "verbrauchKWh100": 21.7
-  },
-  {
-    "marke": "LOTUS- LOTUS NYO",
-    "modell": "ELETRE",
-    "verbrauchKWh100": 30.7
+    "verbrauchKWh100": 21.8
   },
   {
     "marke": "LUCID MOTORS",
     "modell": "AIR",
-    "verbrauchKWh100": 14.3
+    "verbrauchKWh100": 15.4
   },
   {
-    "marke": "LUCID MOTORS",
-    "modell": "LUCID GRAVITY",
-    "verbrauchKWh100": 19.1
+    "marke": "LUCID USA INC",
+    "modell": "AIR",
+    "verbrauchKWh100": 15.7
   },
   {
     "marke": "LYNK & CO",
-    "modell": "LYNK CO 02",
-    "verbrauchKWh100": 22.3
+    "modell": "LYNK & CO 02",
+    "verbrauchKWh100": 16.3
   },
   {
-    "marke": "LYNK AND CO",
-    "modell": "LYNK AND CO 02 BEV AUT.",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "LYNK AND CO",
-    "modell": "LYNK CO 02",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "LYNK CO",
-    "modell": "LYNK CO 02",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "LYNK&AMPCO",
-    "modell": "LYNKAMPCO 02",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "LYNK&AMPCO",
-    "modell": "LYNKAMPCO 05- LYNKAMPCO 02",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "LYNK&CO",
-    "modell": "2",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "LYNK&CO",
+    "marke": "LYNK & CO",
     "modell": "LYNK AND CO 02",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "LYNK&CO",
-    "modell": "LYNK CO 02",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "M G",
-    "modell": "MG ZS EV",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "M G",
-    "modell": "MG4 ELECTRIC",
-    "verbrauchKWh100": 18.5
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "MASERATI",
     "modell": "GRANCABRIO FOLGORE",
-    "verbrauchKWh100": 24.1
+    "verbrauchKWh100": 23.6
   },
   {
     "marke": "MASERATI",
     "modell": "GRANTURISMO FOLGORE",
-    "verbrauchKWh100": 22.1
+    "verbrauchKWh100": 22.2
   },
   {
     "marke": "MASERATI",
     "modell": "GRECALE FOLGORE",
-    "verbrauchKWh100": 27.1
+    "verbrauchKWh100": 26
   },
   {
     "marke": "MAXUS",
-    "modell": "E-DELIVER9",
-    "verbrauchKWh100": 24.9
+    "modell": "EDELIVER 9",
+    "verbrauchKWh100": 32.6
   },
   {
     "marke": "MAXUS",
-    "modell": "EUNIQ5",
-    "verbrauchKWh100": 28.9
-  },
-  {
-    "marke": "MAXUS",
-    "modell": "EUNIQ6",
-    "verbrauchKWh100": 35.4
-  },
-  {
-    "marke": "MAXUS",
-    "modell": "MAXUS EUNIQ 5",
-    "verbrauchKWh100": 22.7
-  },
-  {
-    "marke": "MAXUS",
-    "modell": "MAXUS EUNIQ 5 PLUS",
+    "modell": "EUNIQ 5",
     "verbrauchKWh100": 22.6
   },
   {
     "marke": "MAXUS",
+    "modell": "EUNIQ 5 PLUS",
+    "verbrauchKWh100": 22.6
+  },
+  {
+    "marke": "MAXUS",
+    "modell": "EUNIQ 6",
+    "verbrauchKWh100": 21.5
+  },
+  {
+    "marke": "MAXUS",
+    "modell": "EUNIQ5",
+    "verbrauchKWh100": 22.7
+  },
+  {
+    "marke": "MAXUS",
+    "modell": "EUNIQ6",
+    "verbrauchKWh100": 21.5
+  },
+  {
+    "marke": "MAXUS",
+    "modell": "MAXUS EUNIQ 5",
+    "verbrauchKWh100": 33.4
+  },
+  {
+    "marke": "MAXUS",
+    "modell": "MAXUS EUNIQ 5 PLUS",
+    "verbrauchKWh100": 16.8
+  },
+  {
+    "marke": "MAXUS",
     "modell": "MAXUS EUNIQ 6",
-    "verbrauchKWh100": 21.3
+    "verbrauchKWh100": 21.8
   },
   {
     "marke": "MAXUS",
     "modell": "MAXUS MIFA 9",
-    "verbrauchKWh100": 21.8
-  },
-  {
-    "marke": "MAZDA",
-    "modell": "MAZDA 6E",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "MAZDA",
-    "modell": "MAZDA 6E HP",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "MAZDA",
-    "modell": "MAZDA 6E LP",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 20
   },
   {
     "marke": "MAZDA",
@@ -2557,97 +1722,12 @@
   {
     "marke": "MAZDA",
     "modell": "MX-30",
-    "verbrauchKWh100": 19.3
+    "verbrauchKWh100": 17.9
   },
   {
-    "marke": "MERCEDES",
-    "modell": "CLA 250 PLUS",
-    "verbrauchKWh100": 12.8
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "CLA 350 4MATIC",
-    "verbrauchKWh100": 13.6
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQA 250 PLUS",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQA 300 4MATIC",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQB 250 PLUS",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQB 300 4MATIC",
-    "verbrauchKWh100": 18.2
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQE 300",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQE 350 4MATIC",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQS 450 4MATIC",
-    "verbrauchKWh100": 18.7
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQT",
-    "verbrauchKWh100": 20
-  },
-  {
-    "marke": "MERCEDES",
-    "modell": "EQV",
-    "verbrauchKWh100": 28.6
-  },
-  {
-    "marke": "MERCEDES - BENZ",
-    "modell": "EQA 250+",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "MERCEDES - BENZ",
-    "modell": "EQB 250+",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "MERCEDES - BENZ",
-    "modell": "EQB 300 4MATIC",
-    "verbrauchKWh100": 17.7
-  },
-  {
-    "marke": "MERCEDES BENZ",
-    "modell": "CLA 250+",
-    "verbrauchKWh100": 13
-  },
-  {
-    "marke": "MERCEDES BENZ",
-    "modell": "CLA 250+ EQ",
-    "verbrauchKWh100": 13.1
-  },
-  {
-    "marke": "MERCEDES BENZ",
-    "modell": "EQA 250+",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "MERCEDES BENZ",
-    "modell": "EQB 250+",
-    "verbrauchKWh100": 15.9
+    "marke": "MERCEDES-BENZ",
+    "modell": "AMG C PERFORMANCE 4MATIC",
+    "verbrauchKWh100": 31.3
   },
   {
     "marke": "MERCEDES-BENZ",
@@ -2656,48 +1736,23 @@
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "AMG CLA 45 E PERFORMANCE",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
     "modell": "AMG CLA PERFORMANCE EQ 4MATIC",
     "verbrauchKWh100": 14.8
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "AMG EA SUV HIGH 63",
-    "verbrauchKWh100": 25.6
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG EA SUV MID 55",
-    "verbrauchKWh100": 25.6
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG EQ E 43 4MATIC",
-    "verbrauchKWh100": 22.7
-  },
-  {
-    "marke": "MERCEDES-BENZ",
     "modell": "AMG EQE 43 4MATIC",
-    "verbrauchKWh100": 20.5
+    "verbrauchKWh100": 23.2
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "AMG EQE 53 4MATIC+",
-    "verbrauchKWh100": 23.1
+    "verbrauchKWh100": 23.5
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "AMG EQS 53 4MATIC+",
-    "verbrauchKWh100": 22.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG GLC 43 E",
-    "verbrauchKWh100": 34.5
+    "verbrauchKWh100": 23.1
   },
   {
     "marke": "MERCEDES-BENZ",
@@ -2706,23 +1761,8 @@
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT 43E COUPE",
-    "verbrauchKWh100": 21.3
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT 55E COUPE",
-    "verbrauchKWh100": 22.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT 63 PRO",
-    "verbrauchKWh100": 22.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT 63E COUPE",
-    "verbrauchKWh100": 22.8
+    "modell": "AMG GLC 63 S E 4MATIC",
+    "verbrauchKWh100": 34.5
   },
   {
     "marke": "MERCEDES-BENZ",
@@ -2732,167 +1772,102 @@
   {
     "marke": "MERCEDES-BENZ",
     "modell": "AMG GT BEV HIGH",
-    "verbrauchKWh100": 22.9
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT PRO",
     "verbrauchKWh100": 22.8
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT SUV 43 E",
-    "verbrauchKWh100": 18.9
+    "modell": "C LONG RANGE EQ 4MATIC",
+    "verbrauchKWh100": 13.7
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "AMG GT SUV 63 E",
-    "verbrauchKWh100": 25.6
+    "modell": "C STANDARD RANGE EQ 4X2",
+    "verbrauchKWh100": 13.7
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "CLA",
-    "verbrauchKWh100": 12.7
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "CLA 250+",
-    "verbrauchKWh100": 12.4
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "CLA 350 4MATIC",
-    "verbrauchKWh100": 13.5
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "CLASSE EQB",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "CLASSE EQE",
-    "verbrauchKWh100": 19.7
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "E CITAN TOURER",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "E CITAN TOURER- EQT",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "ECITAN TOURER",
-    "verbrauchKWh100": 20
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "ECITAN TOURER EQT",
-    "verbrauchKWh100": 19.2
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQA",
-    "verbrauchKWh100": 16.5
+    "modell": "ECITAN TOURER/EQT",
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQA 250",
-    "verbrauchKWh100": 14.9
+    "verbrauchKWh100": 15.1
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQA 250+",
-    "verbrauchKWh100": 14.5
+    "verbrauchKWh100": 15
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQA 300 4MATIC",
-    "verbrauchKWh100": 17.1
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQA 350 4MATIC",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQB",
-    "verbrauchKWh100": 19.7
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQB 250",
-    "verbrauchKWh100": 17.5
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQB 250+",
-    "verbrauchKWh100": 15.8
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQB 300 4MATIC",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQB 350 4MATIC",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQC 400 4MATIC",
-    "verbrauchKWh100": 22.7
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQE",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQE 300",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQE 350",
     "verbrauchKWh100": 17.9
   },
   {
     "marke": "MERCEDES-BENZ",
+    "modell": "EQB 350 4MATIC",
+    "verbrauchKWh100": 18.1
+  },
+  {
+    "marke": "MERCEDES-BENZ",
+    "modell": "EQC 400 4MATIC",
+    "verbrauchKWh100": 22.8
+  },
+  {
+    "marke": "MERCEDES-BENZ",
+    "modell": "EQE 300",
+    "verbrauchKWh100": 17.4
+  },
+  {
+    "marke": "MERCEDES-BENZ",
+    "modell": "EQE 350",
+    "verbrauchKWh100": 17.3
+  },
+  {
+    "marke": "MERCEDES-BENZ",
     "modell": "EQE 350 4MATIC",
-    "verbrauchKWh100": 18.6
+    "verbrauchKWh100": 19.4
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQE 350+",
-    "verbrauchKWh100": 17.8
+    "verbrauchKWh100": 18.3
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQE 500 4MATIC",
-    "verbrauchKWh100": 19.3
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQS",
-    "verbrauchKWh100": 20.5
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQS 350",
-    "verbrauchKWh100": 17.1
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQS 450 4MATIC",
-    "verbrauchKWh100": 17.4
+    "verbrauchKWh100": 20.1
   },
   {
     "marke": "MERCEDES-BENZ",
@@ -2902,167 +1877,142 @@
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQS 500 4MATIC",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 19.5
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQS 580 4MATIC",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EQT",
-    "verbrauchKWh100": 20.4
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EQV",
-    "verbrauchKWh100": 28.2
+    "verbrauchKWh100": 28.4
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "EQV 300",
-    "verbrauchKWh100": 28.1
+    "modell": "EQV-KLASSE",
+    "verbrauchKWh100": 23.5
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "EQV- MARCO POLO- V-KLASSE- VIT",
-    "verbrauchKWh100": 27.7
+    "modell": "ESPRINTER",
+    "verbrauchKWh100": 31.1
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "EVITO TOURER",
-    "verbrauchKWh100": 27.2
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "EVITO TOURER PRO",
-    "verbrauchKWh100": 35
+    "verbrauchKWh100": 27.8
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "G 580",
-    "verbrauchKWh100": 28
+    "verbrauchKWh100": 28.6
   },
   {
     "marke": "MERCEDES-BENZ",
     "modell": "MAYBACH EQS 680",
-    "verbrauchKWh100": 22.4
+    "verbrauchKWh100": 23.1
   },
   {
     "marke": "MERCEDES-BENZ",
-    "modell": "MERCEDES-AMG C 43E",
-    "verbrauchKWh100": 31.3
+    "modell": "VAN.EA",
+    "verbrauchKWh100": 17.3
   },
   {
-    "marke": "MERCEDES-BENZ",
-    "modell": "MERCEDES-AMG C 63E",
-    "verbrauchKWh100": 34.5
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "MERCEDES-AMG E53E",
-    "verbrauchKWh100": 34
-  },
-  {
-    "marke": "MERCEDES-BENZ",
-    "modell": "SPRINTER",
-    "verbrauchKWh100": 34.7
+    "marke": "MG",
+    "modell": "4 ELECTRIC",
+    "verbrauchKWh100": 16.6
   },
   {
     "marke": "MG",
     "modell": "CYBERSTER",
-    "verbrauchKWh100": 36.8
-  },
-  {
-    "marke": "MG",
-    "modell": "IM 5",
-    "verbrauchKWh100": 19
-  },
-  {
-    "marke": "MG",
-    "modell": "IM 6",
-    "verbrauchKWh100": 23.4
+    "verbrauchKWh100": 18.4
   },
   {
     "marke": "MG",
     "modell": "MARVEL R ELECTRIC",
-    "verbrauchKWh100": 37.5
+    "verbrauchKWh100": 19.8
   },
   {
     "marke": "MG",
     "modell": "MG CYBERSTER",
-    "verbrauchKWh100": 18.5
+    "verbrauchKWh100": 19
+  },
+  {
+    "marke": "MG",
+    "modell": "MG MARVEL R",
+    "verbrauchKWh100": 19.4
   },
   {
     "marke": "MG",
     "modell": "MG MARVEL R ELECTRIC",
-    "verbrauchKWh100": 19.7
+    "verbrauchKWh100": 20.1
   },
   {
     "marke": "MG",
-    "modell": "MG S5 EV",
-    "verbrauchKWh100": 15.7
+    "modell": "MG MG 4 ELECTRIC",
+    "verbrauchKWh100": 16.6
   },
   {
     "marke": "MG",
-    "modell": "MG S6 EV",
+    "modell": "MG MG 5 ELECTRIC",
     "verbrauchKWh100": 17.9
   },
   {
     "marke": "MG",
     "modell": "MG ZS EV",
+    "verbrauchKWh100": 17.7
+  },
+  {
+    "marke": "MG",
+    "modell": "MG ZS EV ROEWE ZS EV",
     "verbrauchKWh100": 17.6
   },
   {
     "marke": "MG",
+    "modell": "MG4",
+    "verbrauchKWh100": 32.7
+  },
+  {
+    "marke": "MG",
     "modell": "MG4 ELECTRIC",
-    "verbrauchKWh100": 18
+    "verbrauchKWh100": 16.8
   },
   {
     "marke": "MG",
     "modell": "MG5 ELECTRIC",
+    "verbrauchKWh100": 17.9
+  },
+  {
+    "marke": "MG",
+    "modell": "MG5 ELETRIC",
     "verbrauchKWh100": 17.8
   },
   {
     "marke": "MG",
     "modell": "MG5 SW EV",
+    "verbrauchKWh100": 17.7
+  },
+  {
+    "marke": "MG",
+    "modell": "ZS",
     "verbrauchKWh100": 17.6
   },
   {
     "marke": "MG",
-    "modell": "MGS6 ELECTRIC",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "MG",
-    "modell": "S5 EV",
-    "verbrauchKWh100": 15.7
-  },
-  {
-    "marke": "MG",
     "modell": "ZS EV",
-    "verbrauchKWh100": 32.5
-  },
-  {
-    "marke": "MG, ROEWE",
-    "modell": "MG MARVEL R ELECTRIC",
-    "verbrauchKWh100": 20.6
-  },
-  {
-    "marke": "MG, ROEWE",
-    "modell": "MG ZS EV",
     "verbrauchKWh100": 17.8
   },
   {
     "marke": "MINI",
-    "modell": "3-DORS",
-    "verbrauchKWh100": 37
+    "modell": "3-DOORS",
+    "verbrauchKWh100": 14.5
   },
   {
     "marke": "MINI",
     "modell": "ACEMAN",
-    "verbrauchKWh100": 37.2
+    "verbrauchKWh100": 14.6
   },
   {
     "marke": "MINI",
@@ -3071,23 +2021,8 @@
   },
   {
     "marke": "MINI",
-    "modell": "ACEMAN E AUT.",
-    "verbrauchKWh100": 14.4
-  },
-  {
-    "marke": "MINI",
     "modell": "ACEMAN SE",
-    "verbrauchKWh100": 14.3
-  },
-  {
-    "marke": "MINI",
-    "modell": "ACEMAN SE AUT.",
     "verbrauchKWh100": 14.5
-  },
-  {
-    "marke": "MINI",
-    "modell": "COOPER",
-    "verbrauchKWh100": 36.1
   },
   {
     "marke": "MINI",
@@ -3102,17 +2037,22 @@
   {
     "marke": "MINI",
     "modell": "COOPER SE",
-    "verbrauchKWh100": 14.5
+    "verbrauchKWh100": 14.7
   },
   {
     "marke": "MINI",
     "modell": "COOPER SE AUT.",
-    "verbrauchKWh100": 14.5
+    "verbrauchKWh100": 15
   },
   {
     "marke": "MINI",
     "modell": "COUNTRYMAN E",
-    "verbrauchKWh100": 16.8
+    "verbrauchKWh100": 16.5
+  },
+  {
+    "marke": "MINI",
+    "modell": "COUNTRYMAN SE",
+    "verbrauchKWh100": 18.1
   },
   {
     "marke": "MINI",
@@ -3121,38 +2061,33 @@
   },
   {
     "marke": "MINI",
-    "modell": "JCW ACEMAN E",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "MINI",
-    "modell": "JCW E",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "MINI",
     "modell": "MINI ACEMAN E",
-    "verbrauchKWh100": 14.4
+    "verbrauchKWh100": 14.3
   },
   {
     "marke": "MINI",
     "modell": "MINI ACEMAN SE",
-    "verbrauchKWh100": 14.4
+    "verbrauchKWh100": 14.5
   },
   {
     "marke": "MINI",
     "modell": "MINI COOPER E",
-    "verbrauchKWh100": 13.9
+    "verbrauchKWh100": 14.1
   },
   {
     "marke": "MINI",
     "modell": "MINI COOPER E J01 HC0",
-    "verbrauchKWh100": 14.1
+    "verbrauchKWh100": 14.2
   },
   {
     "marke": "MINI",
     "modell": "MINI COOPER SE",
     "verbrauchKWh100": 14.6
+  },
+  {
+    "marke": "MINI",
+    "modell": "MINI COOPER SE BEV F56 IB1",
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "MINI",
@@ -3162,7 +2097,7 @@
   {
     "marke": "MINI",
     "modell": "MINI COUNTRYMAN E",
-    "verbrauchKWh100": 16.5
+    "verbrauchKWh100": 16.6
   },
   {
     "marke": "MINI",
@@ -3172,27 +2107,12 @@
   {
     "marke": "MINI",
     "modell": "MINI COUNTRYMAN SE ALL4",
-    "verbrauchKWh100": 18.1
+    "verbrauchKWh100": 18
   },
   {
     "marke": "MINI",
-    "modell": "MINI JCW E",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "MINI",
-    "modell": "MINI JOHN COOPER WORKS ACEMAN",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "MINI",
-    "modell": "MINI JOHN COOPER WORKS E",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "MITSUBISHI",
-    "modell": "ECLIPSE CROSS",
-    "verbrauchKWh100": 16.8
+    "modell": "MINI COUNTRYMAN SE ALL4 U25 XE",
+    "verbrauchKWh100": 18
   },
   {
     "marke": "MOKE",
@@ -3206,58 +2126,43 @@
   },
   {
     "marke": "NIO",
+    "modell": "EL7",
+    "verbrauchKWh100": 23.1
+  },
+  {
+    "marke": "NIO",
     "modell": "EL8",
-    "verbrauchKWh100": 21.8
+    "verbrauchKWh100": 21.9
+  },
+  {
+    "marke": "NIO",
+    "modell": "ES8",
+    "verbrauchKWh100": 24.1
   },
   {
     "marke": "NIO",
     "modell": "ET5",
-    "verbrauchKWh100": 20.2
+    "verbrauchKWh100": 19.7
   },
   {
     "marke": "NIO",
     "modell": "ET5 TOURING",
-    "verbrauchKWh100": 20.4
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "NIO",
     "modell": "ET7",
-    "verbrauchKWh100": 21.2
-  },
-  {
-    "marke": "NIO",
-    "modell": "FIREFLY",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "NIO",
-    "modell": "FIREFLY B",
-    "verbrauchKWh100": 33
-  },
-  {
-    "marke": "NIO",
-    "modell": "NIO",
-    "verbrauchKWh100": 14.5
-  },
-  {
-    "marke": "NISSAN",
-    "modell": "ARIYA",
-    "verbrauchKWh100": 27.9
-  },
-  {
-    "marke": "NISSAN",
-    "modell": "LEAF 40KWH",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "NISSAN",
-    "modell": "LEAF 62KWH",
-    "verbrauchKWh100": 17.8
+    "verbrauchKWh100": 20.5
   },
   {
     "marke": "NISSAN",
     "modell": "NISSAN ARIYA",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 18.8
+  },
+  {
+    "marke": "NISSAN",
+    "modell": "NISSAN LEAF 40 KWH",
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "NISSAN",
@@ -3276,43 +2181,28 @@
   },
   {
     "marke": "NISSAN",
-    "modell": "NISSAN MICRA",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "NISSAN",
     "modell": "TOWNSTAR",
-    "verbrauchKWh100": 20.3
-  },
-  {
-    "marke": "OMODA",
-    "modell": "5",
-    "verbrauchKWh100": 40
+    "verbrauchKWh100": 19.8
   },
   {
     "marke": "OMODA",
     "modell": "E5",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "OMODA",
     "modell": "OMODA5 EV",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "OPEL",
     "modell": "ASTRA",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "OPEL",
-    "modell": "ASTRA 5P ELECTRIC GS 54KWH 156 CV (115 KW)",
     "verbrauchKWh100": 15
   },
   {
     "marke": "OPEL",
-    "modell": "ASTRA 5P GS ELECTRIC 54KWH 156 CV (115 KW)",
-    "verbrauchKWh100": 14.8
+    "modell": "ASTRA 5P ELECTRIC GS 54KWH 156 CV (115 KW)",
+    "verbrauchKWh100": 14.9
   },
   {
     "marke": "OPEL",
@@ -3326,28 +2216,33 @@
   },
   {
     "marke": "OPEL",
-    "modell": "COMBO ELECTRIC 100 KW 50KWH BATERIA",
-    "verbrauchKWh100": 18.1
+    "modell": "ASTRA-E",
+    "verbrauchKWh100": 15
   },
   {
     "marke": "OPEL",
-    "modell": "COMBO ELECTRIC GS 100 KW 50KWH BATERIA",
-    "verbrauchKWh100": 18.5
+    "modell": "COMBO LIFE ELECTRIC L EDITION 100 KW / 136 CV",
+    "verbrauchKWh100": 20.1
   },
   {
     "marke": "OPEL",
-    "modell": "COMBO LIFE",
-    "verbrauchKWh100": 18.4
+    "modell": "COMBO LIFE ELECTRIC L ELEGANCE PLUS 100 KW / 136 CV",
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "OPEL",
     "modell": "COMBO-E LIFE",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 19.9
+  },
+  {
+    "marke": "OPEL",
+    "modell": "COMBO-E LIFE L ELEGANCE PLUS ELECTRICO 100 KW / 136",
+    "verbrauchKWh100": 19.8
   },
   {
     "marke": "OPEL",
     "modell": "CORSA",
-    "verbrauchKWh100": 14.8
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "OPEL",
@@ -3357,17 +2252,17 @@
   {
     "marke": "OPEL",
     "modell": "CORSA GS ELECTRIC 51KWH LONG RANGE 156 CV (115 KW)",
-    "verbrauchKWh100": 14.2
+    "verbrauchKWh100": 14.3
   },
   {
     "marke": "OPEL",
     "modell": "CORSA-E",
-    "verbrauchKWh100": 37.2
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "OPEL",
     "modell": "CORSA-E EDITION-E BEV 50KWH 136 CV (100 KW)",
-    "verbrauchKWh100": 15.6
+    "verbrauchKWh100": 15.7
   },
   {
     "marke": "OPEL",
@@ -3381,53 +2276,18 @@
   },
   {
     "marke": "OPEL",
-    "modell": "E-COMBO LIFE",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "OPEL",
     "modell": "FRONTERA",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "OPEL",
-    "modell": "FRONTERA EDITION ELECTRIC 44KWH 113 CV (83 KW)",
     "verbrauchKWh100": 18.3
-  },
-  {
-    "marke": "OPEL",
-    "modell": "FRONTERA ELECTRIC",
-    "verbrauchKWh100": 18.2
-  },
-  {
-    "marke": "OPEL",
-    "modell": "FRONTERA GS ELECTRIC 44KWH 113 CV (83 KW)",
-    "verbrauchKWh100": 18.3
-  },
-  {
-    "marke": "OPEL",
-    "modell": "FRONTERA GS ELECTRIC 44KWH 113 CV (83 KW) AUTOMATIC",
-    "verbrauchKWh100": 18.2
-  },
-  {
-    "marke": "OPEL",
-    "modell": "FRONTERA GS ELECTRIC EXTENDED RANGE 113 CV (83 KW)",
-    "verbrauchKWh100": 15.9
   },
   {
     "marke": "OPEL",
     "modell": "GRANDLAND",
-    "verbrauchKWh100": 17.4
-  },
-  {
-    "marke": "OPEL",
-    "modell": "GRANDLAND ELECTRIC",
-    "verbrauchKWh100": 38.4
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "OPEL",
     "modell": "MOKKA",
-    "verbrauchKWh100": 15.5
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "OPEL",
@@ -3436,113 +2296,123 @@
   },
   {
     "marke": "OPEL",
-    "modell": "MOKKA GS ELECTRIC BEV 54KWH 156 CV (115 KW)",
-    "verbrauchKWh100": 15.4
+    "modell": "MOKKA ELECTRIC GS BEV 54KWH 156 CV (115 KW)",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "OPEL",
+    "modell": "MOKKA ELECTRIC ULTIMATE BEV 50KWH 136 CV (100 KW)",
+    "verbrauchKWh100": 16
   },
   {
     "marke": "OPEL",
     "modell": "MOKKA-E",
-    "verbrauchKWh100": 34.4
+    "verbrauchKWh100": 15.8
   },
   {
     "marke": "OPEL",
-    "modell": "NUEVO COMBO ELECTRIC 100 KW 50KWH BATERIA",
-    "verbrauchKWh100": 18.1
+    "modell": "MOKKA-E EDITION BEV 50KWH 136 CV (100 KW)",
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "OPEL",
-    "modell": "NUEVO COMBO ELECTRIC GS 100 KW 50KWH BATERIA",
+    "modell": "MOKKA-E GS BEV 50KWH 136 CV (100 KW)",
+    "verbrauchKWh100": 15.9
+  },
+  {
+    "marke": "OPEL",
+    "modell": "NUEVO COMBO ELECTRIC 100 KW & 50KWH BATERIA",
+    "verbrauchKWh100": 18.2
+  },
+  {
+    "marke": "OPEL",
+    "modell": "NUEVO COMBO ELECTRIC GS 100 KW & 50KWH BATERIA",
     "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "OPEL",
-    "modell": "NUEVO COMBO ELECTRIC XL GS 100 KW 50KWH BATERIA",
-    "verbrauchKWh100": 18.7
   },
   {
     "marke": "OPEL",
     "modell": "NUEVO GRANDLAND GS ELECTRIC 73KWH 213 CV (156 KW)",
-    "verbrauchKWh100": 17.3
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "OPEL",
-    "modell": "NUEVO GRANDLAND GS ELECTRIC 82KWH 213 CV (156 KW)",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "OPEL",
-    "modell": "NUEVO VIVARO COMBI ELECTRIC MOTOR 100 KW + 75 KWH",
-    "verbrauchKWh100": 24.1
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO",
-    "verbrauchKWh100": 24.2
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO - ZAFIRA LIFE",
-    "verbrauchKWh100": 24.1
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO COMBI ELECTRIC M MOTOR 100 KW + 75 KWH BATE",
-    "verbrauchKWh100": 23.8
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO COMBI ELECTRIC MOTOR 100 KW + 50 KWH BATERI",
-    "verbrauchKWh100": 23.9
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO COMBI ELECTRIC MOTOR 100 KW + 75 KWH BATERI",
-    "verbrauchKWh100": 24
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO LIFE",
-    "verbrauchKWh100": 24.2
-  },
-  {
-    "marke": "OPEL",
-    "modell": "VIVARO-E L",
-    "verbrauchKWh100": 25.4
-  },
-  {
-    "marke": "OPEL",
-    "modell": "ZAFIRA",
+    "modell": "NUEVO VIVARO COMBI ELECTRIC XL MOTOR 100 KW + 50 K",
     "verbrauchKWh100": 24.3
   },
   {
     "marke": "OPEL",
-    "modell": "ZAFIRA LIFE",
+    "modell": "NUEVO ZAFIRA ELECTRIC XL MOTOR 100 KW + 75 KWH BAT",
+    "verbrauchKWh100": 24.2
+  },
+  {
+    "marke": "OPEL",
+    "modell": "VIVARO",
+    "verbrauchKWh100": 25.5
+  },
+  {
+    "marke": "OPEL",
+    "modell": "VIVARO - ZAFIRA LIFE",
+    "verbrauchKWh100": 24.7
+  },
+  {
+    "marke": "OPEL",
+    "modell": "VIVARO I VIVARO LIFE I ZAFIRA",
+    "verbrauchKWh100": 26.8
+  },
+  {
+    "marke": "OPEL",
+    "modell": "VIVARO I ZAFIRA I ZAFIRA LIFE",
     "verbrauchKWh100": 24.4
   },
   {
     "marke": "OPEL",
+    "modell": "VIVARO LIFE",
+    "verbrauchKWh100": 26.6
+  },
+  {
+    "marke": "OPEL",
+    "modell": "VIVARO-E / L",
+    "verbrauchKWh100": 27.1
+  },
+  {
+    "marke": "OPEL",
+    "modell": "ZAFIRA LIFE",
+    "verbrauchKWh100": 26.2
+  },
+  {
+    "marke": "OPEL",
     "modell": "ZAFIRA-E LIFE",
-    "verbrauchKWh100": 34.2
-  },
-  {
-    "marke": "OPEL - VAUXHALL",
-    "modell": "FRONTERA",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "OPEL-VAUXHALL",
-    "modell": "VIVARO H VIVARO LIFE H ZAFIRA",
-    "verbrauchKWh100": 24.4
-  },
-  {
-    "marke": "OPEL-VAUXHALL",
-    "modell": "VIVARO H ZAFIRA H ZAFIRA LIFE",
-    "verbrauchKWh100": 24.4
+    "verbrauchKWh100": 24.8
   },
   {
     "marke": "PEUGEOT",
     "modell": "208",
-    "verbrauchKWh100": 15.1
+    "verbrauchKWh100": 15.2
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "208 / 100 / ELEK.",
+    "verbrauchKWh100": 15.5
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "208 / 115 / ELEK.",
+    "verbrauchKWh100": 14.2
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "208 5P ACTIVE ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "208 5P ACTIVE PACK ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "208 5P ALLURE ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "PEUGEOT",
@@ -3551,18 +2421,23 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "208 100 ELEK.",
-    "verbrauchKWh100": 15.5
+    "modell": "208 5P GT ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "PEUGEOT",
     "modell": "308",
-    "verbrauchKWh100": 15.2
+    "verbrauchKWh100": 15.1
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "308 5P FIRST EDITION ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 15
   },
   {
     "marke": "PEUGEOT",
     "modell": "408",
-    "verbrauchKWh100": 14.9
+    "verbrauchKWh100": 15.2
   },
   {
     "marke": "PEUGEOT",
@@ -3571,8 +2446,28 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "2008 115 ELEK.",
+    "modell": "2008 / 100 / ELEK.",
+    "verbrauchKWh100": 15.8
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "2008 / 115 / ELEK.",
     "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "2008 ACTIVE PACK ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.8
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "2008 ALLURE PACK ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.9
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "2008 GT ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "PEUGEOT",
@@ -3581,13 +2476,13 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "3008 157 ELEK.",
-    "verbrauchKWh100": 17
+    "modell": "5008",
+    "verbrauchKWh100": 18.1
   },
   {
     "marke": "PEUGEOT",
-    "modell": "5008",
-    "verbrauchKWh100": 18.8
+    "modell": "E-208",
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "PEUGEOT",
@@ -3601,23 +2496,13 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "E-208 5P GT ELECTRICO 136 (100 KW)",
-    "verbrauchKWh100": 16
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-208 5P GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 14.4
-  },
-  {
-    "marke": "PEUGEOT",
     "modell": "E-208 5P STYLE ELECTRICO 136 (100 KW)",
     "verbrauchKWh100": 15.4
   },
   {
     "marke": "PEUGEOT",
-    "modell": "E-208 5P STYLE ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 14
+    "modell": "E-308",
+    "verbrauchKWh100": 15
   },
   {
     "marke": "PEUGEOT",
@@ -3626,43 +2511,8 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "E-308 5P GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-308 SW ALLURE ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-308 SW GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.2
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-408 ALLURE ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-408 GT ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-2008",
-    "verbrauchKWh100": 39.7
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-2008 ALLURE ELECTRICO 136 (100 KW)",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "PEUGEOT",
     "modell": "E-2008 ALLURE ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.4
+    "verbrauchKWh100": 15.3
   },
   {
     "marke": "PEUGEOT",
@@ -3672,117 +2522,97 @@
   {
     "marke": "PEUGEOT",
     "modell": "E-2008 GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-2008 STYLE ELECTRICO 136 (100 KW)",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-2008 STYLE ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.3
+    "verbrauchKWh100": 15.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-3008",
-    "verbrauchKWh100": 17.5
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "PEUGEOT",
-    "modell": "E-3008 ALLURE ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 16.9
+    "modell": "E-5008",
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "PEUGEOT",
-    "modell": "E-3008 ELECTRICO 325 (240 KW) DUAL MOTOR (LAUNCH E",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-3008 GT ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-3008 GT ELECTRICO 230 (170 KW) LONG RANGE",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-5008 ALLURE ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 17.9
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-5008 GT ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 18
+    "modell": "E-EXPERT COMBI ELECTRICO 100 KW BATERIA 50KWH LONG",
+    "verbrauchKWh100": 25.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-EXPERT COMBI ELECTRICO 100 KW BATERIA 75 KWH LONG",
-    "verbrauchKWh100": 24.2
+    "verbrauchKWh100": 26.8
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-EXPERT COMBI ELECTRICO 100 KW BATERIA 75 KWH STAN",
-    "verbrauchKWh100": 25.6
+    "verbrauchKWh100": 26.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-RIFTER",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 19.6
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-RIFTER ACTIVE PACK STANDARD 100 KW",
-    "verbrauchKWh100": 20.1
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-RIFTER ALLURE LONG 100 KW",
-    "verbrauchKWh100": 18.9
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-RIFTER ALLURE STANDARD 100 KW",
-    "verbrauchKWh100": 18.4
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-RIFTER GT LONG 100 KW",
-    "verbrauchKWh100": 19.2
+    "verbrauchKWh100": 21
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-RIFTER GT STANDARD 100 KW",
-    "verbrauchKWh100": 18.9
+    "verbrauchKWh100": 20.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "E-TRAVELLER BUSINESS ELECTRICO 100 KW BATERIA 75 K",
-    "verbrauchKWh100": 24.4
-  },
-  {
-    "marke": "PEUGEOT",
-    "modell": "E-TRAVELLER BUSINESS VIP ELECTRICO 100 KW BATERIA",
-    "verbrauchKWh100": 24.6
+    "verbrauchKWh100": 26.7
   },
   {
     "marke": "PEUGEOT",
     "modell": "EXPERT",
-    "verbrauchKWh100": 24.3
+    "verbrauchKWh100": 25.1
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "EXPERT - TRAVELLER",
+    "verbrauchKWh100": 25.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "EXPERT TRAVELLER",
-    "verbrauchKWh100": 24.1
+    "verbrauchKWh100": 26
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "N208 5P GT ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 14.4
   },
   {
     "marke": "PEUGEOT",
     "modell": "N208 5P STYLE ELECTRICO 136 (100 KW)",
     "verbrauchKWh100": 15.5
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "N2008 ALLURE ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "N2008 GT ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 15.4
   },
   {
     "marke": "PEUGEOT",
@@ -3792,17 +2622,27 @@
   {
     "marke": "PEUGEOT",
     "modell": "NUEVO E-208 5P ALLURE ELECTRICO 136 (100 KW)",
-    "verbrauchKWh100": 15.5
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "NUEVO E-208 5P GT ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 16
   },
   {
     "marke": "PEUGEOT",
     "modell": "NUEVO E-208 5P GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 14.5
+    "verbrauchKWh100": 14.4
   },
   {
     "marke": "PEUGEOT",
-    "modell": "NUEVO E-308 5P ALLURE ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 14.9
+    "modell": "NUEVO E-2008 ACTIVE ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.8
+  },
+  {
+    "marke": "PEUGEOT",
+    "modell": "NUEVO E-2008 ACTIVE ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 15.3
   },
   {
     "marke": "PEUGEOT",
@@ -3816,13 +2656,13 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "NUEVO E-2008 GT ELECTRICO 156 (115 KW)",
-    "verbrauchKWh100": 15.4
+    "modell": "NUEVO E-2008 GT ELECTRICO 136 (100 KW)",
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "PEUGEOT",
-    "modell": "NUEVO E-3008 ALLURE ELECTRICO 157 KW (210 CV)",
-    "verbrauchKWh100": 16.7
+    "modell": "NUEVO E-2008 GT ELECTRICO 156 (115 KW)",
+    "verbrauchKWh100": 15.4
   },
   {
     "marke": "PEUGEOT",
@@ -3831,13 +2671,8 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "NUEVO E-3008 GT ELECTRICO 157 KW (210 CV)",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "PEUGEOT",
     "modell": "NUEVO E-3008 GT ELECTRICO 210 (157 KW)",
-    "verbrauchKWh100": 16.9
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "PEUGEOT",
@@ -3857,7 +2692,7 @@
   {
     "marke": "PEUGEOT",
     "modell": "NUEVO E-EXPERT COMBI ELECTRICO 100 KW BATERIA 75 KW",
-    "verbrauchKWh100": 24.1
+    "verbrauchKWh100": 24
   },
   {
     "marke": "PEUGEOT",
@@ -3881,48 +2716,23 @@
   },
   {
     "marke": "PEUGEOT",
-    "modell": "NUEVO E-TRAVELLER BUSINESS ELECTRICO 100 KW BATERI",
-    "verbrauchKWh100": 24.4
-  },
-  {
-    "marke": "PEUGEOT",
     "modell": "TRAVELLER",
-    "verbrauchKWh100": 24.5
-  },
-  {
-    "marke": "POLESTAR",
-    "modell": "2",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "POLESTAR",
-    "modell": "3",
-    "verbrauchKWh100": 20.5
-  },
-  {
-    "marke": "POLESTAR",
-    "modell": "4",
-    "verbrauchKWh100": 20.9
+    "verbrauchKWh100": 25.7
   },
   {
     "marke": "POLESTAR",
     "modell": "POLESTAR 2",
-    "verbrauchKWh100": 15.6
+    "verbrauchKWh100": 15.8
   },
   {
     "marke": "POLESTAR",
     "modell": "POLESTAR 3",
-    "verbrauchKWh100": 20.2
+    "verbrauchKWh100": 21.1
   },
   {
     "marke": "POLESTAR",
     "modell": "POLESTAR 4",
     "verbrauchKWh100": 18.8
-  },
-  {
-    "marke": "POLESTAR",
-    "modell": "PS4",
-    "verbrauchKWh100": 23.5
   },
   {
     "marke": "PORSCHE",
@@ -3931,18 +2741,18 @@
   },
   {
     "marke": "PORSCHE",
+    "modell": "BOXSTER S",
+    "verbrauchKWh100": 16.6
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "BOXSTER TOP",
+    "verbrauchKWh100": 16.6
+  },
+  {
+    "marke": "PORSCHE",
     "modell": "CAYENNE",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "PORSCHE",
-    "modell": "CAYENNE COUPE",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "PORSCHE",
-    "modell": "CAYENNE S COUPE",
-    "verbrauchKWh100": 18.1
+    "verbrauchKWh100": 18.4
   },
   {
     "marke": "PORSCHE",
@@ -3951,38 +2761,18 @@
   },
   {
     "marke": "PORSCHE",
-    "modell": "CAYENNE TURBO COUPE",
-    "verbrauchKWh100": 18.4
-  },
-  {
-    "marke": "PORSCHE",
-    "modell": "CAYENNE TURBO GT COUPE",
-    "verbrauchKWh100": 21.3
-  },
-  {
-    "marke": "PORSCHE",
-    "modell": "CAYMAN TOP",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "PORSCHE",
     "modell": "MACAN",
-    "verbrauchKWh100": 17.6
+    "verbrauchKWh100": 18
   },
   {
     "marke": "PORSCHE",
     "modell": "MACAN 4",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 19.1
   },
   {
     "marke": "PORSCHE",
     "modell": "MACAN 4S",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "PORSCHE",
-    "modell": "MACAN BEV",
-    "verbrauchKWh100": 27.5
+    "verbrauchKWh100": 18.7
   },
   {
     "marke": "PORSCHE",
@@ -3992,7 +2782,7 @@
   {
     "marke": "PORSCHE",
     "modell": "MACAN BEV 4S",
-    "verbrauchKWh100": 24.5
+    "verbrauchKWh100": 27.5
   },
   {
     "marke": "PORSCHE",
@@ -4007,42 +2797,72 @@
   {
     "marke": "PORSCHE",
     "modell": "MACAN TURBO",
-    "verbrauchKWh100": 19.4
+    "verbrauchKWh100": 19.6
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN",
-    "verbrauchKWh100": 18
+    "verbrauchKWh100": 18.8
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN 4",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN 4 CROSS TURISMO",
-    "verbrauchKWh100": 19.5
+    "verbrauchKWh100": 21.1
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN 4S",
-    "verbrauchKWh100": 19
+    "verbrauchKWh100": 19.6
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN 4S CROSS TURISMO",
+    "verbrauchKWh100": 21.8
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN CROSS TURISMO",
+    "verbrauchKWh100": 26.8
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN CROSS TURISMO 4S",
+    "verbrauchKWh100": 27
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN GTS",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 22.6
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN GTS SPORT TURISMO",
+    "verbrauchKWh100": 23
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN GTS SPORTTURISMO",
+    "verbrauchKWh100": 27
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN SPORT TURISMO",
-    "verbrauchKWh100": 19.2
+    "verbrauchKWh100": 23.1
+  },
+  {
+    "marke": "PORSCHE",
+    "modell": "TAYCAN SPORT TURISMO 4S",
+    "verbrauchKWh100": 27
   },
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN TURBO",
-    "verbrauchKWh100": 19.5
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "PORSCHE",
@@ -4052,82 +2872,37 @@
   {
     "marke": "PORSCHE",
     "modell": "TAYCAN TURBO S",
-    "verbrauchKWh100": 19.1
+    "verbrauchKWh100": 20.2
   },
   {
-    "marke": "RENAULT",
-    "modell": "4 E-TECH",
-    "verbrauchKWh100": 15.5
+    "marke": "PORSCHE",
+    "modell": "TAYCAN TURBO S GT",
+    "verbrauchKWh100": 26.3
   },
   {
-    "marke": "RENAULT",
-    "modell": "5 E-TECH",
-    "verbrauchKWh100": 15.4
+    "marke": "PORSCHE",
+    "modell": "TAYCAN TURBO S TOURING",
+    "verbrauchKWh100": 26.3
   },
   {
     "marke": "RENAULT",
     "modell": "KANGOO E-TECH ELECTRIC",
-    "verbrauchKWh100": 19.7
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "MASTER",
-    "verbrauchKWh100": 40
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "MEGANE E-TECH",
-    "verbrauchKWh100": 15
+    "verbrauchKWh100": 19.9
   },
   {
     "marke": "RENAULT",
     "modell": "MEGANE E-TECH ELECTRIC",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAUL 5 E-TECH ELECTRIC",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAULT 4",
-    "verbrauchKWh100": 39.8
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAULT 4 E-TECH ELECTRI",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAULT 4 E-TECH ELECTRIC",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAULT 5",
-    "verbrauchKWh100": 38.8
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "RENAULT 5 E-TECH ELECTRI",
-    "verbrauchKWh100": 15
+    "verbrauchKWh100": 15.5
   },
   {
     "marke": "RENAULT",
     "modell": "RENAULT 5 E-TECH ELECTRIC",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "RENAULT",
-    "modell": "SCENIC",
-    "verbrauchKWh100": 21.1
+    "verbrauchKWh100": 15.1
   },
   {
     "marke": "RENAULT",
     "modell": "SCENIC E-TECH ELECTRIC",
-    "verbrauchKWh100": 17.1
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "RENAULT",
@@ -4136,373 +2911,283 @@
   },
   {
     "marke": "RENAULT",
-    "modell": "TWINGO E-TECH ELECTRIC",
-    "verbrauchKWh100": 13.3
+    "modell": "ZOE",
+    "verbrauchKWh100": 17.3
   },
   {
-    "marke": "RENAULT",
-    "modell": "ZOE",
-    "verbrauchKWh100": 17.7
+    "marke": "RIMAC",
+    "modell": "NEVERA",
+    "verbrauchKWh100": 30
+  },
+  {
+    "marke": "ROLLS ROYCE",
+    "modell": "SPECTRE",
+    "verbrauchKWh100": 22.2
   },
   {
     "marke": "ROLLS-ROYCE",
     "modell": "SPECTRE",
-    "verbrauchKWh100": 23.1
-  },
-  {
-    "marke": "ROLLS-ROYCE",
-    "modell": "SPECTRE BLACK BADGE",
-    "verbrauchKWh100": 24
+    "verbrauchKWh100": 24.6
   },
   {
     "marke": "SEAT",
     "modell": "CUPRA BORN",
-    "verbrauchKWh100": 21.8
-  },
-  {
-    "marke": "SEAT",
-    "modell": "CUPRA TAVASCAN",
-    "verbrauchKWh100": 15.8
+    "verbrauchKWh100": 15.9
   },
   {
     "marke": "SEAT",
     "modell": "TAVASCAN",
-    "verbrauchKWh100": 15.7
+    "verbrauchKWh100": 15.8
   },
   {
     "marke": "SERES",
     "modell": "SERES 3",
-    "verbrauchKWh100": 16.9
+    "verbrauchKWh100": 19
   },
   {
     "marke": "SERES",
     "modell": "SERES 5",
-    "verbrauchKWh100": 19.5
+    "verbrauchKWh100": 17.3
   },
   {
-    "marke": "SHINERAY, SWM, JINBEI, SRM",
-    "modell": "X30LEV-M1",
-    "verbrauchKWh100": 22.8
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ",
-    "verbrauchKWh100": 15.7
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ 50",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ 60",
-    "verbrauchKWh100": 21.7
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ 85",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ 85X",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ELROQ RS",
-    "verbrauchKWh100": 16.6
+    "marke": "SERES DFSK SOKON AITO",
+    "modell": "SERES 5 AITO M5 SERES 5 MAX",
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "SKODA",
     "modell": "ENYAQ",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 50",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 60",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 80",
-    "verbrauchKWh100": 17.5
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 80X",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 85",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ 85X",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ COUPE 85",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ COUPE 85X",
-    "verbrauchKWh100": 16.2
-  },
-  {
-    "marke": "SKODA",
-    "modell": "ENYAQ COUPE RS",
     "verbrauchKWh100": 16
   },
   {
     "marke": "SKODA",
+    "modell": "ENYAQ 50",
+    "verbrauchKWh100": 15.9
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ 60",
+    "verbrauchKWh100": 16.2
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ 80",
+    "verbrauchKWh100": 16.2
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ 80X",
+    "verbrauchKWh100": 18
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ 85",
+    "verbrauchKWh100": 15.5
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ 85X",
+    "verbrauchKWh100": 16.7
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ COUPE",
+    "verbrauchKWh100": 15.4
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ COUPE 60",
+    "verbrauchKWh100": 16.1
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ COUPE 85X",
+    "verbrauchKWh100": 16.3
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ COUPE IV",
+    "verbrauchKWh100": 16.5
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ COUPE RS",
+    "verbrauchKWh100": 16.1
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ IV 60",
+    "verbrauchKWh100": 16.3
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ IV 80",
+    "verbrauchKWh100": 16.2
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ IV 80X",
+    "verbrauchKWh100": 17.2
+  },
+  {
+    "marke": "SKODA",
     "modell": "ENYAQ RS",
-    "verbrauchKWh100": 16.4
+    "verbrauchKWh100": 16.6
+  },
+  {
+    "marke": "SKODA",
+    "modell": "ENYAQ80",
+    "verbrauchKWh100": 16.3
   },
   {
     "marke": "SKYWELL",
     "modell": "BE11",
-    "verbrauchKWh100": 19.4
-  },
-  {
-    "marke": "SKYWORTH",
-    "modell": "BE11, SKYWORTH K",
-    "verbrauchKWh100": 19.8
+    "verbrauchKWh100": 19.5
   },
   {
     "marke": "SMART",
     "modell": "#1",
-    "verbrauchKWh100": 17.6
+    "verbrauchKWh100": 17.7
   },
   {
     "marke": "SMART",
     "modell": "#3",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "SMART",
-    "modell": "#5",
-    "verbrauchKWh100": 19.6
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "SMART",
     "modell": "1",
-    "verbrauchKWh100": 17.6
+    "verbrauchKWh100": 18.1
   },
   {
     "marke": "SMART",
     "modell": "3",
-    "verbrauchKWh100": 17.1
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "SMART",
-    "modell": "AUTOMOBILE",
-    "verbrauchKWh100": 17.4
+    "modell": "EQ FORFOUR",
+    "verbrauchKWh100": 17.5
   },
   {
     "marke": "SMART",
     "modell": "EQ FORTWO CABRIO",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 17
   },
   {
     "marke": "SMART",
     "modell": "EQ FORTWO COUPE",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "SMART",
-    "modell": "HX11",
-    "verbrauchKWh100": 17.7
-  },
-  {
-    "marke": "SSANG YONG",
-    "modell": "KORANDO E-MOTION",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "SSANG YONG",
-    "modell": "TORRES EVX",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "SSANGYONG",
-    "modell": "KG MOBILITY TORRES EVX",
-    "verbrauchKWh100": 18.9
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "SSANGYONG",
     "modell": "KORANDO E-MOTION",
-    "verbrauchKWh100": 18.8
+    "verbrauchKWh100": 19
+  },
+  {
+    "marke": "SSANGYONG",
+    "modell": "KORANDO E-MOTION OR KORANDO EV",
+    "verbrauchKWh100": 18.1
+  },
+  {
+    "marke": "SSANGYONG",
+    "modell": "SSANGYONG KORANDO E-MOTION",
+    "verbrauchKWh100": 19.4
   },
   {
     "marke": "SSANGYONG",
     "modell": "TORRES EVX",
-    "verbrauchKWh100": 19.1
+    "verbrauchKWh100": 18.7
   },
   {
     "marke": "SUBARU",
     "modell": "SOLTERRA",
-    "verbrauchKWh100": 18.9
-  },
-  {
-    "marke": "SUBARU",
-    "modell": "SOLTERRA BEV PREMIUM",
-    "verbrauchKWh100": 17.9
-  },
-  {
-    "marke": "SUZUKI",
-    "modell": "E VITARA",
-    "verbrauchKWh100": 22
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "TESLA",
     "modell": "MODEL 3",
-    "verbrauchKWh100": 13.3
+    "verbrauchKWh100": 13.6
   },
   {
     "marke": "TESLA",
     "modell": "MODEL 3 LONG RANGE AWD",
-    "verbrauchKWh100": 14.1
+    "verbrauchKWh100": 14
   },
   {
     "marke": "TESLA",
     "modell": "MODEL 3 LONG RANGE RWD",
-    "verbrauchKWh100": 12.6
+    "verbrauchKWh100": 12.5
   },
   {
     "marke": "TESLA",
     "modell": "MODEL 3 PERFORMANCE AWD",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "TESLA",
     "modell": "MODEL 3 RWD",
-    "verbrauchKWh100": 13.5
+    "verbrauchKWh100": 13.2
   },
   {
     "marke": "TESLA",
     "modell": "MODEL S",
+    "verbrauchKWh100": 18.1
+  },
+  {
+    "marke": "TESLA",
+    "modell": "MODEL S LONG RANGE AWD",
     "verbrauchKWh100": 17.5
   },
   {
     "marke": "TESLA",
     "modell": "MODEL X",
-    "verbrauchKWh100": 19.2
+    "verbrauchKWh100": 19.7
+  },
+  {
+    "marke": "TESLA",
+    "modell": "MODEL X LONG RANGE AWD",
+    "verbrauchKWh100": 19.3
   },
   {
     "marke": "TESLA",
     "modell": "MODEL Y",
-    "verbrauchKWh100": 14.9
+    "verbrauchKWh100": 16.2
   },
   {
     "marke": "TESLA",
     "modell": "MODEL Y LONG RANGE AWD",
-    "verbrauchKWh100": 15.2
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "TESLA",
     "modell": "MODEL Y LONG RANGE RWD",
-    "verbrauchKWh100": 14.3
+    "verbrauchKWh100": 14.9
   },
   {
     "marke": "TESLA",
     "modell": "MODEL Y PERFORMANCE AWD",
-    "verbrauchKWh100": 16.4
+    "verbrauchKWh100": 17.3
   },
   {
     "marke": "TESLA",
     "modell": "MODEL Y RWD",
-    "verbrauchKWh100": 13.8
-  },
-  {
-    "marke": "TESLA",
-    "modell": "MODEL Y STANDARD",
-    "verbrauchKWh100": 13.9
-  },
-  {
-    "marke": "TOGG",
-    "modell": "T10F",
-    "verbrauchKWh100": 18.3
-  },
-  {
-    "marke": "TOGG",
-    "modell": "T10X",
-    "verbrauchKWh100": 20
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "BZ4X",
-    "verbrauchKWh100": 20
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "TOYOTA",
     "modell": "PROACE",
-    "verbrauchKWh100": 22.6
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE CITY VERSO",
-    "verbrauchKWh100": 32.1
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE CITY VERSO ELECTRI",
-    "verbrauchKWh100": 19
+    "verbrauchKWh100": 25.5
   },
   {
     "marke": "TOYOTA",
     "modell": "PROACE CITY VERSO ELECTRIC",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE CITY VERSO ELECTRIC 50",
-    "verbrauchKWh100": 18.5
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE ELECTRIC 75",
-    "verbrauchKWh100": 24.6
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE TAXI",
-    "verbrauchKWh100": 24.7
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "PROACE VERSO",
-    "verbrauchKWh100": 33.7
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "TOYOTA BZ 4X",
-    "verbrauchKWh100": 16
+    "verbrauchKWh100": 19.7
   },
   {
     "marke": "TOYOTA",
     "modell": "TOYOTA BZ4X",
-    "verbrauchKWh100": 15.2
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "TOYOTA BZ4X 4WD",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "TOYOTA",
-    "modell": "URBAN CRUISER",
-    "verbrauchKWh100": 24.7
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "VINFAST",
@@ -4512,136 +3197,51 @@
   {
     "marke": "VINFAST",
     "modell": "VF 8",
-    "verbrauchKWh100": 22.1
+    "verbrauchKWh100": 22.2
   },
   {
     "marke": "VINFAST",
     "modell": "VF6",
-    "verbrauchKWh100": 20.4
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "VINFAST",
     "modell": "VF8",
-    "verbrauchKWh100": 22.1
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.3 GTX 210 KW\"",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.3 GTX PERF. 240 KW\"",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.3 PRO 150 KW\"",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.3 PRO S 150 KW\"",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.3 PURE 125 KW\"",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.4 GTX 250 KW\"",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.4 PRO 4MOTION 210 KW\"",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.4 PRO 210 KW\"",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.7 PRO S\"",
-    "verbrauchKWh100": 14.1
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.7 TOURER GTX\"",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.7 TOURER PRO S\"",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.7 TOURER PRO\"",
-    "verbrauchKWh100": 14.9
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.7\"",
-    "verbrauchKWh100": 15.1
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.BUZZ GTX LR 250 KW\"",
-    "verbrauchKWh100": 21
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.BUZZ PRO KR 210 KW\"",
-    "verbrauchKWh100": 19.7
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "\"ID.BUZZ PRO LR 210 KW\"",
-    "verbrauchKWh100": 19.6
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "CARAVELLE",
-    "verbrauchKWh100": 24.2
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "E-CARAVELLE",
-    "verbrauchKWh100": 31.2
+    "verbrauchKWh100": 22.5
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.3",
-    "verbrauchKWh100": 25.5
+    "verbrauchKWh100": 15.4
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.3 GTX 210 KW",
-    "verbrauchKWh100": 14.7
+    "verbrauchKWh100": 14.9
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.3 GTX PERF. 240 KW",
+    "verbrauchKWh100": 15.3
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.3 PRO",
     "verbrauchKWh100": 15.4
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.3 GTX PERF.240 KW",
-    "verbrauchKWh100": 15.2
+    "modell": "ID.3 PRO 107 KW",
+    "verbrauchKWh100": 15.4
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.3 PRO 150 KW",
-    "verbrauchKWh100": 15.4
+    "verbrauchKWh100": 15.3
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.3 PRO 170 KW",
+    "modell": "ID.3 PRO PERF. 170 KW",
     "verbrauchKWh100": 15.5
   },
   {
@@ -4651,23 +3251,43 @@
   },
   {
     "marke": "VOLKSWAGEN",
+    "modell": "ID.3 PRO S PERF. 170 KW",
+    "verbrauchKWh100": 15.9
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.3 PURE 110 KW",
+    "verbrauchKWh100": 16.4
+  },
+  {
+    "marke": "VOLKSWAGEN",
     "modell": "ID.3 PURE 125 KW",
-    "verbrauchKWh100": 15
+    "verbrauchKWh100": 15.6
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4",
-    "verbrauchKWh100": 18.7
+    "verbrauchKWh100": 16.6
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 GTX 220 KW",
-    "verbrauchKWh100": 17.9
+    "verbrauchKWh100": 18
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 GTX 250 KW",
-    "verbrauchKWh100": 17.7
+    "verbrauchKWh100": 17.4
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.4 PRO",
+    "verbrauchKWh100": 16.9
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.4 PRO 4MOTION 195 KW",
+    "verbrauchKWh100": 17.9
   },
   {
     "marke": "VOLKSWAGEN",
@@ -4687,22 +3307,22 @@
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 PRO 210 KW",
-    "verbrauchKWh100": 16.1
+    "verbrauchKWh100": 16.5
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 PRO 210 KW 4M",
-    "verbrauchKWh100": 16.9
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 PURE 109 KW",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 16.4
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.4 PURE 125 KW",
-    "verbrauchKWh100": 14.5
+    "verbrauchKWh100": 16.7
   },
   {
     "marke": "VOLKSWAGEN",
@@ -4712,12 +3332,12 @@
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.5 GTX 220 KW",
-    "verbrauchKWh100": 17.5
+    "verbrauchKWh100": 17.7
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.5 GTX 250 KW",
-    "verbrauchKWh100": 16.6
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "VOLKSWAGEN",
@@ -4727,67 +3347,82 @@
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.5 PRO 150 KW",
-    "verbrauchKWh100": 16.7
+    "verbrauchKWh100": 16.8
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.5 PRO 210 KW",
-    "verbrauchKWh100": 15.7
+    "verbrauchKWh100": 16.2
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.5 PURE 125 KW",
+    "verbrauchKWh100": 17
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.7",
-    "verbrauchKWh100": 14.3
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "ID.7 GTX",
-    "verbrauchKWh100": 17.8
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "ID.7 PRO",
-    "verbrauchKWh100": 13.9
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "ID.7 PRO 210 KW",
     "verbrauchKWh100": 14.5
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.7 PRO S",
-    "verbrauchKWh100": 13.1
+    "modell": "ID.7 GTX",
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.7 TOURER",
-    "verbrauchKWh100": 14.8
+    "modell": "ID.7 PRO",
+    "verbrauchKWh100": 14.6
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.7 TOURER GTX",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "ID.7 TOURER PRO",
+    "modell": "ID.7 PRO 210 KW",
     "verbrauchKWh100": 14.9
   },
   {
     "marke": "VOLKSWAGEN",
+    "modell": "ID.7 PRO S",
+    "verbrauchKWh100": 14.3
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.7 TOURER",
+    "verbrauchKWh100": 14.9
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.7 TOURER GTX",
+    "verbrauchKWh100": 17.5
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.7 TOURER PRO",
+    "verbrauchKWh100": 15.1
+  },
+  {
+    "marke": "VOLKSWAGEN",
     "modell": "ID.7 TOURER PRO S",
-    "verbrauchKWh100": 14.2
+    "verbrauchKWh100": 14.7
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.BUZZ 150 KW",
+    "verbrauchKWh100": 21.3
   },
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.BUZZ GTX KR 250 KW",
-    "verbrauchKWh100": 20.8
+    "verbrauchKWh100": 21.4
   },
   {
     "marke": "VOLKSWAGEN",
-    "modell": "ID.BUZZ GTX LR 250 KW",
-    "verbrauchKWh100": 22.4
+    "modell": "ID.BUZZ PEOPLE",
+    "verbrauchKWh100": 20.5
+  },
+  {
+    "marke": "VOLKSWAGEN",
+    "modell": "ID.BUZZ PRO",
+    "verbrauchKWh100": 21.2
   },
   {
     "marke": "VOLKSWAGEN",
@@ -4802,267 +3437,17 @@
   {
     "marke": "VOLKSWAGEN",
     "modell": "ID.BUZZ PRO LR 210 KW",
-    "verbrauchKWh100": 22.9
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "ID.BUZZ PURE KR 125 KW",
-    "verbrauchKWh100": 20.6
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "TRANSPORTER",
-    "verbrauchKWh100": 23.5
-  },
-  {
-    "marke": "VOLKSWAGEN",
-    "modell": "TRANSPORTER CARAVELLE",
-    "verbrauchKWh100": 24.4
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.3 PRO 150 KW",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.3 PRO S 150 KW",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.3 PURE 125 KW",
-    "verbrauchKWh100": 15.2
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.4 PRO 4MOTION 210 KW",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.4 PRO 150 KW",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.4 PRO 210 KW",
-    "verbrauchKWh100": 16.1
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.5 PRO 150 KW",
-    "verbrauchKWh100": 16.5
-  },
-  {
-    "marke": "VOLKSWAGEN-VW",
-    "modell": "ID.7 PRO 210 KW",
-    "verbrauchKWh100": 14.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "CARAVELLE",
-    "verbrauchKWh100": 24.6
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 GTX 210 KW",
-    "verbrauchKWh100": 14.8
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 GTX PERF. 240 KW",
-    "verbrauchKWh100": 15.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO 150 KW",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO 170 KW",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO PERF. 170 KW",
-    "verbrauchKWh100": 15.5
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO S 150 KW",
-    "verbrauchKWh100": 15.8
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO S 170 KW",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PRO S PERF. 170 KW",
-    "verbrauchKWh100": 15.9
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.3 PURE 125 KW",
-    "verbrauchKWh100": 15.6
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 GTX 250 KW",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 PRO 4MOTION 210 KW",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 PRO 128 KW",
-    "verbrauchKWh100": 16.8
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 PRO 150 KW",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 PRO 210 KW",
-    "verbrauchKWh100": 16.4
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.4 PURE 125 KW",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.5 GTX 250 KW",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.5 PRO 128 KW",
-    "verbrauchKWh100": 16.6
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.5 PRO 150 KW",
-    "verbrauchKWh100": 16.7
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.5 PRO 210 KW",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.5 PURE 125 KW",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 GTX",
-    "verbrauchKWh100": 17.1
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 PRO",
-    "verbrauchKWh100": 14.6
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 PRO 210 KW",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 PRO S",
-    "verbrauchKWh100": 14.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 TOURER GTX",
-    "verbrauchKWh100": 17.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 TOURER PRO",
-    "verbrauchKWh100": 15
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.7 TOURER PRO S",
-    "verbrauchKWh100": 14.7
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ GTX KR 250 KW",
-    "verbrauchKWh100": 21.2
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ GTX LR 250 KW",
-    "verbrauchKWh100": 23.7
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ PRO 150 KW",
-    "verbrauchKWh100": 21.2
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ PRO KR 210 KW",
-    "verbrauchKWh100": 19.6
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ PRO LR 210 KW",
     "verbrauchKWh100": 23.2
   },
   {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "ID.BUZZ PURE KR 125 KW",
-    "verbrauchKWh100": 20.8
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "TRANSPORTER",
-    "verbrauchKWh100": 23.3
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
-    "modell": "TRANSPORTER CARAVELLE",
-    "verbrauchKWh100": 24.4
-  },
-  {
-    "marke": "VOLKSWAGEN, VW",
+    "marke": "VOLKSWAGEN",
     "modell": "UP!",
     "verbrauchKWh100": 14.6
   },
   {
-    "marke": "VOLKSWAGEN. VW",
-    "modell": "ID.3 PRO 150 KW",
-    "verbrauchKWh100": 15.4
-  },
-  {
-    "marke": "VOLKSWAGEN. VW",
-    "modell": "ID.4 GTX 250 KW",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "VOLKSWAGEN. VW",
-    "modell": "ID.4 PRO 4MOTION 210 KW",
-    "verbrauchKWh100": 16.9
-  },
-  {
-    "marke": "VOLKSWAGEN. VW",
-    "modell": "ID.7 TOURER GTX",
-    "verbrauchKWh100": 17.4
+    "marke": "VOLKSWAGEN",
+    "modell": "UP|",
+    "verbrauchKWh100": 14.4
   },
   {
     "marke": "VOLVO",
@@ -5076,108 +3461,78 @@
   },
   {
     "marke": "VOLVO",
-    "modell": "ES90",
-    "verbrauchKWh100": 16.3
-  },
-  {
-    "marke": "VOLVO",
     "modell": "EX30",
-    "verbrauchKWh100": 17.9
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "VOLVO",
-    "modell": "EX30 BEV AUT. AWD",
+    "modell": "EX30 / BEV / AUT. AWD",
+    "verbrauchKWh100": 17.5
+  },
+  {
+    "marke": "VOLVO",
+    "modell": "EX30 / BEV / AUT. RWD",
     "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLVO",
-    "modell": "EX30 BEV AUT. RWD",
-    "verbrauchKWh100": 17
-  },
-  {
-    "marke": "VOLVO",
-    "modell": "EX30 CROSS COUNTRY",
-    "verbrauchKWh100": 18.3
   },
   {
     "marke": "VOLVO",
     "modell": "EX40",
-    "verbrauchKWh100": 17.4
+    "verbrauchKWh100": 17.2
   },
   {
     "marke": "VOLVO",
     "modell": "EX90",
-    "verbrauchKWh100": 20.6
-  },
-  {
-    "marke": "VOLVO",
-    "modell": "EX90 BEV AUT. AWD",
-    "verbrauchKWh100": 18.5
+    "verbrauchKWh100": 21
   },
   {
     "marke": "VOLVO",
     "modell": "XC40",
-    "verbrauchKWh100": 17
+    "verbrauchKWh100": 17.1
   },
   {
     "marke": "VOLVO",
-    "modell": "XC40 EX40",
-    "verbrauchKWh100": 17.2
-  },
-  {
-    "marke": "VOYAH",
-    "modell": "COURAGE",
-    "verbrauchKWh100": 19.4
+    "modell": "XC40/EX40",
+    "verbrauchKWh100": 16.9
   },
   {
     "marke": "VOYAH",
     "modell": "FREE",
-    "verbrauchKWh100": 20.4
-  },
-  {
-    "marke": "VOYAH",
-    "modell": "JOY",
-    "verbrauchKWh100": 19.5
-  },
-  {
-    "marke": "XPENG",
-    "modell": "G3I",
-    "verbrauchKWh100": 17.6
+    "verbrauchKWh100": 20.2
   },
   {
     "marke": "XPENG",
     "modell": "G6",
-    "verbrauchKWh100": 18.5
+    "verbrauchKWh100": 17.7
   },
   {
     "marke": "XPENG",
     "modell": "G9",
-    "verbrauchKWh100": 22
+    "verbrauchKWh100": 20.5
   },
   {
     "marke": "XPENG",
     "modell": "P7",
-    "verbrauchKWh100": 24.5
-  },
-  {
-    "marke": "XPENG",
-    "modell": "P7,P7I",
-    "verbrauchKWh100": 19.2
+    "verbrauchKWh100": 17.5
   },
   {
     "marke": "XPENG",
     "modell": "P7I",
+    "verbrauchKWh100": 18.6
+  },
+  {
+    "marke": "XPENG",
+    "modell": "P7I P7",
     "verbrauchKWh100": 19.2
   },
   {
     "marke": "XPENG",
-    "modell": "P7I, P7",
-    "verbrauchKWh100": 18.3
+    "modell": "P7P7I",
+    "verbrauchKWh100": 19.2
   },
   {
-    "marke": "XPENG",
-    "modell": "P7P7I",
-    "verbrauchKWh100": 17.3
+    "marke": "YODO YUN",
+    "modell": "YUDO 3",
+    "verbrauchKWh100": 14.8
   },
   {
     "marke": "YUDO",
@@ -5187,31 +3542,11 @@
   {
     "marke": "ZEEKR",
     "modell": "001",
-    "verbrauchKWh100": 18
-  },
-  {
-    "marke": "ZEEKR",
-    "modell": "1",
-    "verbrauchKWh100": 18.1
-  },
-  {
-    "marke": "ZEEKR",
-    "modell": "7X",
-    "verbrauchKWh100": 19.6
+    "verbrauchKWh100": 18.2
   },
   {
     "marke": "ZEEKR",
     "modell": "X",
-    "verbrauchKWh100": 17.6
-  },
-  {
-    "marke": "ZEEKR",
-    "modell": "ZEEKR 7X AWD",
-    "verbrauchKWh100": 20
-  },
-  {
-    "marke": "ZEEKR-GEELY",
-    "modell": "X",
-    "verbrauchKWh100": 16.3
+    "verbrauchKWh100": 16.5
   }
 ]
