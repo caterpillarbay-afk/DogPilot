@@ -2,8 +2,9 @@
 // Erzeugt vehicle-database.json aus den offenen EEA-CO2-Monitoringdaten (Discodata).
 // Quelle: https://discodata.eea.europa.eu – Datenbank [CO2Emission], Schema [latest].
 // Die neueste Tabelle co2cars_<Jahr><F|P>v<Version> wird durch Ausprobieren gefunden
-// (Discodata erlaubt keine Abfrage der Tabellenliste): neuere Jahre zuerst, endgültige
-// Daten "F" vor vorläufigen "P", höchste Version zuerst. Schlägt sie fehl, gilt FALLBACK_TABLE.
+// (Discodata erlaubt keine Abfrage der Tabellenliste). Bevorzugt werden endgültige Daten "F"
+// (von der EEA geprüft) des neuesten Jahres; vorläufige "P" nur, wenn keine F-Tabelle nutzbar ist.
+// Innerhalb eines Jahres gilt die höchste Version. Zuletzt FALLBACK_TABLE.
 // Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-vehicle-database.mjs
 // Ausgabe: vehicle-database.json im Repo-Root (neben index.html)
 
@@ -91,14 +92,14 @@ async function newestVersion(year, status) {
 }
 
 async function candidateTables() {
-  const tables = [];
+  const final = [], provisional = [];
   for (let year = new Date().getFullYear(); year > FALLBACK_YEAR; year--) {
-    for (const status of ['F', 'P']) {
-      const name = await newestVersion(year, status);
-      if (name) { console.log(`Gefunden: ${name}`); tables.push(name); }
-    }
+    const f = await newestVersion(year, 'F');
+    const p = await newestVersion(year, 'P');
+    if (f) { console.log(`Gefunden: ${f}`); final.push(f); }
+    if (p) { console.log(`Gefunden: ${p}`); provisional.push(p); }
   }
-  return [...tables, FALLBACK_TABLE];
+  return [...final, FALLBACK_TABLE, ...provisional];
 }
 
 let rows = [], sourceTable = null;
@@ -116,30 +117,40 @@ for (const table of await candidateTables()) {
 if (!sourceTable) throw new Error('Keine nutzbare EEA-Tabelle gefunden.');
 console.log(`Quelle: ${sourceTable}`);
 
-// Herstellernamen, die in den Rohdaten in mehreren Schreibweisen vorkommen
-const MARKE_ALIAS = {
-  'BMW I': 'BMW',
-  'FIAT ABARTH': 'ABARTH',
-  'DFSK SERES SOKON': 'DFSK',
-  'GREAT WALL MOTOR COMPANY': 'GREAT WALL',
-  'GREAT WALL MOTOR COMPANY LIMITED': 'GREAT WALL',
-  'MERCEDES-BENZ AG': 'MERCEDES-BENZ',
-  'MG ROEWE': 'MG',
-  'MGROEWE': 'MG',
-  'OPELVAUXHALL': 'OPEL',
-  'VOLKSWAGEN VW': 'VOLKSWAGEN',
-  'VOLKSWAGENVW': 'VOLKSWAGEN',
-  'VW': 'VOLKSWAGEN',
-  'ZHIDOU ZD ELARIS': 'ZHIDOU',
-};
+// Herstellernamen kommen in vielen Schreibweisen vor ("MERCEDES - BENZ", "B M W",
+// "LYNK&AMPCO", "VOLKSWAGEN. VW" …). Verglichen wird ohne Satz- und Leerzeichen.
+const MARKE_RULES = [
+  [/^ABARTH|^FIATABARTH/, 'ABARTH'],
+  [/^AION|^GACAION/, 'AION'],
+  [/^BMW/, 'BMW'],
+  [/^CHERY/, 'CHERY'],
+  [/^DFSK/, 'DFSK'],
+  [/^DONGFENG|^DFM$/, 'DONGFENG'],
+  [/^DS(AUTOMOBILES)?$/, 'DS'],
+  [/^GREATWALL/, 'GREAT WALL'],
+  [/^HYUNDAIGENESIS|^GENESIS/, 'GENESIS'],
+  [/^KG(M|MOBILITY)$/, 'KGM'],
+  [/^LOTUS/, 'LOTUS'],
+  [/^LYNK/, 'LYNK & CO'],
+  [/^MERCEDES/, 'MERCEDES-BENZ'],
+  [/^MG/, 'MG'],
+  [/^OPEL/, 'OPEL'],
+  [/^SHINERAY/, 'SHINERAY'],
+  [/^SSANGYONG/, 'SSANGYONG'],
+  [/^(VOLKSWAGEN|VW$)/, 'VOLKSWAGEN'],
+  [/^ZEEKR/, 'ZEEKR'],
+  [/^ZHIDOU/, 'ZHIDOU'],
+];
 
 function squash(str){
   return String(str).replace(/\s+/g, ' ').trim();
 }
 
 function cleanMarke(mk){
-  const m = squash(mk);
-  return MARKE_ALIAS[m] || m;
+  const m = squash(String(mk).replace(/&AMP;?/g, '&'));
+  const key = m.replace(/[^A-Z0-9&]/g, '');
+  const rule = MARKE_RULES.find(([re]) => re.test(key));
+  return rule ? rule[1] : m.replace(/[\s,.-]+$/, '');
 }
 
 function cleanModell(cn){
