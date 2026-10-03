@@ -127,17 +127,22 @@ const MARKE_RULES = [
   [/^DFSK/, 'DFSK'],
   [/^DONGFENG|^DFM$/, 'DONGFENG'],
   [/^DS(AUTOMOBILES)?$/, 'DS'],
+  [/^FISKER/, 'FISKER'],
   [/^GREATWALL/, 'GREAT WALL'],
   [/^HYUNDAIGENESIS|^GENESIS/, 'GENESIS'],
   [/^KG(M|MOBILITY)$/, 'KGM'],
   [/^LOTUS/, 'LOTUS'],
+  [/^LUCID/, 'LUCID'],
   [/^LYNK/, 'LYNK & CO'],
   [/^MERCEDES/, 'MERCEDES-BENZ'],
   [/^MG/, 'MG'],
   [/^OPEL/, 'OPEL'],
+  [/^ROLLSROYCE/, 'ROLLS-ROYCE'],
+  [/^SERES/, 'SERES'],
   [/^SHINERAY/, 'SHINERAY'],
   [/^SSANGYONG/, 'SSANGYONG'],
   [/^(VOLKSWAGEN|VW$)/, 'VOLKSWAGEN'],
+  [/^(YUDO|YODO)/, 'YUDO'],
   [/^ZEEKR/, 'ZEEKR'],
   [/^ZHIDOU/, 'ZHIDOU'],
 ];
@@ -173,7 +178,8 @@ for (const r of rows) {
   const wh = Number(r.verbrauch_wh_km), n = Number(r.n);
   if (!Number.isFinite(wh) || wh <= 0 || !n) continue;
   const marke = cleanMarke(r.Mk), modell = cleanModell(r.Cn);
-  if (!marke || !modell) continue;
+  // Herstellerfeld fehlerhaft gemeldet (nur Ziffern, "B" …) → nicht zuordenbar
+  if (!/[A-Z].*[A-Z]/.test(marke) || !modell) continue;
   const key = `${marke}\u0000${modell}`;
   const g = groups.get(key) || { marke, modell, whSum: 0, n: 0 };
   g.whSum += wh * n; g.n += n;
