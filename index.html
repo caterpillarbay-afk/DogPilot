@@ -96,6 +96,13 @@
   .comp-names{margin-top:8px; font-size:12.5px; font-weight:600;}
   .veh-icon{font-size:30px; margin:4px 0;}
   .veh-name{font-size:12.5px; font-weight:600; overflow-wrap:break-word;}
+  .legal summary{cursor:pointer; font-weight:600; padding:6px 0;}
+  .legal details + details{border-top:1px solid var(--border); margin-top:6px; padding-top:6px;}
+  .legal p, .legal li{font-size:12.5px; color:var(--text-dim); line-height:1.45; margin:6px 0;}
+  .legal ul{padding-left:18px; margin:6px 0;}
+  .legal a{color:var(--accent);}
+  .legal b{color:var(--text);}
+  .legal .todo{color:var(--danger); font-weight:600;}
   .veh-brand{font-size:10.5px; color:var(--text-dim); letter-spacing:.3px; overflow-wrap:break-word;}
   .charge-icon{font-size:30px; margin:4px 0; color:var(--accent);}
   .photo-slot{cursor:pointer; position:relative;}
@@ -972,6 +979,53 @@ function formatAge(timestamp){
   return { days, dateStr };
 }
 
+// Impressum, Datenschutz und Quellen – Platzhalter in [eckigen Klammern] (Klasse .todo)
+// müssen vor einer Veröffentlichung durch echte Angaben ersetzt werden.
+function renderLegal(){
+  const todo = t => `<span class="todo">[${t}]</span>`;
+  return `
+  <div class="section-head"><h3>RECHTLICHES &amp; QUELLEN</h3></div>
+  <div class="card legal">
+    <details>
+      <summary>Impressum</summary>
+      <p>Angaben gemäß § 5 DDG</p>
+      <p>${todo('Vorname Nachname')}<br>${todo('Straße Hausnummer')}<br>${todo('PLZ Ort')}<br>Deutschland</p>
+      <p>E-Mail: ${todo('E-Mail-Adresse')}</p>
+      <p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${todo('Vorname Nachname, Anschrift wie oben')}</p>
+    </details>
+    <details>
+      <summary>Datenschutzerklärung</summary>
+      <p><b>Verantwortlich:</b> siehe Impressum.</p>
+      <p><b>Keine Konten, kein Tracking, keine Cookies.</b> DogPilot setzt keine Analyse- oder Werbedienste ein.</p>
+      <p><b>Speicherung auf deinem Gerät:</b> Deine Einstellungen (Fahrzeug, Verbrauch, TomTom-Key, Ladeleistung), hochgeladene Dateien und Fotos werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst sie jederzeit über die Browser-Einstellungen („Websitedaten löschen“) entfernen.</p>
+      <p><b>Hosting:</b> Die App wird über Cloudflare (Cloudflare, Inc., USA) ausgeliefert. Dabei verarbeitet Cloudflare technisch notwendige Verbindungsdaten wie IP-Adresse und Zeitpunkt des Abrufs (Art. 6 Abs. 1 lit. f DSGVO).</p>
+      <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
+      <ul>
+        <li>OpenStreetMap Foundation (Großbritannien) – Ortssuche „Nominatim“ (eingegebener Start/Ziel-Text) und Kartenkacheln</li>
+        <li>OSRM-Routingdienst (router.project-osrm.org) – Koordinaten von Start und Ziel, wenn kein TomTom-Key hinterlegt ist</li>
+        <li>TomTom International B.V. (Niederlande) – Koordinaten von Start und Ziel sowie dein Key, nur wenn du einen TomTom-Key einträgst</li>
+        <li>Open Charge Map (Großbritannien) – Koordinaten eines Ladestopps beim Abruf des Ladesäulen-Status</li>
+        <li>cdnjs / Cloudflare – Laden der Kartenbibliothek Leaflet</li>
+      </ul>
+      <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
+      <p class="hint">Stand: ${todo('Datum')}. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>
+    </details>
+    <details>
+      <summary>Quellen &amp; Lizenzen</summary>
+      <ul>
+        <li><b>Fahrzeugverbrauch:</b> Europäische Umweltagentur (EEA), CO2-Monitoringdaten Pkw – <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank">Nutzungsbedingungen der EEA</a>; Werte aufbereitet und zusammengefasst.</li>
+        <li><b>Ladesäulen:</b> Bundesnetzagentur, Ladesäulenregister – <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur.html" target="_blank">bundesnetzagentur.de</a>, Lizenz: ${todo('laut Downloadseite prüfen, z. B. CC BY 4.0')}.</li>
+        <li><b>Rastanlagen:</b> Die Autobahn GmbH des Bundes, SID/ITP über die Mobilithek – Lizenz: ${todo('laut Mobilithek-Angebot')}.</li>
+        <li><b>Ladesäulen-Status:</b> Open Charge Map – <a href="https://openchargemap.org" target="_blank">openchargemap.org</a>.</li>
+        <li><b>Karte &amp; Ortssuche:</b> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap-Mitwirkende</a> (ODbL).</li>
+        <li><b>Routing:</b> OSRM (Project OSRM) bzw. © TomTom bei eigenem Key.</li>
+        <li><b>Kartenbibliothek:</b> Leaflet (BSD-2-Clause).</li>
+      </ul>
+    </details>
+  </div>
+  `;
+}
+
 function renderProfil(){
   const csvAge = formatAge(chargingUpdatedAt);
   const xmlAge = formatAge(areasUpdatedAt);
@@ -1046,6 +1100,8 @@ function renderProfil(){
     </select>
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Wie weit seitlich der Fahrtstrecke nach Ladesäulen/Rastanlagen gesucht wird (z. B. 5 km bedeutet: bis zu 5 km links und rechts der Route). Wird beim nächsten "Fahrt planen" verwendet.</p>
   </div>
+
+  ${renderLegal()}
   `;
 }
 
