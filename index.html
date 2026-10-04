@@ -233,6 +233,7 @@
 <script>
 const favorites = {};
 const photos = {}; // schoko, fibi, vehicle -> URL
+let tomtomKeyVisible = false; // Key im Profil nur auf Wunsch (👁) im Klartext zeigen
 let tomtomApiKey = ''; // eigener, kostenloser Key von developer.tomtom.com (2.500 Anfragen/Tag)
 let routeTrafficDelayMin = null; // Verzögerung durch aktuellen Verkehr laut TomTom, in Minuten
 let routeStart = '';
@@ -1004,7 +1005,11 @@ function renderProfil(){
   <div class="section-head"><h3>LIVE-VERKEHR (OPTIONAL)</h3></div>
   <div class="card">
     <div class="card-label"><span>TomTom API-Key</span></div>
-    <input id="tomtomKeyInput" type="text" placeholder="einfügen für Live-Verkehr" value="${tomtomApiKey}" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px; font-weight:600; color:var(--text); font-family:inherit;">
+    <div style="display:flex; gap:8px;">
+      <input id="tomtomKeyInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="einfügen für Live-Verkehr" value="${escapeAttr(tomtomApiKey)}" style="flex:1; min-width:0; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px; font-weight:600; color:var(--text); font-family:inherit;${tomtomKeyVisible ? '' : ' -webkit-text-security:disc; text-security:disc;'}">
+      <button id="tomtomKeyToggle" type="button" aria-label="${tomtomKeyVisible ? 'Key verbergen' : 'Key anzeigen'}" style="flex:none; width:46px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; font-size:18px; cursor:pointer;">${tomtomKeyVisible ? '🙈' : '👁'}</button>
+    </div>
+    ${tomtomApiKey ? `<p style="font-size:12px; color:var(--text-dim); margin:6px 0 0;">Gespeichert: ••••${escapeAttr(tomtomApiKey.slice(-4))}</p>` : ''}
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Kostenlos (2.500 Anfragen/Tag, keine Kreditkarte) unter <a href="https://developer.tomtom.com" target="_blank" style="color:var(--accent);">developer.tomtom.com</a> registrieren, "Routing API"-Key erstellen und hier einfügen. Ohne Key funktioniert die Planung weiter wie bisher (OSRM, ohne Live-Stauinfo) – Verbrauch/Reichweite werden dann nicht an Stau angepasst.</p>
   </div>
 
@@ -1066,10 +1071,16 @@ function attachProfilEvents(){
     if(!Number.isNaN(v) && v > 0){ vehicleConsumptionKWh100 = v; idbSet('vehicleConsumptionKWh100', v); }
     render();
   });
+  document.getElementById('tomtomKeyToggle').addEventListener('click', ()=>{
+    tomtomKeyVisible = !tomtomKeyVisible;
+    render();
+  });
   document.getElementById('tomtomKeyInput').addEventListener('change', (e)=>{
     tomtomApiKey = e.target.value.trim();
+    tomtomKeyVisible = false;
     idbSet('tomtomApiKey', tomtomApiKey);
     toast(tomtomApiKey ? 'TomTom-Key gespeichert' : 'TomTom-Key entfernt');
+    render();
   });
   document.getElementById('csvInput').addEventListener('change', async (e)=>{
     const file = e.target.files[0];
