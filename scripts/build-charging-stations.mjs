@@ -38,6 +38,27 @@ async function findCsvUrl() {
   throw new Error('Keine CSV-Adresse des Ladesäulenregisters gefunden.');
 }
 
+// Grob Deutschland – filtert vertauschte oder fehlerhafte Koordinaten aus
+const BBOX = { latMin: 47.2, latMax: 55.1, lonMin: 5.8, lonMax: 15.1 };
+
+// Eine CSV-Zeile mit ";" als Trenner; Felder in "…" dürfen ";" und "" (= ") enthalten
+function splitCsvLine(line) {
+  const cells = [];
+  let cur = '', quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ';') { cells.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  cells.push(cur);
+  return cells;
+}
+
 function num(s) {
   return parseFloat(String(s ?? '').replace(',', '.'));
 }
@@ -45,9 +66,9 @@ function num(s) {
 // Gleiche Spalten wie parseChargingCSV() in index.html
 function parse(text) {
   const lines = text.split(/\r?\n/);
-  const headerIdx = lines.findIndex(l => l.replace(/^﻿/, '').startsWith('Ladeeinrichtungs-ID'));
+  const headerIdx = lines.findIndex(l => l.replace(/^\uFEFF/, '').startsWith('Ladeeinrichtungs-ID'));
   if (headerIdx < 0) throw new Error('Header "Ladeeinrichtungs-ID" nicht gefunden');
-  const header = lines[headerIdx].replace(/^﻿/, '').split(';').map(c => c.trim());
+  const header = splitCsvLine(lines[headerIdx].replace(/^\uFEFF/, '')).map(c => c.trim());
   console.log(`Spalten: ${JSON.stringify(header)}`);
   const col = Object.fromEntries(header.map((h, i) => [h, i]));
   for (const name of ['Breitengrad', 'Längengrad', 'Nennleistung Ladeeinrichtung [kW]', 'Anzahl Ladepunkte', 'Betreiber']) {
@@ -55,11 +76,12 @@ function parse(text) {
   }
   const out = [];
   for (let i = headerIdx + 1; i < lines.length; i++) {
-    const r = lines[i].split(';');
+    const r = splitCsvLine(lines[i]);
     if (r.length < header.length || !r[0]) continue;
     const lat = num(r[col['Breitengrad']]), lon = num(r[col['Längengrad']]);
     const kw = num(r[col['Nennleistung Ladeeinrichtung [kW]']]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(kw) || kw < MIN_KW) continue;
+    if (lat < BBOX.latMin || lat > BBOX.latMax || lon < BBOX.lonMin || lon > BBOX.lonMax) continue;
     out.push({
       lat, lon, kw,
       n: parseInt(r[col['Anzahl Ladepunkte']] || '0', 10) || 0,
@@ -88,6 +110,8 @@ const round5 = x => Math.round(x * 1e5) / 1e5;
 const data = {
   quelle: url,
   stand: new Date().toISOString().slice(0, 10),
+  // Datenstand steht im Dateinamen der BNetzA, z. B. Ladesaeulenregister_BNetzA_2026-09-01.csv
+  datenstand: (url.match(/(\d{4}-\d{2}-\d{2})/) || [])[1] || null,
   felder: ['lat', 'lon', 'kw', 'anzahlLadepunkte', 'betreiberIndex'],
   betreiber,
   punkte: points.map(p => [round5(p.lat), round5(p.lon), p.kw, p.n, bIdx.get(p.betreiber)]),
