@@ -6,7 +6,7 @@
 // - Wetter: Open-Meteo, kein Schlüssel
 // - Ladesäulen-Status: Open Charge Map (nur mit eigenem, kostenlosem Schlüssel)
 
-import { decodePolyline, encodePolyline, simplifyByDistance } from './geo.js';
+import { decodePolyline, encodePolyline, simplifyByDistance, parseCoordinates } from './geo.js';
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de';
 const OSRM = 'https://routing.openstreetmap.de/routed-car';
@@ -37,8 +37,24 @@ function photonLabel(p) {
   return { main, sub };
 }
 
+// Eingefügte Koordinaten direkt übernehmen; die Adresse dazu ist nur Beschriftung (Photon-Rückwärtssuche)
+async function coordinatePlace([lat, lon]) {
+  const sub = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  try {
+    const d = await getJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=de`, { timeout: 5000 });
+    const p = d.features?.[0]?.properties;
+    if (p) {
+      const { main, sub: place } = photonLabel(p);
+      if (main) return [{ main, sub: [place, sub].filter(Boolean).join(' · '), lat, lon }];
+    }
+  } catch { /* Beschriftung ist optional */ }
+  return [{ main: 'Koordinaten', sub, lat, lon }];
+}
+
 export async function searchPlaces(query, near) {
   if (!query || query.trim().length < 2) return [];
+  const coords = parseCoordinates(query);
+  if (coords) return coordinatePlace(coords);
   const params = new URLSearchParams({ q: query.trim(), limit: '6', lang: 'de' });
   if (near) { params.set('lat', near[0]); params.set('lon', near[1]); }
   const d = await getJson(`https://photon.komoot.io/api/?${params}`, { timeout: 8000 });

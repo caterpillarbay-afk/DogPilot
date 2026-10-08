@@ -51,6 +51,37 @@ export function simplifyByDistance(points, minKm) {
 }
 
 // Route mit kumulierten Kilometern und Raster-Index der Segmente
+// Koordinaten aus eingefügtem Text lesen, z. B. aus Google Maps:
+// "54.7886, 8.8291" · "54,7886 8,8291" · "N 54.7886 E 8.8291" · 54°47'19.0"N 8°49'44.8"E · Links mit @lat,lon oder q=lat,lon
+// Liefert [lat, lon] oder null
+export function parseCoordinates(text) {
+  const t = String(text || '').trim();
+  if (!t) return null;
+  const valid = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && (lat || lon) ? [lat, lon] : null;
+  const sign = (v, h) => /[SW]/i.test(h || '') ? -Math.abs(v) : v;
+
+  // Link mit Koordinaten
+  const url = t.match(/[@=/](-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/);
+  if (/^https?:\/\//i.test(t)) return url ? valid(+url[1], +url[2]) : null;
+
+  // Grad, Minuten, Sekunden
+  const dms = [...t.matchAll(/(?<![\d.,])(\d{1,3})\s*°\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*['′’]\s*)?(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:["″”]|''|′′)\s*)?([NSEWO])/gi)];
+  if (dms.length === 2) {
+    const deg = m => sign(+m[1] + (+(m[2] || '0').replace(',', '.')) / 60 + (+(m[3] || '0').replace(',', '.')) / 3600, m[4]);
+    const latM = dms.find(m => /[NS]/i.test(m[4])), lonM = dms.find(m => /[EWO]/i.test(m[4]));
+    return latM && lonM ? valid(deg(latM), deg(lonM)) : null;
+  }
+
+  // Dezimalgrad mit Punkt (Trenner Komma, Semikolon oder Leerzeichen) oder mit Komma (Trenner Semikolon oder Leerzeichen)
+  const H1 = '([NS])?\\s*', H2 = '\\s*([NS])?', H3 = '([EWO])?\\s*', H4 = '\\s*([EWO])?';
+  const dot = new RegExp(`^${H1}(-?\\d{1,2}\\.\\d+)°?${H2}\\s*[,;\\s]\\s*${H3}(-?\\d{1,3}\\.\\d+)°?${H4}$`, 'i');
+  const comma = new RegExp(`^${H1}(-?\\d{1,2},\\d+)°?${H2}\\s*(?:[;\\s]|,\\s)\\s*${H3}(-?\\d{1,3},\\d+)°?${H4}$`, 'i');
+  const m = t.match(dot) || t.match(comma);
+  if (!m) return null;
+  const n = v => +v.replace(',', '.');
+  return valid(sign(n(m[2]), m[1] || m[3]), sign(n(m[5]), m[4] || m[6]));
+}
+
 export class RouteLine {
   constructor(points, cellDeg = 0.05) {
     if (!points || points.length < 2) throw new Error('Route braucht mindestens zwei Punkte');

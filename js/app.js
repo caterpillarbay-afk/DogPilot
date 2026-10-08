@@ -305,6 +305,7 @@ function viewPlan() {
         ${placeField('to', 'Ziel', f.to, 'Ziel – Ort oder Adresse')}
         <button class="icon-btn swap" type="button" id="swap" aria-label="Start und Ziel tauschen">${icon('arrow-up-down')}</button>
       </div>
+      <p class="hint">Ort nicht gefunden? In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</p>
       <div class="grid-2" style="margin-top:16px">
         ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
