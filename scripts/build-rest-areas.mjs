@@ -1,97 +1,32 @@
 #!/usr/bin/env node
-// Erzeugt rest-areas.json aus OpenStreetMap (Overpass API): alle Rastanlagen und Rastplätze
-// in Deutschland samt Ausstattung im Umkreis – für Mensch (WC, Essen, Shop) und Hund
-// (Hundewiese, Park, Wald, Wiese, Picknickplatz, Trinkwasser).
-// Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-rest-areas.mjs
+// Erzeugt rest-areas.json aus OpenStreetMap: alle Rastanlagen und Rastplätze in Deutschland samt
+// Ausstattung im Umkreis – für Mensch (WC, Essen, Shop) und Hund (Hundewiese, Park, Wald, Wiese,
+// Picknickplatz, Trinkwasser).
+//
+// Eingabe: GeoJSON-Sequenz, erzeugt aus dem Geofabrik-Deutschland-Extrakt mit osmium
+// (siehe .github/workflows/rest-areas.yml):
+//   osmium tags-filter germany-latest.osm.pbf <Filter> -o filtered.osm.pbf
+//   osmium export filtered.osm.pbf -f geojsonseq -o features.geojsonseq
+// Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-rest-areas.mjs features.geojsonseq
 // Ausgabe: rest-areas.json im Repo-Root. Daten © OpenStreetMap-Mitwirkende, ODbL.
 
+import { createReadStream } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'rest-areas.json');
-const ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-];
-const UA = 'DogPilot-DataBuilder (+https://github.com/caterpillarbay-afk/DogPilot)';
+const INPUT = process.argv[2];
 const AMENITY_RADIUS_M = 250; // Einrichtungen, die zur Anlage selbst gehören
 const GREEN_RADIUS_M = 600;   // Grün und Hundewiesen in Gassi-Entfernung
-
-// Deutschland (samt Grenzregionen) in Kacheln abfragen – eine einzige Abfrage überfordert die
-// öffentlichen Overpass-Server. Grünflächen kommen nur als Umriss-Rechteck (out bb), damit auch große
-// Wälder zählen, deren Mittelpunkt weit entfernt liegt, ohne alle Randpunkte zu laden.
-const ROWS = 6, COLS = 6;   // 36 Kacheln à ca. 1,3° × 1,55°
-const BOUNDS = { south: 47.2, north: 55.1, west: 5.8, east: 15.1 };
-
-const tileQuery = ([s, w, n, e]) => `
-[out:json][timeout:300];
-nwr[highway~"^(services|rest_area)$"](${s},${w},${n},${e})->.r;
-.r out center tags;
-make grp name="amenity"; out;
-(
-  nwr(around.r:${AMENITY_RADIUS_M})[amenity~"^(toilets|restaurant|fast_food|cafe|drinking_water|fuel)$"];
-  nwr(around.r:${AMENITY_RADIUS_M})[shop~"^(convenience|kiosk)$"];
-  nwr(around.r:${AMENITY_RADIUS_M})[leisure~"^(picnic_table|playground)$"];
-  nwr(around.r:${AMENITY_RADIUS_M})[tourism=picnic_site];
-  nwr(around.r:${GREEN_RADIUS_M})[leisure=dog_park];
-);
-out center tags;
-make grp name="green"; out;
-(
-  way(around.r:${GREEN_RADIUS_M})[leisure=park];
-  way(around.r:${GREEN_RADIUS_M})[landuse~"^(forest|meadow|recreation_ground)$"];
-  way(around.r:${GREEN_RADIUS_M})[natural~"^(wood|grassland|heath)$"];
-);
-out bb tags;
-`;
-
-function tiles() {
-  const out = [];
-  const dLat = (BOUNDS.north - BOUNDS.south) / ROWS, dLon = (BOUNDS.east - BOUNDS.west) / COLS;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const s = BOUNDS.south + r * dLat, w = BOUNDS.west + c * dLon;
-      out.push([s, w, s + dLat, w + dLon].map(x => +x.toFixed(3)));
-    }
-  }
-  return out;
-}
+const M_PER_DEG = 111320;
 
 // Ausstattungs-Bits (gleiche Reihenfolge wie FEATURES in js/data.js der App)
 const F = {
   toilets: 1, food: 2, shop: 4, fuel: 8, water: 16, picnic: 32,
   playground: 64, dogPark: 128, park: 256, forest: 512, meadow: 1024,
 };
-
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-// Öffentliche Overpass-Server sind oft ausgelastet (HTTP 429/504): dann eine Minute warten.
-async function overpass(query, rounds = 3) {
-  for (let round = 0; round < rounds; round++) {
-    for (const url of ENDPOINTS) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'data=' + encodeURIComponent(query),
-          signal: AbortSignal.timeout(6 * 60 * 1000),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${(await res.text()).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 300)}`);
-        const json = await res.json();
-        if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
-        return json.elements || [];
-      } catch (err) {
-        console.warn(`  ${new URL(url).host}: ${err.message.slice(0, 160)}`);
-        await sleep(/HTTP (429|504)|too busy|rate_limited/.test(err.message) ? 60000 : 5000);
-      }
-    }
-    await sleep(30000);
-  }
-  throw new Error('Kein Overpass-Server lieferte Daten.');
-}
-
-const pos = el => el.type === 'node' ? [el.lat, el.lon] : el.center ? [el.center.lat, el.center.lon] : null;
 
 function distM(a, b) {
   const R = 6371000, toRad = Math.PI / 180;
@@ -100,117 +35,109 @@ function distM(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-function featureOf(tags) {
-  const a = tags.amenity, l = tags.leisure, lu = tags.landuse, n = tags.natural;
+// Einrichtungen (Punkt, kleiner Radius) und Grünflächen (Umriss-Rechteck, großer Radius)
+function featureOf(t) {
+  const a = t.amenity, l = t.leisure, lu = t.landuse, n = t.natural;
   if (a === 'toilets') return [F.toilets, AMENITY_RADIUS_M];
   if (a === 'restaurant' || a === 'fast_food' || a === 'cafe') return [F.food, AMENITY_RADIUS_M];
   if (a === 'fuel') return [F.fuel, AMENITY_RADIUS_M];
   if (a === 'drinking_water') return [F.water, AMENITY_RADIUS_M];
-  if (tags.shop) return [F.shop, AMENITY_RADIUS_M];
-  if (l === 'picnic_table' || tags.tourism === 'picnic_site') return [F.picnic, AMENITY_RADIUS_M];
+  if (t.shop === 'convenience' || t.shop === 'kiosk') return [F.shop, AMENITY_RADIUS_M];
+  if (l === 'picnic_table' || t.tourism === 'picnic_site') return [F.picnic, AMENITY_RADIUS_M];
   if (l === 'playground') return [F.playground, AMENITY_RADIUS_M];
   if (l === 'dog_park') return [F.dogPark, GREEN_RADIUS_M];
   if (l === 'park' || lu === 'recreation_ground') return [F.park, GREEN_RADIUS_M];
   if (lu === 'forest' || n === 'wood') return [F.forest, GREEN_RADIUS_M];
-  if (lu === 'meadow' || lu === 'grass' || n === 'grassland' || n === 'heath') return [F.meadow, GREEN_RADIUS_M];
+  if (lu === 'meadow' || n === 'grassland' || n === 'heath') return [F.meadow, GREEN_RADIUS_M];
   return null;
 }
 
 // Ausstattung, die direkt an der Anlage getaggt ist
-function ownFlags(tags) {
+function ownFlags(t) {
   let f = 0;
-  if (tags.toilets === 'yes') f |= F.toilets;
-  if (tags.drinking_water === 'yes') f |= F.water;
-  if (tags.picnic_table === 'yes') f |= F.picnic;
-  if (tags.fuel === 'yes') f |= F.fuel;
+  if (t.toilets === 'yes') f |= F.toilets;
+  if (t.drinking_water === 'yes') f |= F.water;
+  if (t.picnic_table === 'yes') f |= F.picnic;
+  if (t.fuel === 'yes') f |= F.fuel;
   return f;
 }
 
-const areas = [], pois = [], greens = [], seen = new Set();
-
-// Kachel abfragen; scheitert sie, in vier kleinere Kacheln teilen. Liefert eine Liste von Antworten.
-async function fetchTile(tile, depth = 0) {
-  try {
-    return [await overpass(tileQuery(tile), depth ? 1 : 2)];
-  } catch (err) {
-    if (depth >= 2) throw err;
-    const [s, w, n, e] = tile, ms = +((s + n) / 2).toFixed(3), mw = +((w + e) / 2).toFixed(3);
-    console.log(`  Kachel [${tile.join(', ')}] wird geteilt`);
-    const parts = [];
-    for (const t of [[s, w, ms, mw], [s, mw, ms, e], [ms, w, n, mw], [ms, mw, n, e]]) parts.push(...await fetchTile(t, depth + 1));
-    return parts;
-  }
+// Umriss-Rechteck einer GeoJSON-Geometrie: [minLat, minLon, maxLat, maxLon]
+function bbox(geometry) {
+  let minLat = Infinity, minLon = Infinity, maxLat = -Infinity, maxLon = -Infinity;
+  const walk = c => {
+    if (typeof c[0] === 'number') {
+      if (c[1] < minLat) minLat = c[1];
+      if (c[1] > maxLat) maxLat = c[1];
+      if (c[0] < minLon) minLon = c[0];
+      if (c[0] > maxLon) maxLon = c[0];
+    } else for (const x of c) walk(x);
+  };
+  walk(geometry.coordinates);
+  return minLat === Infinity ? null : [minLat, minLon, maxLat, maxLon];
 }
 
-const all = tiles();
-for (const [i, tile] of all.entries()) {
-  let nA = 0, nP = 0, nG = 0;
-  for (const elements of await fetchTile(tile)) {
-    let group = null;
-    for (const el of elements) {
-      if (el.type === 'grp') { group = el.tags?.name; continue; }
-      if (group === 'green') {
-        const b = el.bounds, t = el.tags || {};
-        if (!b) continue;
-        const bit = t.leisure === 'park' || t.landuse === 'recreation_ground' ? F.park
-          : t.landuse === 'forest' || t.natural === 'wood' ? F.forest : F.meadow;
-        greens.push({ b, bit }); nG++;
-        continue;
-      }
-      const p = pos(el);
-      if (!p) continue;
-      if (group === null) {
-        if (!seen.has(el.type + el.id)) { seen.add(el.type + el.id); areas.push({ el, p }); nA++; }
-        continue;
-      }
-      const bit = featureOf(el.tags || {});
-      if (bit) { pois.push({ p, bit: bit[0], radius: bit[1] }); nP++; }
-    }
-  }
-  console.log(`Kachel ${i + 1}/${all.length} [${tile.join(', ')}]: ${nA} Anlagen, ${nP} Einrichtungen, ${nG} Grünflächen`);
-  await sleep(2000);
-}
-console.log(`${areas.length} Anlagen, ${pois.length} Einrichtungen in der Nähe`);
-if (areas.length < 500) throw new Error(`Nur ${areas.length} Anlagen – Antwort unvollständig?`);
+if (!INPUT) throw new Error('Aufruf: node scripts/build-rest-areas.mjs features.geojsonseq');
 
-// Raster-Index der Anlagen (~0,01°) für die Zuordnung der Einrichtungen
-const cell = p => `${Math.floor(p[0] * 100)}:${Math.floor(p[1] * 100)}`;
+const areas = [], items = [];
+let lines = 0;
+const rl = createInterface({ input: createReadStream(INPUT), crlfDelay: Infinity });
+for await (let line of rl) {
+  line = line.replace(/^\x1e/, '').trim();   // GeoJSON-Sequenz: optionales Record-Separator-Zeichen
+  if (!line) continue;
+  lines++;
+  const feat = JSON.parse(line);
+  const t = feat.properties || {};
+  const b = feat.geometry && bbox(feat.geometry);
+  if (!b) continue;
+  const center = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+  if (t.highway === 'services' || t.highway === 'rest_area') {
+    const name = (t.name || '').trim();
+    areas.push({
+      p: center, flags: ownFlags(t), name,
+      services: t.highway === 'services',
+      autohof: /autohof|truck ?stop/i.test(name),
+    });
+    continue;
+  }
+  const f = featureOf(t);
+  if (f) items.push({ b, bit: f[0], radius: f[1] });
+}
+console.log(`${lines} Objekte gelesen: ${areas.length} Anlagen, ${items.length} Einrichtungen/Grünflächen`);
+if (areas.length < 500) throw new Error(`Nur ${areas.length} Anlagen – Eingabe unvollständig?`);
+
+// Raster-Index der Anlagen (0,05°), damit jede Einrichtung nur Anlagen in ihrer Nähe prüft
+const CELL = 0.05;
 const grid = new Map();
-const out = areas.map(({ el, p }) => {
-  const t = el.tags;
-  const a = { p, flags: ownFlags(t), name: (t.name || '').trim(), services: t.highway === 'services', autohof: /autohof|truck ?stop/i.test(t.name || '') };
-  const k = cell(p);
+for (const a of areas) {
+  const k = `${Math.floor(a.p[0] / CELL)}:${Math.floor(a.p[1] / CELL)}`;
   if (!grid.has(k)) grid.set(k, []);
   grid.get(k).push(a);
-  return a;
-});
-for (const poi of pois) {
-  const [ci, cj] = [Math.floor(poi.p[0] * 100), Math.floor(poi.p[1] * 100)];
-  for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
-    for (const a of grid.get(`${ci + di}:${cj + dj}`) || []) {
-      if (distM(a.p, poi.p) <= poi.radius) a.flags |= poi.bit;
-    }
-  }
 }
-
-// Grünflächen: Abstand der Anlage zum Umriss-Rechteck (0 innerhalb)
-const M_PER_DEG = 111320;
-for (const g of greens) {
-  const { minlat, minlon, maxlat, maxlon } = g.b;
-  const padLat = GREEN_RADIUS_M / M_PER_DEG, padLon = padLat / Math.cos(minlat * Math.PI / 180);
-  for (const a of out) {
-    const [lat, lon] = a.p;
-    if (lat < minlat - padLat || lat > maxlat + padLat || lon < minlon - padLon || lon > maxlon + padLon) continue;
-    const q = [Math.min(maxlat, Math.max(minlat, lat)), Math.min(maxlon, Math.max(minlon, lon))];
-    if (distM(a.p, q) <= GREEN_RADIUS_M) a.flags |= g.bit;
+for (const it of items) {
+  const [minLat, minLon, maxLat, maxLon] = it.b;
+  const padLat = it.radius / M_PER_DEG, padLon = padLat / Math.cos(minLat * Math.PI / 180);
+  const i0 = Math.floor((minLat - padLat) / CELL), i1 = Math.floor((maxLat + padLat) / CELL);
+  const j0 = Math.floor((minLon - padLon) / CELL), j1 = Math.floor((maxLon + padLon) / CELL);
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+    for (const a of grid.get(`${i}:${j}`) || []) {
+      if (a.flags & it.bit) continue;
+      // Abstand zum Umriss-Rechteck (0 innerhalb); bei Punkten ist das Rechteck der Punkt selbst
+      const q = [Math.min(maxLat, Math.max(minLat, a.p[0])), Math.min(maxLon, Math.max(minLon, a.p[1]))];
+      if (distM(a.p, q) <= it.radius) a.flags |= it.bit;
+    }
   }
 }
 
 // Doppelte Objekte (gleicher Name, < 80 m) zusammenfassen
 const merged = [];
-for (const a of out) {
-  const dup = merged.find(m => m.name === a.name && distM(m.p, a.p) < 80);
+const byName = new Map();
+for (const a of areas) {
+  const same = byName.get(a.name) || [];
+  const dup = same.find(m => distM(m.p, a.p) < 80);
   if (dup) { dup.flags |= a.flags; continue; }
+  same.push(a);
+  byName.set(a.name, same);
   merged.push(a);
 }
 
@@ -218,7 +145,7 @@ const names = [...new Set(merged.map(a => a.name))].sort();
 const nIdx = new Map(names.map((n, i) => [n, i]));
 const round5 = x => Math.round(x * 1e5) / 1e5;
 const data = {
-  quelle: 'OpenStreetMap (Overpass API), © OpenStreetMap-Mitwirkende, ODbL',
+  quelle: 'OpenStreetMap (Geofabrik-Extrakt Deutschland), © OpenStreetMap-Mitwirkende, ODbL',
   stand: new Date().toISOString().slice(0, 10),
   felder: ['lat', 'lon', 'nameIndex', 'typ (0=Rastplatz, 1=Rastanlage, 2=Autohof)', 'ausstattungBits'],
   ausstattungBits: F,
