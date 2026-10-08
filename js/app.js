@@ -529,7 +529,7 @@ function viewStop(i) {
     <div class="card" style="margin-top:12px"><div class="features">
       ${FEATURE_LIST.map(([k, ic, label]) => { const on = (ra.flags & FEATURES[k]) !== 0; return `<div class="feature ${on ? '' : 'off'}">${icon(on ? ic : 'x')} ${label}</div>`; }).join('')}
     </div></div>
-    <p class="hint">Ausstattung aus OpenStreetMap im Umkreis der Anlage (WC, Essen bis 250 m, Grünflächen bis 600 m). Nicht eingetragene Einrichtungen können trotzdem vorhanden sein.</p>`
+    <p class="hint">Ausstattung aus OpenStreetMap im Umkreis der Anlage (WC und Essen bis 250 m, Park, Wald und Wiese bis 300 m, Hundewiese bis 600 m). Nicht eingetragene Einrichtungen können trotzdem vorhanden sein.</p>`
     : `<div class="notice info">${icon('info')}<span>Zu diesem Standort sind keine Rastanlagen-Daten bekannt. Ausstattung bitte vor Ort prüfen.</span></div>`}
     <div class="btn-row" style="margin-top:24px">
       <button class="btn btn-secondary" type="button" data-href="#/map/${i}">${icon('map')} Karte</button>

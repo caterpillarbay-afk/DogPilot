@@ -19,7 +19,8 @@ import { dirname, join } from 'node:path';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'rest-areas.json');
 const INPUT = process.argv[2];
 const AMENITY_RADIUS_M = 250; // Einrichtungen, die zur Anlage selbst gehören
-const GREEN_RADIUS_M = 600;   // Grün und Hundewiesen in Gassi-Entfernung
+const GREEN_RADIUS_M = 300;   // Park, Wald, Wiese: in ca. 4 Minuten zu Fuß erreichbar
+const DOG_PARK_RADIUS_M = 600; // eine eingezäunte Hundewiese lohnt auch einen längeren Weg
 const M_PER_DEG = 111320;
 
 // Ausstattungs-Bits (gleiche Reihenfolge wie FEATURES in js/data.js der App)
@@ -45,7 +46,7 @@ function featureOf(t) {
   if (t.shop === 'convenience' || t.shop === 'kiosk') return [F.shop, AMENITY_RADIUS_M];
   if (l === 'picnic_table' || t.tourism === 'picnic_site') return [F.picnic, AMENITY_RADIUS_M];
   if (l === 'playground') return [F.playground, AMENITY_RADIUS_M];
-  if (l === 'dog_park') return [F.dogPark, GREEN_RADIUS_M];
+  if (l === 'dog_park') return [F.dogPark, DOG_PARK_RADIUS_M];
   if (l === 'park' || lu === 'recreation_ground') return [F.park, GREEN_RADIUS_M];
   if (lu === 'forest' || n === 'wood') return [F.forest, GREEN_RADIUS_M];
   if (lu === 'meadow' || n === 'grassland' || n === 'heath') return [F.meadow, GREEN_RADIUS_M];
