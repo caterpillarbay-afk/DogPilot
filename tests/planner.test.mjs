@@ -1,0 +1,85 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { RouteLine } from '../js/geo.js';
+import { EnergyProfile } from '../js/energy.js';
+import { findHubs, attachRestAreas, planTrip, schedule } from '../js/planner.js';
+import { FEATURES } from '../js/data.js';
+
+// Gerade Teststrecke von ~715 km entlang 50° N
+const route = new RouteLine(Array.from({ length: 11 }, (_, i) => [50, 5 + i]));
+const atKm = km => [50.002, 5 + km / route.lengthKm * 10]; // knapp neben der Route
+const charger = (km, kw, op = 'Ionity') => { const [lat, lon] = atKm(km); return { lat, lon, kw, points: 4, operator: op }; };
+
+test('findHubs: nur schnelle Säulen im Korridor, nahe Säulen zusammengefasst', () => {
+  const [lat, lon] = atKm(100);
+  const hubs = findHubs(route, [charger(100, 150), { lat: lat + 0.001, lon, kw: 300, points: 2, operator: 'Tesla' }, charger(200, 50), { lat: 51, lon: 6, kw: 300, points: 8, operator: 'X' }], { corridorKm: 2, minKw: 150 });
+  assert.equal(hubs.length, 1);
+  assert.equal(hubs[0].maxKw, 300);
+  assert.equal(hubs[0].points, 6);
+  assert.deepEqual([...hubs[0].operators].sort(), ['Ionity', 'Tesla']);
+});
+
+test('attachRestAreas: Ausstattung und Hund-Bewertung', () => {
+  const [lat, lon] = atKm(100);
+  const hubs = attachRestAreas(findHubs(route, [charger(100, 150)], { corridorKm: 2, minKw: 150 }),
+    [{ lat, lon: lon + 0.002, name: 'Rasthof Test', type: 'rastanlage', flags: FEATURES.toilets | FEATURES.food | FEATURES.dogPark }]);
+  assert.equal(hubs[0].name, 'Rasthof Test');
+  assert.ok(hubs[0].dog >= 3.5);
+  assert.ok(hubs[0].human >= 4);
+});
+
+test('planTrip: kurze Strecke ohne Stopp', () => {
+  const short = new RouteLine([[50, 8], [50, 9]]);
+  const energy = new EnergyProfile({ lengthKm: short.lengthKm, baseKWh100: 20 });
+  const plan = planTrip({ route: short, energy, hubs: [], settings: { capacityKWh: 77, startSoc: 80 } });
+  assert.equal(plan.stops.length, 0);
+  assert.ok(plan.feasible);
+  assert.ok(plan.arrivalSoc > 50);
+});
+
+test('planTrip: lange Strecke mit Stopps, Akku nie unter Reserve', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const hubs = attachRestAreas(findHubs(route, [50, 150, 250, 350, 450, 550, 650].map(km => charger(km, 150)), { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15 } });
+  assert.ok(plan.feasible, plan.warnings.join());
+  assert.ok(plan.stops.length >= 2 && plan.stops.length <= 3, plan.stops.length);
+  for (const st of plan.stops) {
+    assert.ok(st.arriveSoc >= 10, `Ankunft ${st.arriveSoc} %`);
+    assert.ok(st.targetSoc <= 80);
+    assert.ok(st.chargeMin > 0);
+  }
+  assert.ok(plan.arrivalSoc >= 15, plan.arrivalSoc);
+  const sch = schedule({ plan, lengthKm: route.lengthKm, durationMin: 420, departure: new Date('2026-10-10T08:00:00Z') });
+  assert.ok(sch.arrivalAt > new Date('2026-10-10T15:00:00Z'));
+  assert.ok(sch.stops.every((st, i, a) => i === 0 || st.arriveAt > a[i - 1].departAt));
+});
+
+test('planTrip: ohne erreichbare Säule wird gewarnt statt still falsch geplant', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const hubs = attachRestAreas(findHubs(route, [charger(600, 150)], { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80 } });
+  assert.equal(plan.feasible, false);
+  assert.ok(plan.warnings.length > 0);
+});
+
+test('planTrip: Ausweichen auf langsamere Säule, wenn keine schnelle erreichbar ist', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const hubs = attachRestAreas(findHubs(route, [charger(500, 150)], { corridorKm: 2, minKw: 150 }), []);
+  const fallbackHubs = attachRestAreas(findHubs(route, [charger(200, 50)], { corridorKm: 2, minKw: 22 }), []);
+  const plan = planTrip({ route, energy, hubs, fallbackHubs, settings: { capacityKWh: 77, startSoc: 80 } });
+  assert.equal(plan.stops[0].fallback, true);
+  assert.ok(plan.warnings.some(w => w.includes('Ausweichen')));
+});
+
+test('Rastanlage auf der Gegenfahrbahn wird nicht angefahren, Autohof schon', () => {
+  // Route nach Osten: Norden = links = Gegenfahrbahn
+  const left = { lat: 50.002, lon: 6, name: 'Gegenseite', type: 'rastanlage', flags: FEATURES.toilets };
+  const right = { lat: 49.998, lon: 6.1, name: 'Unsere Seite', type: 'rastanlage', flags: FEATURES.toilets };
+  const hof = { lat: 50.002, lon: 6.2, name: 'Autohof', type: 'autohof', flags: FEATURES.toilets };
+  const hubs = attachRestAreas([
+    { lat: 50.002, lon: 6, maxKw: 300, points: 4, operators: new Set(['A']), alongKm: 71, offsetKm: 0.2 },
+    { lat: 49.998, lon: 6.1, maxKw: 300, points: 4, operators: new Set(['B']), alongKm: 79, offsetKm: 0.2 },
+    { lat: 50.002, lon: 6.2, maxKw: 300, points: 4, operators: new Set(['C']), alongKm: 86, offsetKm: 0.2 },
+  ], [left, right, hof], route);
+  assert.deepEqual(hubs.map(h => h.oppositeSide), [true, false, false]);
+});

@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 22
       - name: Daten abrufen
-        run: node scripts/build-charging-stations.mjs | tee build.log
+        run: set -o pipefail; node scripts/build-charging-stations.mjs | tee build.log
       - name: Commit charging-stations.json
         run: |
           git add charging-stations.json
