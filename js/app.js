@@ -4,7 +4,7 @@ import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
-import { searchPlaces, getChargerStatus } from './services.js';
+import { searchPlaces, getLiveStatus } from './services.js';
 import { computeTrip, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
@@ -22,6 +22,7 @@ const state = {
   error: null,
   onboardingStep: 0,
   draftDogs: null,
+  live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
 };
 
 // ---------- Hilfen ----------
@@ -505,6 +506,7 @@ function viewTrip() {
             <span class="name">${esc(st.name)} ${icon('chevron-right', 'sm chev')}</span>
             <span class="meta">${charge ? `${num(st.maxKw)} kW · ${st.points} Ladepunkte${st.operators.length ? ' · ' + esc(st.operators.slice(0, 2).join(', ')) : ''}` : `Akku bei Ankunft ca. ${st.arriveSoc} %`}${st.detour.km ? ` · ${num(st.detour.km, 1)} km Umweg` : ''}</span>
             ${charge ? socBar(st.arriveSoc, st.targetSoc) : ''}
+            ${charge ? `<span class="live" id="live-${i}">${liveLine(i)}</span>` : ''}
             ${scores(st)}
           </button>
         </div>
@@ -600,7 +602,10 @@ function viewStop(i) {
         ${st.operators.length ? `<dt>Betreiber</dt><dd>${esc(st.operators.join(', '))}</dd>` : ''}
       </dl>
       ${st.fallback ? `<div class="notice warn" style="margin-top:12px">${icon('triangle-alert')}<span>Langsamere Säule als gewünscht – auf diesem Abschnitt ist keine schnellere erreichbar.</span></div>` : ''}
-      ${state.settings.keys.ocm ? `<div id="ocmStatus" style="margin-top:12px"><button class="btn btn-secondary block" type="button" data-action="ocm">${icon('refresh-cw')} Aktuellen Status abrufen</button></div>` : ''}`
+      <div class="live-box" style="margin-top:12px">
+        <div class="live" id="live-${i}">${liveLine(i, true)}</div>
+        <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
+      </div>`
       : `<p class="muted small" style="margin:0">Pause für den Hund – nach spätestens 2,5 Stunden Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     <h3 class="section-title">Für Hund und Mensch</h3>
@@ -623,17 +628,37 @@ function viewStop(i) {
     </div>`;
 }
 
-async function loadOcm(i) {
-  const st = trip().stops[i], box = $('#ocmStatus');
-  box.innerHTML = `<div class="progress">${icon('loader-circle', 'spin')} Status wird abgerufen …</div>`;
-  try {
-    const r = await getChargerStatus(st.lat, st.lon, state.settings.keys.ocm);
-    box.innerHTML = r.total
-      ? `<div class="notice ${r.faulted ? 'warn' : 'info'}">${icon(r.faulted ? 'triangle-alert' : 'circle-check')}<span>Open Charge Map: ${r.operational} in Betrieb, ${r.faulted} gestört, ${r.unknown} unbekannt.</span></div>`
-      : `<div class="notice info">${icon('info')}<span>Open Charge Map kennt hier keine Statusangaben.</span></div>`;
-  } catch (err) {
-    box.innerHTML = `<div class="notice error">${icon('circle-alert')}<span>${esc(err.message)}${/403|401/.test(err.message) ? ' – Schlüssel prüfen.' : ''}</span></div>`;
-  }
+// ---------- Live-Belegung der Ladestopps ----------
+// Zustand je Stopp: { loading } | { data, at } | { error, at }. Gilt für die aktuelle Fahrt, max. 2 min alt.
+const LIVE_MAX_AGE_MS = 2 * 60000;
+const liveKey = i => `${trip()?.departure}|${i}`;
+
+function liveLine(i, detail = false) {
+  const s = state.live[liveKey(i)];
+  if (!s || s.loading) return `<span class="muted">${icon('loader-circle', 'sm spin')} Belegung wird abgerufen …</span>`;
+  if (s.error) return `<span class="muted">${icon('circle-alert', 'sm')} Belegung gerade nicht abrufbar</span>`;
+  const r = s.data, at = clock(new Date(s.at));
+  if (!r) return `<span class="muted">${icon('info', 'sm')} Keine Live-Belegung gemeldet</span>`;
+  const cls = r.free ? 'ok' : r.busy ? 'warn' : 'bad';
+  const text = r.free ? `${r.free} von ${r.total} frei` : r.busy ? `alle ${r.total} belegt` : `alle ${r.total} gestört`;
+  const extra = r.broken && (r.free || r.busy) ? ` · ${r.broken} gestört` : '';
+  return `<span class="dot ${cls}"></span><span><b>Jetzt ${text}</b>${extra}${detail ? ` <span class="muted">· Stand ${at} Uhr · Quelle MobiData BW</span>` : ''}</span>`;
+}
+
+async function refreshLive(indices, force = false) {
+  const t = trip();
+  if (!t) return;
+  await Promise.all(indices.map(async i => {
+    const st = t.stops[i], k = liveKey(i), cur = state.live[k];
+    if (!st || st.kind !== 'charge' || cur?.loading) return;
+    if (!force && cur && Date.now() - cur.at < LIVE_MAX_AGE_MS) return;
+    state.live[k] = { loading: true };
+    const el = () => document.getElementById(`live-${i}`);
+    if (el()) el().innerHTML = liveLine(i, route().name === 'stop');
+    try { state.live[k] = { data: await getLiveStatus(st.lat, st.lon), at: Date.now() }; }
+    catch { state.live[k] = { error: true, at: Date.now() }; }
+    if (el()) el().innerHTML = liveLine(i, route().name === 'stop');
+  }));
 }
 
 // ---------- Karte ----------
@@ -676,7 +701,7 @@ function viewSettings() {
       ${row('#/settings/vehicle', 'car', 'Fahrzeug', esc(vehicleName(s.vehicle)))}
       ${row('#/settings/dogs', 'dog', 'Hunde', esc(dogNames))}
       ${row('#/settings/charging', 'battery-charging', 'Laden und Pausen', `ab ${s.charging.minChargerKw} kW`)}
-      ${row('#/settings/advanced', 'key', 'Erweitert', s.keys.tomtom || s.keys.ocm ? 'Schlüssel hinterlegt' : '')}
+      ${row('#/settings/advanced', 'key', 'Erweitert', s.keys.tomtom ? 'Schlüssel hinterlegt' : '')}
     </div>
     <h3 class="section-title">Daten</h3>
     <div class="list">
@@ -711,8 +736,6 @@ function viewSettingsPage(page) {
     body = `<div class="card">
       ${field('TomTom-Schlüssel (optional)', `<span class="input-wrap">${icon('key')}<input class="input" id="kTomtom" type="password" autocomplete="off" spellcheck="false" value="${esc(s.keys.tomtom)}" placeholder="Nicht hinterlegt"></span>`,
         'Mit eigenem, kostenlosem Schlüssel von developer.tomtom.com berücksichtigt die Route den aktuellen Verkehr. Ohne Schlüssel routet DogPilot über Valhalla bzw. OSRM (FOSSGIS e.V.).')}
-      <div style="margin-top:16px">${field('Open-Charge-Map-Schlüssel (optional)', `<span class="input-wrap">${icon('key')}<input class="input" id="kOcm" type="password" autocomplete="off" spellcheck="false" value="${esc(s.keys.ocm)}" placeholder="Nicht hinterlegt"></span>`,
-        'Für den aktuellen Status der Ladesäulen. Kostenlos nach Registrierung auf openchargemap.org.')}</div>
       <label class="row" style="margin-top:12px"><input type="checkbox" id="showKeys"> <span class="small">Schlüssel anzeigen</span></label>
     </div>
     <div class="card">
@@ -737,10 +760,10 @@ function bindSettingsPage(root, page) {
   if (page === 'dogs') bindDogsForm(root, s.dogs, saved);
   if (page === 'charging') bindChargingForm(root, s.charging, saved);
   if (page === 'advanced') {
-    for (const [id, key] of [['kTomtom', 'tomtom'], ['kOcm', 'ocm']]) {
+    for (const [id, key] of [['kTomtom', 'tomtom']]) {
       $('#' + id, root).addEventListener('change', e => { s.keys[key] = e.target.value.trim(); saved(false); });
     }
-    $('#showKeys', root).addEventListener('change', e => $$('#kTomtom, #kOcm', root).forEach(i => { i.type = e.target.checked ? 'text' : 'password'; }));
+    $('#showKeys', root).addEventListener('change', e => $$('#kTomtom', root).forEach(i => { i.type = e.target.checked ? 'text' : 'password'; }));
     $('#cCorridor', root).addEventListener('change', () => {
       const v = readNumber('cCorridor', 0.5, 10);
       if (v != null) { s.charging.corridorKm = v; saved(false); }
@@ -826,7 +849,11 @@ function render() {
   if (name === 'plan' || !views[name]) bindPlan(main);
   if (name === 'map') bindMap(main, arg != null ? +arg : null);
   if (name === 'settings' && arg) bindSettingsPage(main, arg);
-  if (name === 'stop') $('[data-action="ocm"]', main)?.addEventListener('click', () => loadOcm(+arg));
+  if (name === 'trip' && trip()) refreshLive(trip().stops.map((_, i) => i));
+  if (name === 'stop' && trip()) {
+    refreshLive([+arg]);
+    $('[data-action="live-refresh"]', main)?.addEventListener('click', () => refreshLive([+arg], true));
+  }
 }
 
 // Klicks auf data-href / data-action zentral behandeln

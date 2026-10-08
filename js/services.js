@@ -4,9 +4,10 @@
 //   ersatzweise OSRM von FOSSGIS e.V.
 // - Höhenprofil: Valhalla /height (FOSSGIS)
 // - Wetter: Open-Meteo, kein Schlüssel
-// - Ladesäulen-Status: Open Charge Map (nur mit eigenem, kostenlosem Schlüssel)
+// - Ladesäulen-Belegung: MobiData BW (NVBW), Open ChargePoint DataBase, kein Schlüssel
 
 import { decodePolyline, encodePolyline, simplifyByDistance, parseCoordinates } from './geo.js';
+import { summarizeLive } from './data.js';
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de';
 const OSRM = 'https://routing.openstreetmap.de/routed-car';
@@ -162,16 +163,12 @@ export async function getTemperature(samples) {
   }
 }
 
-// ---------- Ladesäulen-Status (Open Charge Map) ----------
+// ---------- Live-Status der Ladesäulen (MobiData BW, OCPDB) ----------
 
-export async function getChargerStatus(lat, lon, key) {
-  const params = new URLSearchParams({ output: 'json', latitude: lat, longitude: lon, distance: '0.5', distanceunit: 'KM', maxresults: '10', compact: 'true', verbose: 'false', key });
-  const data = await getJson(`https://api.openchargemap.io/v3/poi/?${params}`, { timeout: 10000 });
-  let operational = 0, faulted = 0, unknown = 0;
-  for (const poi of data) for (const c of poi.Connections || []) {
-    if (c.StatusTypeID === 50) operational++;
-    else if ([30, 75, 150].includes(c.StatusTypeID)) faulted++;
-    else unknown++;
-  }
-  return { operational, faulted, unknown, total: operational + faulted + unknown };
+// Ladepunkte im Umkreis mit aktuellem Status (frei/belegt/gestört). Die Betreiber melden ihn nach der
+// EU-Verordnung AFIR; MobiData BW (NVBW) bündelt die Meldungen deutschlandweit, frei abrufbar (CC0).
+export async function getLiveStatus(lat, lon, radiusM = 250) {
+  const params = new URLSearchParams({ lat: lat.toFixed(5), lon: lon.toFixed(5), radius: String(radiusM), limit: '25' });
+  const d = await getJson(`https://api.mobidata-bw.de/ocpdb/api/public/v1/locations?${params}`, { timeout: 8000 });
+  return summarizeLive(d.items);
 }

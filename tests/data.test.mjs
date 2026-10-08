@@ -34,3 +34,17 @@ test('matchVariants: Akzente und mehrteilige Markennamen', () => {
   assert.deepEqual(names(matchVariants(more, 'CITROEN', 'E-C3')), ['ë-C3']);
   assert.deepEqual(names(matchVariants(more, 'ALFA ROMEO', 'ALFA ROMEO JUNIOR')), ['Junior Elettrica']);
 });
+
+test('summarizeLive: Schnellladepunkte mit Live-Status, Doppelte und Daten ohne Status', async () => {
+  const { summarizeLive } = await import('../js/data.js');
+  const evse = (id, status, kw) => ({ evse_id: id, status, last_updated: '2026-10-08T20:00:00Z', connectors: [{ max_electric_power: kw * 1000 }] });
+  const items = [
+    { source: 'bnetza_api', evses: [evse('DE*A*1', 'STATIC', 300), evse('DE*A*2', 'STATIC', 300)] },
+    { source: 'datex2_enbw', evses: [evse('DE*A*1', 'AVAILABLE', 300), evse('DE*A*2', 'CHARGING', 300), evse('DE*A*3', 'OUTOFORDER', 300), evse('DE*A*9', 'AVAILABLE', 11)] },
+    { source: 'datex2_ecomovement', evses: [evse('DE*A*1', 'AVAILABLE', 300)] },   // doppelt gemeldet
+  ];
+  assert.deepEqual(summarizeLive(items), { free: 1, busy: 1, broken: 1, total: 3, updatedAt: '2026-10-08T20:00:00Z' });
+  assert.equal(summarizeLive([{ evses: [evse('X', 'STATIC', 150)] }]), null);          // keine Live-Daten
+  assert.equal(summarizeLive([]), null);
+  assert.equal(summarizeLive([{ evses: [evse('Y', 'AVAILABLE', 22)] }]).free, 1);     // nur AC: dann diese
+});
