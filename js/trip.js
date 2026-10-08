@@ -6,8 +6,8 @@ import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide
 import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
-const MAX_DRIVE_MIN = 150;   // spätestens nach 2,5 h Fahrt eine Pause für den Hund
-const BREAK_MIN = 15;
+const DEFAULT_MAX_DRIVE_MIN = 90;   // spätestens nach 1,5 h Fahrt eine Pause für die Hunde
+const ROOF_BOX_FACTOR = 1.12;       // Dachbox: rund 12 % Mehrverbrauch bei Autobahntempo
 const BREAK_CORRIDOR_KM = 1;
 
 export function settingsForPlanner(settings, startSoc) {
@@ -16,6 +16,7 @@ export function settingsForPlanner(settings, startSoc) {
     capacityKWh: v.capacityKWh, carMaxKw: v.carMaxKw, baseKWh100: v.consumptionKWh100, startSoc,
     reserveSoc: c.reserveSoc, arrivalSoc: c.arrivalSoc, maxChargeSoc: c.maxChargeSoc,
     minChargerKw: c.minChargerKw, fallbackMinKw: 22, corridorKm: c.corridorKm, minBreakMin: c.minBreakMin,
+    maxDriveMin: c.maxDriveMin || DEFAULT_MAX_DRIVE_MIN,
   };
 }
 
@@ -29,10 +30,11 @@ function restAreasAlong(line, restAreas) {
   return out.sort((a, b) => a.alongKm - b.alongKm);
 }
 
-// Zwischen zwei Stopps, die mehr als 2,5 h auseinanderliegen, die hundefreundlichste Rastanlage einfügen
-function addDogBreaks(stops, line, durationMin, areas) {
+// Wo trotzdem länger als die eingestellte Fahrzeit ohne Stopp gefahren würde (keine passende Säule),
+// die hundefreundlichste Rastanlage als Gassi-Pause ohne Laden einfügen
+function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
   const minPerKm = durationMin / line.lengthKm;
-  const maxKm = MAX_DRIVE_MIN / minPerKm;
+  const maxKm = maxDriveMin / minPerKm;
   const result = [];
   let pos = 0;
   const marks = [...stops.map(s => s.alongKm), line.lengthKm];
@@ -53,7 +55,7 @@ function addDogBreaks(stops, line, durationMin, areas) {
     result.push({
       kind: 'break', lat: pick.lat, lon: pick.lon, alongKm: pick.alongKm, offsetKm: pick.offsetKm,
       name: pick.name || 'Rastplatz', restArea: pick, dog: pick.dog, human: pick.human,
-      chargeMin: 0, stopMin: BREAK_MIN, detour: detourOf(pick), operators: [],
+      chargeMin: 0, stopMin: breakMin, detour: detourOf(pick), operators: [],
     });
     pos = pick.alongKm;
   }
@@ -69,7 +71,7 @@ function socAt(plan, stops, energy, s, km) {
   return Math.round(soc - energy.between(pos, km) / s.capacityKWh * 100);
 }
 
-export async function computeTrip({ from, to, departure, startSoc, settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
+export async function computeTrip({ from, to, departure, startSoc, roofBox = false, settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -88,7 +90,11 @@ export async function computeTrip({ from, to, departure, startSoc, settings, cha
 
   onProgress('Ladestopps werden geplant …');
   const s = settingsForPlanner(settings, startSoc);
-  const factor = temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin);
+  s.maxDriveKm = s.maxDriveMin / (route.durationMin / line.lengthKm);
+  // Linienlänge und Streckenlänge des Routendienstes weichen leicht ab: Verbrauch und angezeigte
+  // Kilometer auf die offizielle Streckenlänge beziehen
+  const kmScale = Math.min(1.25, Math.max(0.8, route.lengthKm / line.lengthKm));
+  const factor = kmScale * temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin) * (roofBox ? ROOF_BOX_FACTOR : 1);
   const energy = new EnergyProfile({ lengthKm: line.lengthKm, baseKWh100: s.baseKWh100, factor, heights });
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
@@ -96,12 +102,12 @@ export async function computeTrip({ from, to, departure, startSoc, settings, cha
   const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
-  const stops = addDogBreaks(chargeStops, line, route.durationMin, restAreasAlong(line, restAreas));
+  const stops = addDogBreaks(chargeStops, line, route.durationMin, restAreasAlong(line, restAreas), s.maxDriveMin, s.minBreakMin);
   for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(plan, stops, energy, s, st.alongKm);
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
 
   return {
-    from, to, departure: departure.toISOString(), startSoc,
+    from, to, departure: departure.toISOString(), startSoc, roofBox,
     provider: route.provider,
     points: route.points,
     lengthKm: route.lengthKm,
@@ -110,9 +116,9 @@ export async function computeTrip({ from, to, departure, startSoc, settings, cha
     temperature,
     climbM: heights ? Math.round(energy.climbM) : null,
     energyKWh: energy.totalKWh,
-    consumptionKWh100: energy.totalKWh / line.lengthKm * 100,
+    consumptionKWh100: energy.totalKWh / route.lengthKm * 100,
     hubsOnRoute: hubs.length,
-    stops: timed.stops.map(st => ({ ...st, arriveAt: st.arriveAt.toISOString(), departAt: st.departAt.toISOString() })),
+    stops: timed.stops.map(st => ({ ...st, alongKm: st.alongKm * kmScale, arriveAt: st.arriveAt.toISOString(), departAt: st.departAt.toISOString() })),
     arrivalAt: timed.arrivalAt.toISOString(),
     totalMin: timed.totalMin,
     arrivalSoc: plan.arrivalSoc,

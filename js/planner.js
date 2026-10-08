@@ -16,6 +16,7 @@ export const DEFAULT_PLAN_SETTINGS = {
   fallbackMinKw: 22,  // Notlösung, wenn keine schnelle Säule erreichbar ist
   corridorKm: 2,      // max. seitlicher Abstand zur Route
   minBreakMin: 15,    // Mindestpause für Hund und Mensch
+  maxDriveKm: Infinity, // spätestens nach so vielen km eine Pause (aus der Fahrzeit berechnet)
   baseKWh100: 20,
 };
 
@@ -125,6 +126,13 @@ function hubScore(hub, fromKm, reachKm, s) {
   return 0.5 * progress + 0.25 * power + 0.25 * amen - detourOf(hub).km * 0.02;
 }
 
+// Akkustand nach `minutes` Laden (gleiche Ladekurve wie chargeMinutes)
+function socAfterCharging({ capacityKWh, socFrom, minutes, chargerKw, carMaxKw, cap }) {
+  let soc = socFrom;
+  while (soc < cap && chargeMinutes({ capacityKWh, socFrom, socTo: soc + 1, chargerKw, carMaxKw }) <= minutes) soc += 1;
+  return soc;
+}
+
 // Plant die Fahrt. Liefert { stops, arrivalSoc, totalChargeMin, warnings, feasible }
 export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
   const s = { ...DEFAULT_PLAN_SETTINGS, ...settings };
@@ -134,13 +142,22 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
   const warnings = [];
   let pos = 0, soc = s.startSoc, feasible = true;
 
-  for (let guard = 0; guard < 25; guard++) {
-    if (socAfter(soc, energy.between(pos, L)) >= s.arrivalSoc) break;
+  for (let guard = 0; guard < 40; guard++) {
+    const energyOk = socAfter(soc, energy.between(pos, L)) >= s.arrivalSoc;
+    if (energyOk && L - pos <= s.maxDriveKm) break;
 
-    const reach = energy.reachKm(pos, soc, s.capacityKWh, s.reserveSoc);
-    const inWindow = list => list.filter(h => !h.oppositeSide && h.alongKm > pos + (stops.length ? MIN_LEG_KM : 0) && h.alongKm <= reach);
-    let candidates = inWindow(hubs), fallback = false;
-    if (!candidates.length) { candidates = inWindow(fallbackHubs); fallback = candidates.length > 0; }
+    // Bis wohin reicht der Akku – und bis wohin darf ohne Pause gefahren werden?
+    const energyReach = energy.reachKm(pos, soc, s.capacityKWh, s.reserveSoc);
+    const reach = Math.min(energyReach, pos + s.maxDriveKm);
+    const inWindow = (list, to) => list.filter(h => !h.oppositeSide && h.alongKm > pos + (stops.length ? MIN_LEG_KM : 0) && h.alongKm <= to);
+    let candidates = inWindow(hubs, reach), fallback = false;
+    if (!candidates.length) { candidates = inWindow(fallbackHubs, reach); fallback = candidates.length > 0; }
+    if (!candidates.length && reach < energyReach) {
+      // Im Pausenfenster keine Säule: weiter bis zur Akkugrenze suchen (Gassi-Pause ohne Laden ergänzt trip.js)
+      if (energyOk) break;
+      candidates = inWindow(hubs, energyReach);
+      if (!candidates.length) { candidates = inWindow(fallbackHubs, energyReach); fallback = candidates.length > 0; }
+    }
 
     if (!candidates.length) {
       // Nichts sicher erreichbar: nächste Säule dahinter nehmen und deutlich warnen
@@ -160,7 +177,12 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
     const arriveSoc = socAfter(soc, energy.between(pos, hub.alongKm) + detour.km / 2 * s.baseKWh100 / 100);
     const toDest = energy.between(hub.alongKm, L) / s.capacityKWh * 100;
     const needed = toDest + s.arrivalSoc + 5 + detour.km / 2 * s.baseKWh100 / s.capacityKWh;
-    const targetSoc = Math.max(arriveSoc, Math.min(s.maxChargeSoc, Math.max(needed, arriveSoc + 10)));
+    // Mindestens so viel, dass der nächste Pausenabschnitt sicher reicht; während der ohnehin
+    // fälligen Pause darf mehr geladen werden – aber nicht mehr, als bis zum Ziel gebraucht wird.
+    const nextLeg = Math.min(L, hub.alongKm + s.maxDriveKm);
+    const neededNext = energy.between(hub.alongKm, nextLeg) / s.capacityKWh * 100 + s.reserveSoc + 3;
+    const breakSoc = socAfterCharging({ capacityKWh: s.capacityKWh, socFrom: Math.max(0, arriveSoc), minutes: s.minBreakMin, chargerKw: hub.maxKw, carMaxKw: s.carMaxKw, cap: s.maxChargeSoc });
+    const targetSoc = Math.max(arriveSoc, Math.min(s.maxChargeSoc, needed, Math.max(neededNext, breakSoc, arriveSoc + 10)));
     const chargeMin = chargeMinutes({ capacityKWh: s.capacityKWh, socFrom: Math.max(0, arriveSoc), socTo: targetSoc, chargerKw: hub.maxKw, carMaxKw: s.carMaxKw });
 
     stops.push({

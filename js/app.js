@@ -163,12 +163,16 @@ function chargingFormHtml(c) {
       ${field('Laden bis höchstens', numberInput('cMaxCharge', c.maxChargeSoc, { min: 50, max: 100, suffix: '%' }))}
       ${field('Pause mindestens', numberInput('cBreak', c.minBreakMin, { min: 0, max: 60, suffix: 'min' }))}
     </div>
-    <p class="hint">Über 80 % lädt fast jedes Elektroauto deutlich langsamer. Ohne Ladestopp plant DogPilot spätestens nach 2,5 Stunden eine Gassi-Pause an einer möglichst hundefreundlichen Rastanlage ein.</p>`;
+    <div style="margin-top:12px">
+      ${field('Pause spätestens nach', numberInput('cMaxDrive', c.maxDriveMin ?? 90, { min: 45, max: 240, step: 15, suffix: 'min Fahrt' }),
+        'Spätestens nach dieser Fahrzeit plant DogPilot einen Stopp – wenn möglich an einer Ladesäule, damit während der Pause geladen wird, sonst als Gassi-Pause an einer hundefreundlichen Rastanlage.')}
+    </div>
+    <p class="hint">Über 80 % lädt fast jedes Elektroauto deutlich langsamer. Während der Pause lädt DogPilot so viel, wie in der Pausenzeit möglich ist, aber nicht mehr als bis zum Ziel nötig.</p>`;
 }
 
 function bindChargingForm(root, c, onChange) {
   $$('[data-minkw]', root).forEach(b => b.addEventListener('click', () => { c.minChargerKw = +b.dataset.minkw; onChange(true); }));
-  for (const [id, key, min, max] of [['cArrival', 'arrivalSoc', 5, 60], ['cReserve', 'reserveSoc', 5, 30], ['cMaxCharge', 'maxChargeSoc', 50, 100], ['cBreak', 'minBreakMin', 0, 60]]) {
+  for (const [id, key, min, max] of [['cArrival', 'arrivalSoc', 5, 60], ['cReserve', 'reserveSoc', 5, 30], ['cMaxCharge', 'maxChargeSoc', 50, 100], ['cBreak', 'minBreakMin', 0, 60], ['cMaxDrive', 'maxDriveMin', 45, 240]]) {
     $('#' + id, root)?.addEventListener('change', () => {
       const val = readNumber(id, min, max);
       if (val != null) { c[key] = Math.round(val); $('#' + id, root).value = c[key]; onChange(false); }
@@ -281,6 +285,7 @@ function viewPlan() {
         ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
+      <label class="row" style="margin-top:14px"><input type="checkbox" id="roofBox" ${f.roofBox ? 'checked' : ''}> <span>Dachbox montiert <span class="muted small">(ca. +12 % Verbrauch)</span></span></label>
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
       </button>
@@ -361,6 +366,7 @@ function bindPlan(root) {
     const d = new Date(e.target.value);
     if (!Number.isNaN(d.getTime())) state.form.departure = d;
   });
+  $('#roofBox', root).addEventListener('change', e => { state.form.roofBox = e.target.checked; });
   $('#startSoc', root).addEventListener('change', () => {
     const v = readNumber('startSoc', 5, 100);
     if (v != null) { state.form.startSoc = Math.round(v); $('#startSoc', root).value = state.form.startSoc; }
@@ -382,7 +388,7 @@ async function plan() {
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
     const result = await computeTrip({
-      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, settings: state.settings,
+      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, roofBox: f.roofBox, settings: state.settings,
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     });
     state.settings.lastTrip = result;
@@ -425,6 +431,7 @@ function viewTrip() {
     t.temperature != null ? `${icon('thermometer', 'sm')} ${num(t.temperature)} °C` : '',
     t.climbM != null ? `${icon('mountain', 'sm')} ${num(t.climbM)} m bergauf` : '',
     t.trafficDelayMin ? `${icon('timer', 'sm')} ${num(t.trafficDelayMin)} min Stau` : '',
+    t.roofBox ? `${icon('car', 'sm')} mit Dachbox` : '',
   ].filter(Boolean);
   let prevKm = 0;
   const minPerKm = t.driveMin / t.lengthKm;
@@ -547,7 +554,7 @@ function viewStop(i) {
     </div>` : ''}
     ${st.walk ? walkCard(st) : ''}
     ${ra ? `<div class="card" style="margin-top:12px">
-      <div class="card-head">${icon('map-pin')} Auf der ${typeLabel}</div>
+      <div class="card-head">${icon('map-pin')} ${{ rastplatz: 'Auf dem Rastplatz', rastanlage: 'Auf der Rastanlage', autohof: 'Auf dem Autohof' }[ra.type]}</div>
       <div class="features">
       ${FEATURE_LIST.map(([k, ic, label]) => { const on = (ra.flags & FEATURES[k]) !== 0; return `<div class="feature ${on ? '' : 'off'}">${icon(on ? ic : 'x')} ${label}</div>`; }).join('')}
     </div></div>` : ''}
@@ -797,6 +804,7 @@ async function start() {
     from: t?.from || null, to: t?.to || null,
     departure: defaultDeparture(),
     startSoc: t?.startSoc ?? 80,
+    roofBox: t?.roofBox ?? false,
   };
   state.draftDogs = structuredClone(state.settings.dogs);
   $$('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon); });
