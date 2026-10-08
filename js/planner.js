@@ -3,7 +3,7 @@
 
 import { haversineKm } from './geo.js';
 import { chargeMinutes } from './energy.js';
-import { dogScore, humanScore } from './data.js';
+import { dogScore, humanScore, siteDogScore, siteHumanScore } from './data.js';
 
 export const DEFAULT_PLAN_SETTINGS = {
   capacityKWh: 77,
@@ -56,9 +56,17 @@ export function isOppositeSide(route, area) {
 
 // Nächstgelegene Rastanlage zu jedem Hub zuordnen (für Name, Ausstattung, Hund/Mensch).
 // Mit route werden Hubs an Anlagen der Gegenfahrbahn als unerreichbar markiert.
-export function attachRestAreas(hubs, restAreas, route = null) {
+// Mit sites (Fußwege vom Schnelllader) werden Hund/Mensch vom Ladeplatz aus bewertet, nicht vom
+// Mittelpunkt der Rastanlage – Schnelllader stehen oft abseits von Restaurant und Grün.
+export function attachRestAreas(hubs, restAreas, route = null, sites = []) {
   const grid = new Map();
   const key = (lat, lon) => `${Math.floor(lat * 50)}:${Math.floor(lon * 50)}`;
+  const siteGrid = new Map();
+  for (const st of sites) {
+    const k = key(st.lat, st.lon);
+    if (!siteGrid.has(k)) siteGrid.set(k, []);
+    siteGrid.get(k).push(st);
+  }
   for (const r of restAreas) {
     const k = key(r.lat, r.lon);
     if (!grid.has(k)) grid.set(k, []);
@@ -78,8 +86,29 @@ export function attachRestAreas(hubs, restAreas, route = null) {
     h.human = best ? humanScore(best.flags) : null;
     h.name = best?.name || [...h.operators].filter(Boolean)[0] || 'Ladestation';
     h.oppositeSide = Boolean(best) && isOppositeSide(route, best);
+    const site = nearestSite(siteGrid, h);
+    if (site) {
+      h.walk = site.walk;
+      h.greenKind = site.greenKind;
+      h.dog = siteDogScore(site.walk);
+      h.human = siteHumanScore(site.walk);
+    }
   }
   return hubs;
+}
+
+// Nächster Schnelllade-Standort (≤ 150 m) zu einem Hub
+const SITE_MATCH_KM = 0.15;
+function nearestSite(siteGrid, h) {
+  let best = null, bestD = SITE_MATCH_KM;
+  const [ci, cj] = [Math.floor(h.lat * 50), Math.floor(h.lon * 50)];
+  for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+    for (const st of siteGrid.get(`${ci + di}:${cj + dj}`) || []) {
+      const d = haversineKm(h.lat, h.lon, st.lat, st.lon);
+      if (d < bestD) { best = st; bestD = d; }
+    }
+  }
+  return best;
 }
 
 // Umweg hin und zurück (Abfahrt, Anfahrt) in km und Minuten

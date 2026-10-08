@@ -83,3 +83,23 @@ test('Rastanlage auf der Gegenfahrbahn wird nicht angefahren, Autohof schon', ()
   ], [left, right, hof], route);
   assert.deepEqual(hubs.map(h => h.oppositeSide), [true, false, false]);
 });
+
+test('Fußwege vom Ladeplatz: Bewertung nach Entfernung, Lader am Rand der Anlage wird schlechter bewertet', async () => {
+  const { siteDogScore, siteHumanScore } = await import('../js/data.js');
+  const close = { wc: 60, food: 120, shop: 200, water: null, picnic: 50, playground: null, dogPark: null, green: 40 };
+  const far = { wc: 450, food: 580, shop: null, water: null, picnic: null, playground: null, dogPark: null, green: 520 };
+  assert.ok(siteDogScore(close) >= 3.5 && siteDogScore(far) < 2);
+  assert.ok(siteHumanScore(close) >= 4 && siteHumanScore(far) <= 2);
+  assert.ok(siteDogScore({ ...far, dogPark: 250 }) >= siteDogScore(far) + 2);
+});
+
+test('attachRestAreas: Fußwege vom nächsten Schnelllader überschreiben die Bewertung der Anlage', () => {
+  const area = { lat: 49.998, lon: 6, name: 'Große Anlage', type: 'rastanlage', flags: FEATURES.toilets | FEATURES.food | FEATURES.forest };
+  const site = { lat: 49.998, lon: 6.0005, walk: { wc: 450, food: 580, shop: null, water: null, picnic: null, playground: null, dogPark: null, green: 520 }, greenKind: 'Wald' };
+  const [hub] = attachRestAreas([{ lat: 49.998, lon: 6.0005, maxKw: 300, points: 4, operators: new Set(['A']), alongKm: 71, offsetKm: 0.1 }], [area], null, [site]);
+  assert.equal(hub.name, 'Große Anlage');
+  assert.deepEqual(hub.walk, site.walk);
+  assert.ok(hub.dog < 2 && hub.human <= 2);
+  const [noSite] = attachRestAreas([{ lat: 49.998, lon: 6.0005, maxKw: 300, points: 4, operators: new Set(['A']), alongKm: 71, offsetKm: 0.1 }], [area], null, []);
+  assert.ok(noSite.dog >= 3 && noSite.walk === undefined);
+});

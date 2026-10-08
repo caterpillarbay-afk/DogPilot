@@ -8,15 +8,24 @@
 //   osmium tags-filter germany-latest.osm.pbf <Filter> -o filtered.osm.pbf
 //   osmium export filtered.osm.pbf -f geojsonseq -o features.geojsonseq
 // Aufruf (Node >= 18, keine Abhängigkeiten):  node scripts/build-rest-areas.mjs features.geojsonseq
-// Ausgabe: rest-areas.json im Repo-Root. Daten © OpenStreetMap-Mitwirkende, ODbL.
+// Ausgabe (im Repo-Root), Daten © OpenStreetMap-Mitwirkende, ODbL:
+//   rest-areas.json    – Rastanlagen mit Ausstattung, gemessen vom Gelände der Anlage
+//   charger-sites.json – Fußwege von jedem Schnelllade-Standort (≥ 50 kW, aus charging-stations.json)
+//                        zu WC, Essen, Einkauf, Wasser, Picknick, Spielplatz, Hundewiese und Grün
 
 import { createReadStream } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'rest-areas.json');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT = join(ROOT, 'rest-areas.json');
+const OUT_SITES = join(ROOT, 'charger-sites.json');
+const CHARGERS = join(ROOT, 'charging-stations.json');
+const SITE_MIN_KW = 50;        // Schnelllader, für die Fußwege berechnet werden
+const SITE_MERGE_M = 80;       // Ladepunkte näher beieinander gelten als ein Standort
+const SITE_MAX_M = 600;        // weiter entfernte Einrichtungen zählen nicht
 const INPUT = process.argv[2];
 const AMENITY_RADIUS_M = 250; // Einrichtungen, die zur Anlage selbst gehören
 const GREEN_RADIUS_M = 300;   // Park, Wald, Wiese: in ca. 4 Minuten zu Fuß erreichbar
@@ -137,7 +146,7 @@ for await (const feat of features()) {
   if (!b) continue;
   const name = (t.name || '').trim();
   areas.push({
-    p: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], flags: ownFlags(t), name,
+    p: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], b, g: feat.geometry, flags: ownFlags(t), name,
     services: t.highway === 'services',
     autohof: /autohof|truck ?stop/i.test(name),
   });
@@ -154,7 +163,49 @@ for (const a of areas) {
   grid.get(k).push(a);
 }
 
-// 2. Durchgang: Einrichtungen und Grünflächen mit exaktem Abstand zur Geometrie
+// Schnelllade-Standorte aus dem Ladesäulenregister (Ladepunkte im Umkreis von 80 m zusammengefasst)
+const sites = [];
+try {
+  const ch = JSON.parse(await readFile(CHARGERS, 'utf8'));
+  const sGrid = new Map();
+  const key = (lat, lon) => `${Math.floor(lat / 0.002)}:${Math.floor(lon / 0.002)}`;
+  for (const [lat, lon, kw] of ch.punkte) {
+    if (kw < SITE_MIN_KW) continue;
+    const [ci, cj] = key(lat, lon).split(':').map(Number);
+    let hit = null;
+    for (let di = -1; di <= 1 && !hit; di++) for (let dj = -1; dj <= 1 && !hit; dj++) {
+      hit = (sGrid.get(`${ci + di}:${cj + dj}`) || []).find(x => distM(x.p, [lat, lon]) < SITE_MERGE_M) || null;
+    }
+    if (hit) { if (kw > hit.kw) Object.assign(hit, { p: [lat, lon], kw }); continue; }
+    const site = { p: [lat, lon], kw, d: {}, greenKind: 0 };
+    sites.push(site);
+    const k = key(lat, lon);
+    if (!sGrid.has(k)) sGrid.set(k, []);
+    sGrid.get(k).push(site);
+  }
+  console.log(`${sites.length} Schnelllade-Standorte (≥ ${SITE_MIN_KW} kW)`);
+} catch (err) {
+  console.warn(`charging-stations.json nicht lesbar (${err.message}) – keine Fußwege für Ladestandorte`);
+}
+const siteGrid = new Map();
+for (const s of sites) {
+  const k = `${Math.floor(s.p[0] / CELL)}:${Math.floor(s.p[1] / CELL)}`;
+  if (!siteGrid.has(k)) siteGrid.set(k, []);
+  siteGrid.get(k).push(s);
+}
+
+// Welcher Fußweg-Eintrag zu einem Ausstattungs-Bit gehört (Tankstelle zählt als Einkauf)
+const SITE_KEY = {
+  [F.toilets]: 'wc', [F.food]: 'food', [F.shop]: 'shop', [F.fuel]: 'shop', [F.water]: 'water',
+  [F.picnic]: 'picnic', [F.playground]: 'playground', [F.dogPark]: 'dogPark',
+  [F.park]: 'green', [F.forest]: 'green', [F.meadow]: 'green',
+};
+const GREEN_KIND = { [F.park]: 1, [F.forest]: 2, [F.meadow]: 3 };
+const GREEN_BITS = F.park | F.forest | F.meadow;
+const AREA_PAD_DEG = 0.012;   // größte halbe Ausdehnung einer Rastanlage (~1 km)
+
+// 2. Durchgang: Einrichtungen und Grünflächen mit exaktem Abstand zur Geometrie.
+// Einrichtungen (WC, Essen …) zählen ab dem Gelände der Anlage, Grünflächen ab ihrem Mittelpunkt.
 let items = 0;
 for await (const feat of features()) {
   const t = feat.properties || {};
@@ -165,16 +216,34 @@ for await (const feat of features()) {
   if (!b) continue;
   items++;
   const [minLat, minLon, maxLat, maxLon] = b;
-  const padLat = radius / M_PER_DEG, padLon = padLat / Math.cos(minLat * Math.PI / 180);
-  const i0 = Math.floor((minLat - padLat) / CELL), i1 = Math.floor((maxLat + padLat) / CELL);
-  const j0 = Math.floor((minLon - padLon) / CELL), j1 = Math.floor((maxLon + padLon) / CELL);
-  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
-    for (const a of grid.get(`${i}:${j}`) || []) {
-      if (a.flags & bit) continue;
-      const [lat, lon] = a.p;
-      if (lat < minLat - padLat || lat > maxLat + padLat || lon < minLon - padLon || lon > maxLon + padLon) continue;
-      if (distanceToGeometry(a.p, feat.geometry) <= radius) a.flags |= bit;
+  const cellsAround = (pad, gridMap, fn) => {
+    const padLat = pad / M_PER_DEG, padLon = padLat / Math.cos(minLat * Math.PI / 180);
+    const i0 = Math.floor((minLat - padLat) / CELL), i1 = Math.floor((maxLat + padLat) / CELL);
+    const j0 = Math.floor((minLon - padLon) / CELL), j1 = Math.floor((maxLon + padLon) / CELL);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      for (const x of gridMap.get(`${i}:${j}`) || []) {
+        const [lat, lon] = x.p;
+        if (lat < minLat - padLat || lat > maxLat + padLat || lon < minLon - padLon || lon > maxLon + padLon) continue;
+        fn(x);
+      }
     }
+  };
+  const isGreen = (bit & GREEN_BITS) !== 0;
+  const itemCenter = [(minLat + maxLat) / 2, (minLon + maxLon) / 2];
+  cellsAround(radius + AREA_PAD_DEG * M_PER_DEG, grid, a => {
+    if (a.flags & bit) return;
+    const d = isGreen ? distanceToGeometry(a.p, feat.geometry) : distanceToGeometry(itemCenter, a.g);
+    if (d <= radius) a.flags |= bit;
+  });
+  if (sites.length) {
+    const k = SITE_KEY[bit];
+    cellsAround(SITE_MAX_M, siteGrid, s => {
+      const d = distanceToGeometry(s.p, feat.geometry);
+      if (d <= SITE_MAX_M && !(s.d[k] <= d)) {
+        s.d[k] = d;
+        if (k === 'green') s.greenKind = GREEN_KIND[bit];
+      }
+    });
   }
 }
 console.log(`${items} Einrichtungen und Grünflächen ausgewertet`);
@@ -206,3 +275,17 @@ const json = JSON.stringify(data);
 await writeFile(OUT, json + '\n');
 const count = bit => merged.filter(a => a.flags & bit).length;
 console.log(`${merged.length} Rastanlagen, davon mit WC ${count(F.toilets)}, Essen ${count(F.food)}, Grün/Hund ${count(F.dogPark | F.park | F.forest | F.meadow)}, ${(json.length / 1e6).toFixed(2)} MB → ${OUT}`);
+
+// Fußwege der Schnelllade-Standorte (in 10 m, 255 = nichts innerhalb 600 m)
+const SITE_FIELDS = ['wc', 'food', 'shop', 'water', 'picnic', 'playground', 'dogPark', 'green'];
+const enc = d => d == null ? 255 : Math.min(254, Math.round(d / 10));
+const sitesData = {
+  quelle: 'Bundesnetzagentur (Ladesäulenregister) und OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL)',
+  stand: data.stand,
+  felder: ['lat', 'lon', ...SITE_FIELDS.map(f => `${f} (×10 m, 255 = > ${SITE_MAX_M} m)`), 'gruenArt (0 = keine, 1 = Park, 2 = Wald, 3 = Wiese)'],
+  punkte: sites.map(s => [round5(s.p[0]), round5(s.p[1]), ...SITE_FIELDS.map(f => enc(s.d[f])), s.greenKind]),
+};
+const sitesJson = JSON.stringify(sitesData);
+await writeFile(OUT_SITES, sitesJson + '\n');
+const near = (f, m) => sites.filter(s => s.d[f] != null && s.d[f] <= m).length;
+console.log(`${sites.length} Ladestandorte: WC ≤ 300 m ${near('wc', 300)}, Essen ≤ 300 m ${near('food', 300)}, Grün ≤ 150 m ${near('green', 150)}, Hundewiese ≤ 600 m ${near('dogPark', 600)}, ${(sitesJson.length / 1e6).toFixed(2)} MB → ${OUT_SITES}`);

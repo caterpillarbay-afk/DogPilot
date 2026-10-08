@@ -51,7 +51,7 @@ jobs:
         run: set -o pipefail; node scripts/build-rest-areas.mjs features.geojsonseq | tee build.log
       - name: Commit rest-areas.json
         run: |
-          git add rest-areas.json
+          git add rest-areas.json charger-sites.json
           if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
           SUMMARY=$(grep -oE '[0-9]+ Rastanlagen' build.log || echo "neue Daten")
           git config user.name "github-actions[bot]"
