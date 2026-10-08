@@ -98,6 +98,33 @@ export async function loadChargerSites() {
   return { list: decodeSites(d), datenstand: d.stand };
 }
 
+// Fahrzeugvarianten mit Akku und DC-Ladeleistung (Open EV Data)
+export async function loadVehicleSpecs() {
+  const d = await fetchJson('vehicle-specs.json');
+  if (!Array.isArray(d.fahrzeuge) || !d.fahrzeuge.length) throw new Error('Fahrzeugvarianten leer');
+  return d.fahrzeuge;
+}
+
+// Varianten zu Marke und Modell aus der EEA-Liste finden. Die Schreibweisen der beiden Quellen weichen ab
+// ("MERCEDES-BENZ"/"Mercedes", "Q4"/"Q4 Sportback e-tron 45"): Vergleich ohne Groß-/Kleinschreibung,
+// Leer- und Satzzeichen; erst Präfix des ganzen Modellnamens, sonst gleiches erstes Wort.
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const firstWord = s => norm(String(s || '').trim().split(/\s+/)[0]);
+export function matchVariants(specs, make, model) {
+  if (!specs?.length || !make || !model) return [];
+  const mk = norm(make);
+  const brand = specs.filter(v => { const b = norm(v.marke); return b && (b === mk || mk.startsWith(b) || b.startsWith(mk)); });
+  if (!brand.length) return [];
+  // Markenname am Anfang des Modells entfernen: "TESLA MODEL 3" → "MODEL 3", "ALFA ROMEO JUNIOR" → "JUNIOR"
+  const words = String(model).trim().split(/\s+/);
+  for (let acc = ''; words.length > 1 && norm(words[0]) && mk.startsWith(acc + norm(words[0]));) acc += norm(words.shift());
+  const m = words.join(' ');
+  const full = norm(m), first = firstWord(m);
+  const byPrefix = brand.filter(v => norm(v.modell).startsWith(full));
+  if (byPrefix.length) return byPrefix;
+  return first.length >= 2 ? brand.filter(v => firstWord(v.modell) === first) : [];
+}
+
 export async function loadVehicles() {
   const list = await fetchJson('vehicle-database.json');
   if (!Array.isArray(list) || !list.length) throw new Error('Fahrzeugliste leer');

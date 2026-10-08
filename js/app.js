@@ -3,7 +3,7 @@
 import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
-import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, FEATURES } from './data.js';
+import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, getChargerStatus } from './services.js';
 import { computeTrip, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
@@ -49,6 +49,7 @@ function loadData(force = false) {
     wrap('restAreas', loadRestAreas),
     wrap('sites', loadChargerSites),
     wrap('vehicles', loadVehicles),
+    wrap('specs', loadVehicleSpecs),
   ]);
   return state.dataPromise;
 }
@@ -66,8 +67,8 @@ function avatar(photo, fallbackIcon, cls = '') {
 const field = (label, inner, hint = '') =>
   `<label class="field"><span class="field-label">${label}</span>${inner}${hint ? `<p class="hint">${hint}</p>` : ''}</label>`;
 
-const numberInput = (id, value, { min, max, step = 1, suffix = '' }) =>
-  `<span class="input-wrap"><input class="input" id="${id}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}">${suffix ? `<span class="suffix">${suffix}</span>` : ''}</span>`;
+const numberInput = (id, value, { min, max, step = 1, suffix = '', placeholder = '' }) =>
+  `<span class="input-wrap"><input class="input" id="${id}" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value ?? ''}"${placeholder ? ` placeholder="${placeholder}"` : ''}>${suffix ? `<span class="suffix">${suffix}</span>` : ''}</span>`;
 
 function readNumber(id, min, max) {
   const v = parseFloat(String($('#' + id)?.value).replace(',', '.'));
@@ -87,16 +88,17 @@ function vehicleFormHtml(v) {
       ${field('Marke', `<select class="select" id="vMake"><option value="">Bitte wählen</option>${makes.map(m => `<option value="${esc(m)}" ${m === v.make ? 'selected' : ''}>${esc(prettyMake(m))}</option>`).join('')}</select>`)}
       ${field('Modell', `<select class="select" id="vModel" ${models.length ? '' : 'disabled'}><option value="">${v.make ? 'Bitte wählen' : 'Erst Marke wählen'}</option>${models.map(m => `<option value="${esc(m.modell)}" ${m.modell === v.model ? 'selected' : ''}>${esc(prettyModel(m.marke, m.modell))}</option>`).join('')}</select>`)}
     </div>
+    ${variantField(v)}
     <div class="grid-2" style="margin-top:12px">
-      ${field('Akku netto', numberInput('vCapacity', v.capacityKWh, { min: 10, max: 200, step: 0.1, suffix: 'kWh' }))}
-      ${field('Max. Ladeleistung', numberInput('vMaxKw', v.carMaxKw, { min: 11, max: 400, suffix: 'kW' }))}
+      ${field('Akku netto', numberInput('vCapacity', v.capacityKWh, { min: 10, max: 200, step: 0.1, suffix: 'kWh', placeholder: 'z. B. 60' }))}
+      ${field('Max. Ladeleistung', numberInput('vMaxKw', v.carMaxKw, { min: 11, max: 400, suffix: 'kW', placeholder: 'z. B. 120' }))}
     </div>
     <div class="field" style="margin-top:12px">
       ${field('Verbrauch normal beladen', numberInput('vConsumption', v.consumptionKWh100, { min: 8, max: 60, step: 0.1, suffix: 'kWh/100 km' }),
-        'Trag deinen echten Verbrauch normal beladen bei deinem üblichen Autobahntempo ein (z. B. 115–120 km/h). Bei Auswahl eines Modells steht hier zunächst der WLTP-Normwert – der liegt meist 10–20 % zu niedrig. Dachbox oder volle Beladung wählst du pro Fahrt; Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
+        'Trag deinen echten Verbrauch normal beladen bei deinem üblichen Autobahntempo ein. Bei Auswahl eines Modells steht hier zunächst der WLTP-Normwert – der liegt meist 10–20 % zu niedrig. Dachbox oder volle Beladung wählst du pro Fahrt; Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
       <div id="vConsumptionWarn">${consumptionWarning(v)}</div>
     </div>
-    <p class="hint">Akku-Kapazität und Ladeleistung findest du im Datenblatt deines Fahrzeugs.</p>`;
+    <p class="hint">Ohne passende Variante: Nutzbare Akku-Kapazität (netto) und maximale DC-Ladeleistung findest du im Datenblatt deines Fahrzeugs.</p>`;
 }
 
 // Schutz vor Verwechslung: Wer hier den Verbrauch voll beladen einträgt, bekommt die Beladung pro Fahrt doppelt aufgeschlagen
@@ -110,15 +112,37 @@ function consumptionWarning(v) {
   return `<div class="notice warn" style="margin-top:8px">${icon('triangle-alert')}<span>${ref} Ist das dein Verbrauch mit Dachbox oder voll beladen? Dann trag hier den Wert <b>normal beladen</b> ein – die Beladung wählst du pro Fahrt, sonst wird sie doppelt gerechnet.</span></div>`;
 }
 
+const variantsOf = v => matchVariants(state.data.specs, v.make, v.model);
+const variantKey = x => `${x.modell}|${x.jahr || ''}|${x.akkuKWh}|${x.dcKw}`;
+
+function variantField(v) {
+  const list = variantsOf(v);
+  if (!list.length) return '';
+  return `<div style="margin-top:12px">${field('Variante', `<select class="select" id="vVariant"><option value="">Bitte wählen – füllt Akku und Ladeleistung aus</option>${list.map((x, i) =>
+    `<option value="${i}" ${variantKey(x) === v.variant ? 'selected' : ''}>${esc(x.modell)}${x.jahr ? ` · ${x.jahr}` : ''} · ${num(x.akkuKWh, 1)} kWh · ${num(x.dcKw)} kW</option>`).join('')}</select>`,
+    'Werte aus Open EV Data. Neuere Modelljahre oder Software-Updates können mehr Ladeleistung haben – dann den Wert unten anpassen.')}</div>`;
+}
+
+function vehicleMissing(v) {
+  const names = [!(v.capacityKWh > 0) && 'Akku netto', !(v.carMaxKw > 0) && 'max. Ladeleistung', !(v.consumptionKWh100 > 0) && 'Verbrauch'].filter(Boolean);
+  return names.length ? `Bitte ${names.join(', ').replace(/, ([^,]*)$/, ' und $1')} eintragen.` : '';
+}
+
 function bindVehicleForm(root, v, onChange) {
   $('#vMake', root)?.addEventListener('change', e => {
-    v.make = e.target.value; v.model = '';
+    v.make = e.target.value; v.model = ''; v.variant = '';
     onChange(true);
   });
   $('#vModel', root)?.addEventListener('change', e => {
-    v.model = e.target.value;
+    v.model = e.target.value; v.variant = '';
     const hit = state.data.vehicles?.find(x => x.marke === v.make && x.modell === v.model);
     if (hit) v.consumptionKWh100 = hit.verbrauchKWh100;
+    onChange(true);
+  });
+  $('#vVariant', root)?.addEventListener('change', e => {
+    const x = variantsOf(v)[+e.target.value];
+    if (!x) return;
+    Object.assign(v, { variant: variantKey(x), capacityKWh: x.akkuKWh, carMaxKw: x.dcKw });
     onChange(true);
   });
   for (const [id, key, min, max] of [['vCapacity', 'capacityKWh', 10, 200], ['vMaxKw', 'carMaxKw', 11, 400], ['vConsumption', 'consumptionKWh100', 8, 60]]) {
@@ -217,7 +241,6 @@ function viewOnboarding() {
   }
   const titles = ['', ['Dein Fahrzeug', 'Damit Reichweite und Ladezeiten stimmen.'], ['Deine Hunde', 'Optional – für die Übersicht und die Planung der Pausen.'], ['Laden und Pausen', 'Du kannst alles später in den Einstellungen ändern.']];
   const body = step === 1 ? vehicleFormHtml(s.vehicle) : step === 2 ? dogsFormHtml(state.draftDogs) : chargingFormHtml(s.charging);
-  const canNext = step !== 1 || (s.vehicle.capacityKWh > 0 && s.vehicle.consumptionKWh100 > 0);
   return `<div class="onboarding">
     ${steps}
     <h2 class="screen-title">${titles[step][0]}</h2>
@@ -225,7 +248,7 @@ function viewOnboarding() {
     <div id="obForm">${body}</div>
     <div class="actions btn-row">
       <button class="btn btn-secondary" id="obBack" type="button">Zurück</button>
-      <button class="btn btn-primary" id="obNext" type="button" ${canNext ? '' : 'disabled'}>${step === 3 ? 'Fertig' : 'Weiter'}</button>
+      <button class="btn btn-primary" id="obNext" type="button">${step === 3 ? 'Fertig' : 'Weiter'}</button>
     </div>
   </div>`;
 }
@@ -238,6 +261,7 @@ function bindOnboarding(root) {
   if (step === 3) bindChargingForm(root, s.charging, rerender => rerender && render());
   $('#obBack', root)?.addEventListener('click', () => { state.onboardingStep--; render(); });
   $('#obNext', root)?.addEventListener('click', async () => {
+    if (step === 1 && vehicleMissing(s.vehicle)) { toast(vehicleMissing(s.vehicle)); return; }
     if (step === 2) s.dogs = state.draftDogs.filter(d => d.name || d.photo).map(d => ({ ...d, name: d.name || 'Hund' }));
     if (step === 3) {
       s.onboarded = true;
@@ -258,8 +282,8 @@ function bindOnboarding(root) {
 function loadHint(load) {
   const base = state.settings.vehicle.consumptionKWh100;
   const f = LOAD_FACTORS[load] || 1;
-  const what = { normal: 'Normal beladen', roof: 'Mit Dachbox (+12 %)', full: 'Voll beladen – Dachbox, Kofferraum und Rückbank voll, zwei Personen und Hunde (+20 %)' }[load] || '';
-  return `${what}: geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
+  const what = { normal: 'Alltagsbeladung', roof: 'Dachbox oder Fahrradträger auf dem Dach, +12 %', full: 'Urlaubsgepäck bis unters Dach, alle Plätze besetzt, meist mit Dachbox, +20 %' }[load] || '';
+  return `${what} – geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
 }
 
 const LOAD_OPTIONS = [['normal', 'Normal'], ['roof', 'Mit Dachbox'], ['full', 'Voll beladen']];
@@ -408,6 +432,8 @@ function bindPlan(root) {
 async function plan() {
   const f = state.form;
   state.error = null;
+  const missing = vehicleMissing(state.settings.vehicle);
+  if (missing) { state.error = missing + ' (Einstellungen → Fahrzeug)'; render(); return; }
   if (!f.from || !f.to) {
     state.error = !f.from ? 'Bitte einen Start aus der Vorschlagsliste wählen.' : 'Bitte ein Ziel aus der Vorschlagsliste wählen.';
     render();

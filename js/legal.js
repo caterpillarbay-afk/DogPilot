@@ -38,6 +38,7 @@ export const LEGAL = {
     html: `
 <ul>
   <li><b>Fahrzeugverbrauch:</b> Europäische Umweltagentur (EEA), CO2-Monitoringdaten Pkw – ${link('https://www.eea.europa.eu/en/legal-notice', 'Nutzungsbedingungen der EEA')}; Werte aufbereitet und zusammengefasst, monatlich aktualisiert.</li>
+  <li><b>Akku und Ladeleistung je Variante:</b> ${link('https://github.com/KilowattApp/open-ev-data', 'Open EV Data')} (KilowattApp), MIT-Lizenz mit Namensnennung; monatlich aktualisiert.</li>
   <li><b>Ladesäulen:</b> Bundesnetzagentur, Ladesäulenregister – ${link('https://www.bundesnetzagentur.de/ladeinfrastruktur.html', 'bundesnetzagentur.de')}, Lizenz: ${todo('laut Downloadseite prüfen, z. B. CC BY 4.0')}; monatlich aktualisiert.</li>
   <li><b>Rastanlagen und Ausstattung:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, ODbL; über die Overpass API, monatlich aktualisiert.</li>
   <li><b>Karte:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, Kacheln der OpenStreetMap Foundation.</li>

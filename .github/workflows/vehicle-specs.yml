@@ -1,0 +1,43 @@
+name: Fahrzeugvarianten aktualisieren
+
+# Holt Akku-Kapazität und DC-Ladeleistung je Fahrzeugvariante aus Open EV Data
+# (https://github.com/KilowattApp/open-ev-data, MIT-Lizenz mit Namensnennung) und committet
+# vehicle-specs.json, falls sich etwas geändert hat.
+# - automatisch am 1. jedes Monats
+# - bei Änderungen am Generator-Skript
+# - manuell: GitHub → Actions → "Fahrzeugvarianten aktualisieren" → Run workflow
+on:
+  schedule:
+    - cron: '27 4 1 * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - scripts/build-vehicle-specs.mjs
+      - .github/workflows/vehicle-specs.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vehicle-specs-${{ github.ref }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Open EV Data abrufen
+        run: git clone --depth 1 https://github.com/KilowattApp/open-ev-data "$RUNNER_TEMP/oed"
+      - name: vehicle-specs.json erzeugen
+        run: set -o pipefail; node scripts/build-vehicle-specs.mjs "$RUNNER_TEMP/oed/data/ev-data.json" | tee build.log
+      - name: Commit vehicle-specs.json
+        run: |
+          git add vehicle-specs.json
+          if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fahrzeugvarianten aktualisiert: $(cat build.log)"
+          git push
