@@ -2,8 +2,8 @@
   "id": "/",
   "name": "DogPilot",
   "short_name": "DogPilot",
-  "description": "Reise-Co-Pilot für Mensch, Hund & Auto",
-  "start_url": "./index.html",
+  "description": "Reiseplaner für Elektroauto, Mensch und Hund: Ladestopps und Hundepausen auf deiner Route.",
+  "start_url": "./#/plan",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0a1615",
@@ -11,9 +11,33 @@
   "orientation": "portrait",
   "lang": "de",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "travel",
+    "navigation"
   ]
 }

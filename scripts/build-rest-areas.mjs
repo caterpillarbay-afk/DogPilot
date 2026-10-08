@@ -30,7 +30,7 @@ const tileQuery = ([s, w, n, e]) => `
 [out:json][timeout:300];
 nwr[highway~"^(services|rest_area)$"](${s},${w},${n},${e})->.r;
 .r out center tags;
-make grp name=amenity; out;
+make grp name="amenity"; out;
 (
   nwr(around.r:${AMENITY_RADIUS_M})[amenity~"^(toilets|restaurant|fast_food|cafe|drinking_water|fuel)$"];
   nwr(around.r:${AMENITY_RADIUS_M})[shop~"^(convenience|kiosk)$"];
@@ -39,15 +39,15 @@ make grp name=amenity; out;
   nwr(around.r:${GREEN_RADIUS_M})[leisure=dog_park];
 );
 out center tags;
-make grp name=park; out;
+make grp name="park"; out;
 (way(around.r:${GREEN_RADIUS_M})[leisure=park]; way(around.r:${GREEN_RADIUS_M})[landuse=recreation_ground];);
 node(w)(around.r:${GREEN_RADIUS_M});
 out skel qt;
-make grp name=forest; out;
+make grp name="forest"; out;
 (way(around.r:${GREEN_RADIUS_M})[landuse=forest]; way(around.r:${GREEN_RADIUS_M})[natural=wood];);
 node(w)(around.r:${GREEN_RADIUS_M});
 out skel qt;
-make grp name=meadow; out;
+make grp name="meadow"; out;
 (way(around.r:${GREEN_RADIUS_M})[landuse=meadow]; way(around.r:${GREEN_RADIUS_M})[natural~"^(grassland|heath)$"];);
 node(w)(around.r:${GREEN_RADIUS_M});
 out skel qt;
@@ -81,7 +81,7 @@ async function overpass(query) {
           body: 'data=' + encodeURIComponent(query),
           signal: AbortSignal.timeout(6 * 60 * 1000),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${(await res.text()).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 300)}`);
         const json = await res.json();
         if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
         return json.elements || [];
