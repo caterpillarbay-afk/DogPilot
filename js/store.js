@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS = {
   vehicle: { make: '', model: '', variant: '', capacityKWh: null, consumptionKWh100: 20, carMaxKw: null, photo: null },
   dogs: [],
   charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
-  keys: { tomtom: '', ocm: '' },
+  keys: { tomtom: '' },
   lastTrip: null,
 };
 

@@ -130,3 +130,26 @@ export async function loadVehicles() {
   if (!Array.isArray(list) || !list.length) throw new Error('Fahrzeugliste leer');
   return list;
 }
+
+// Live-Status eines Ladestandorts aus den OCPDB-Standorten im Umkreis zusammenfassen.
+// Mehrere Quellen melden oft dieselben Ladepunkte (Bundesnetzagentur ohne Status, Betreiber mit Status):
+// Ladepunkte ohne Live-Status zählen nur, wenn es gar keine mit Live-Status gibt; Doppelte über die EVSE-ID.
+// Nur Schnellladepunkte (ab minKw), sofern es welche gibt. Ergebnis null, wenn niemand Live-Daten meldet.
+const LIVE_STATES = { AVAILABLE: 'free', CHARGING: 'busy', BLOCKED: 'busy', RESERVED: 'busy', OUTOFORDER: 'broken', INOPERATIVE: 'broken' };
+export function summarizeLive(items, minKw = 50) {
+  const evses = (items || []).flatMap(it => it.evses || []);
+  const kw = e => Math.max(0, ...(e.connectors || []).map(c => (c.max_electric_power || 0) / 1000));
+  const fast = evses.filter(e => kw(e) >= minKw);
+  const pool = (fast.length ? fast : evses).filter(e => LIVE_STATES[e.status]);
+  if (!pool.length) return null;
+  const seen = new Set(), out = { free: 0, busy: 0, broken: 0, total: 0, updatedAt: null };
+  for (const e of pool) {
+    const id = e.evse_id || e.uid;
+    if (id && seen.has(id)) continue;
+    seen.add(id);
+    out[LIVE_STATES[e.status]]++;
+    out.total++;
+    if (e.last_updated && (!out.updatedAt || e.last_updated > out.updatedAt)) out.updatedAt = e.last_updated;
+  }
+  return out;
+}

@@ -250,6 +250,13 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .soc-bar span { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
 .soc-bar .from { left: 0; background: var(--text-3); }
 .soc-bar .add { background: var(--accent); }
+.live { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--text-2); margin: 6px 0 4px; }
+.live .icon { width: 14px; height: 14px; }
+.live b { color: var(--text); font-weight: 650; }
+.live .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.live .dot.ok { background: var(--ok); } .live .dot.warn { background: var(--warn); } .live .dot.bad { background: var(--danger); }
+.live-box { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); border-top: 1px solid var(--line); padding-top: var(--s2); }
+.live-box .live { margin: 0; font-size: var(--fs-sm); }
 .scores { display: flex; gap: var(--s3); font-size: var(--fs-xs); color: var(--text-2); }
 .scores span { display: inline-flex; align-items: center; gap: 4px; }
 .scores .icon { width: 14px; height: 14px; }
