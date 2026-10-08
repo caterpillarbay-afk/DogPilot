@@ -271,7 +271,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .kv dd { margin: 0; text-align: right; font-weight: 600; }
 
 /* ---------- Karte ---------- */
-.map-wrap { position: relative; margin: calc(-1 * var(--s5)) calc(-1 * var(--s4)) calc(-1 * var(--s8)); height: calc(100dvh - 140px); }
+/* Eigener Stapelkontext: Leaflet nutzt z-index 400–1000 und läge sonst über Menü und Kopfzeile */
+.map-wrap { position: relative; isolation: isolate; z-index: 0; margin: calc(-1 * var(--s5)) calc(-1 * var(--s4)) calc(-1 * var(--s8)); height: calc(100dvh - 140px); }
 #map { position: absolute; inset: 0; background: var(--surface-2); }
 .map-overlay { position: absolute; left: var(--s3); right: var(--s3); bottom: var(--s3); z-index: 500; }
 .map-fab { position: absolute; right: var(--s3); top: var(--s3); z-index: 500; display: flex; flex-direction: column; gap: var(--s2); }
