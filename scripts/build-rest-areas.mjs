@@ -12,8 +12,6 @@ import { dirname, join } from 'node:path';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'rest-areas.json');
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
 const UA = 'DogPilot-DataBuilder (+https://github.com/caterpillarbay-afk/DogPilot)';
@@ -23,7 +21,7 @@ const GREEN_RADIUS_M = 600;   // Grün und Hundewiesen in Gassi-Entfernung
 // Deutschland (samt Grenzregionen) in Kacheln abfragen – eine einzige Abfrage überfordert die
 // öffentlichen Overpass-Server. Grünflächen kommen nur als Umriss-Rechteck (out bb), damit auch große
 // Wälder zählen, deren Mittelpunkt weit entfernt liegt, ohne alle Randpunkte zu laden.
-const TILE_DEG = 1.5;
+const ROWS = 6, COLS = 6;   // 36 Kacheln à ca. 1,3° × 1,55°
 const BOUNDS = { south: 47.2, north: 55.1, west: 5.8, east: 15.1 };
 
 const tileQuery = ([s, w, n, e]) => `
@@ -50,9 +48,11 @@ out bb tags;
 
 function tiles() {
   const out = [];
-  for (let s = BOUNDS.south; s < BOUNDS.north; s += TILE_DEG) {
-    for (let w = BOUNDS.west; w < BOUNDS.east; w += TILE_DEG) {
-      out.push([s, w, Math.min(s + TILE_DEG, BOUNDS.north), Math.min(w + TILE_DEG, BOUNDS.east)].map(x => +x.toFixed(3)));
+  const dLat = (BOUNDS.north - BOUNDS.south) / ROWS, dLon = (BOUNDS.east - BOUNDS.west) / COLS;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const s = BOUNDS.south + r * dLat, w = BOUNDS.west + c * dLon;
+      out.push([s, w, s + dLat, w + dLon].map(x => +x.toFixed(3)));
     }
   }
   return out;
@@ -66,7 +66,8 @@ const F = {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function overpass(query, rounds = 2) {
+// Öffentliche Overpass-Server sind oft ausgelastet (HTTP 429/504): dann eine Minute warten.
+async function overpass(query, rounds = 3) {
   for (let round = 0; round < rounds; round++) {
     for (const url of ENDPOINTS) {
       try {
@@ -81,8 +82,8 @@ async function overpass(query, rounds = 2) {
         if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
         return json.elements || [];
       } catch (err) {
-        console.warn(`  ${new URL(url).host}: ${err.message}`);
-        await sleep(5000);
+        console.warn(`  ${new URL(url).host}: ${err.message.slice(0, 160)}`);
+        await sleep(/HTTP (429|504)|too busy|rate_limited/.test(err.message) ? 60000 : 5000);
       }
     }
     await sleep(30000);
