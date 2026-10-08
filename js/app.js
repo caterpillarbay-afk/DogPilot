@@ -5,7 +5,7 @@ import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalI
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, FEATURES } from './data.js';
 import { searchPlaces, getChargerStatus } from './services.js';
-import { computeTrip } from './trip.js';
+import { computeTrip, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 
@@ -92,10 +92,22 @@ function vehicleFormHtml(v) {
       ${field('Max. Ladeleistung', numberInput('vMaxKw', v.carMaxKw, { min: 11, max: 400, suffix: 'kW' }))}
     </div>
     <div class="field" style="margin-top:12px">
-      ${field('Verbrauch', numberInput('vConsumption', v.consumptionKWh100, { min: 8, max: 60, step: 0.1, suffix: 'kWh/100 km' }),
+      ${field('Verbrauch normal beladen', numberInput('vConsumption', v.consumptionKWh100, { min: 8, max: 60, step: 0.1, suffix: 'kWh/100 km' }),
         'Trag deinen echten Verbrauch normal beladen bei deinem üblichen Autobahntempo ein (z. B. 115–120 km/h). Bei Auswahl eines Modells steht hier zunächst der WLTP-Normwert – der liegt meist 10–20 % zu niedrig. Dachbox oder volle Beladung wählst du pro Fahrt; Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
+      <div id="vConsumptionWarn">${consumptionWarning(v)}</div>
     </div>
     <p class="hint">Akku-Kapazität und Ladeleistung findest du im Datenblatt deines Fahrzeugs.</p>`;
+}
+
+// Schutz vor Verwechslung: Wer hier den Verbrauch voll beladen einträgt, bekommt die Beladung pro Fahrt doppelt aufgeschlagen
+const wltpOf = v => state.data.vehicles?.find(x => x.marke === v.make && x.modell === v.model)?.verbrauchKWh100;
+
+function consumptionWarning(v) {
+  const wltp = wltpOf(v);
+  const limit = wltp ? wltp * 1.3 : 26;
+  if (!(v.consumptionKWh100 > limit)) return '';
+  const ref = wltp ? `${num(v.consumptionKWh100, 1)} kWh liegt mehr als 30 % über dem Normwert dieses Modells (${num(wltp, 1)} kWh).` : `${num(v.consumptionKWh100, 1)} kWh ist für normale Beladung sehr hoch.`;
+  return `<div class="notice warn" style="margin-top:8px">${icon('triangle-alert')}<span>${ref} Ist das dein Verbrauch mit Dachbox oder voll beladen? Dann trag hier den Wert <b>normal beladen</b> ein – die Beladung wählst du pro Fahrt, sonst wird sie doppelt gerechnet.</span></div>`;
 }
 
 function bindVehicleForm(root, v, onChange) {
@@ -113,6 +125,8 @@ function bindVehicleForm(root, v, onChange) {
     $('#' + id, root)?.addEventListener('change', () => {
       const val = readNumber(id, min, max);
       if (val != null) { v[key] = val; $('#' + id, root).value = val; onChange(false); }
+      const warn = $('#vConsumptionWarn', root);
+      if (warn) warn.innerHTML = consumptionWarning(v);
     });
   }
 }
@@ -240,6 +254,14 @@ function bindOnboarding(root) {
 
 // ---------- Planen ----------
 
+// Zeigt, mit welchem Verbrauch geplant wird – so fällt ein falsch eingetragener Grundverbrauch sofort auf
+function loadHint(load) {
+  const base = state.settings.vehicle.consumptionKWh100;
+  const f = LOAD_FACTORS[load] || 1;
+  const what = { normal: 'Normal beladen', roof: 'Mit Dachbox (+12 %)', full: 'Voll beladen – Dachbox, Kofferraum und Rückbank voll, zwei Personen und Hunde (+20 %)' }[load] || '';
+  return `${what}: geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
+}
+
 const LOAD_OPTIONS = [['normal', 'Normal'], ['roof', 'Mit Dachbox'], ['full', 'Voll beladen']];
 
 function placeField(id, label, value, placeholder) {
@@ -258,7 +280,7 @@ function crewBar() {
   const names = s.dogs.map(d => d.name).filter(Boolean);
   return `<button class="list crew list-row" type="button" data-href="#/settings">
     <span class="avatars">${avatar(s.vehicle.photo, 'car')}${s.dogs.map(d => avatar(d.photo, 'dog')).join('')}</span>
-    <span class="grow"><b>${esc(vehicleName(s.vehicle))}</b><br><span class="muted small">${names.length ? 'Mit ' + esc(names.join(' und ')) : 'Ohne Hund'} · ${num(s.vehicle.consumptionKWh100, 1)}&nbsp;kWh/100&nbsp;km</span></span>
+    <span class="grow"><b>${esc(vehicleName(s.vehicle))}</b><br><span class="muted small">${names.length ? 'Mit ' + esc(names.join(' und ')) : 'Ohne Hund'} · ${num(s.vehicle.consumptionKWh100, 1)}&nbsp;kWh/100&nbsp;km normal</span></span>
     ${icon('chevron-right', 'chev')}
   </button>`;
 }
@@ -289,7 +311,7 @@ function viewPlan() {
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${LOAD_OPTIONS.map(([k, label]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
-        'Voll beladen: Dachbox, Kofferraum und Rückbank voll, zwei Personen und Hunde – rund 20 % mehr Verbrauch als normal beladen.')}</div>
+        `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
       </button>
@@ -373,6 +395,7 @@ function bindPlan(root) {
   $$('[data-load]', root).forEach(b => b.addEventListener('click', () => {
     state.form.load = b.dataset.load;
     $$('[data-load]', root).forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
+    $('#loadHint', root).innerHTML = loadHint(state.form.load);
   }));
   $('#startSoc', root).addEventListener('change', () => {
     const v = readNumber('startSoc', 5, 100);
