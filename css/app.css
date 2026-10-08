@@ -155,6 +155,10 @@ main { flex: 1; padding: var(--s5) var(--s4) var(--s8); }
 .input[type=number]::-webkit-inner-spin-button, .input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .input-wrap .suffix { position: absolute; right: 12px; color: var(--text-3); font-size: var(--fs-sm); pointer-events: none; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+/* Abfahrt braucht Platz für Datum und Uhrzeit, der Akku-Wert nur für drei Ziffern */
+.depart-row { grid-template-columns: minmax(0, 1fr) 6.5rem; }
+.depart-row .input[type=datetime-local] { padding-left: 12px; padding-right: 8px; min-width: 0; font-variant-numeric: tabular-nums; }
+.depart-row .input-wrap .input:has(+ .suffix) { padding-right: 36px; }
 .grid-2 .field + .field { margin-top: 0; }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 
