@@ -2,7 +2,7 @@
 // offline die zuletzt geladene. Externe Dienste (Routing, Wetter, Karte) werden nicht zwischengespeichert.
 const CACHE = 'dogpilot-v3';
 const SHELL = [
-  './', 'index.html', 'manifest.json', 'logo.svg', 'icon-192.png', 'css/app.css',
+  './', 'index.html', 'manifest.json', 'logo.png', 'icon-192.png', 'css/app.css',
   'js/app.js', 'js/icons.js', 'js/format.js', 'js/store.js', 'js/data.js', 'js/services.js', 'js/trip.js',
   'js/geo.js', 'js/energy.js', 'js/planner.js', 'js/legal.js', 'js/map.js',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css',
