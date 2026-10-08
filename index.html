@@ -44,6 +44,19 @@
   .brand-text h1 b{color:var(--accent); font-weight:800;}
   .brand-text p{margin:2px 0 0; font-size:11.5px; color:var(--text-dim);}
   .header-tag{font-size:10.5px; color:var(--text-dim); text-align:right; line-height:1.4;}
+  .header-right{display:flex; align-items:center; gap:10px;}
+  /* Auf Handys passt der Slogan nicht neben Logo und Menü-Knopf – er steht dann im Menü */
+  @media (max-width: 459px){ .header-right .header-tag{display:none;} }
+  .menu-tagline{padding:24px 20px 0; font-size:11px; letter-spacing:1.2px; color:var(--text-dim);}
+  .menu-btn{background:none; border:1px solid var(--border); border-radius:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:var(--text); cursor:pointer; flex:none;}
+  .menu-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:50;}
+  .menu-panel{position:fixed; top:0; right:0; bottom:0; width:min(300px, 82vw); background:var(--panel); border-left:1px solid var(--border); z-index:51; padding:calc(16px + env(safe-area-inset-top,0px)) 0 16px; overflow-y:auto; box-shadow:-8px 0 24px rgba(0,0,0,0.35);}
+  .menu-head{display:flex; align-items:center; justify-content:space-between; padding:0 16px 12px 20px; font-weight:700; font-size:17px; border-bottom:1px solid var(--border);}
+  .menu-close{background:none; border:none; color:var(--text-dim); font-size:20px; width:40px; height:40px; cursor:pointer;}
+  .menu-group{padding:16px 20px 6px; font-size:11.5px; letter-spacing:0.6px; color:var(--text-dim); text-transform:uppercase;}
+  .menu-item{display:block; width:100%; text-align:left; background:none; border:none; color:var(--text); font:inherit; font-size:15.5px; padding:14px 20px; cursor:pointer;}
+  .menu-item:active, .menu-item:hover{background:var(--panel-2);}
+  .back-link{background:none; border:none; color:var(--accent); font:inherit; font-size:15px; padding:4px 0; cursor:pointer;}
   main{flex:1; padding:20px 20px 8px; overflow-y:auto;}
   h2.title{font-size:26px; margin:6px 0 2px; font-weight:700;}
   p.subtitle{color:var(--text-dim); margin:0 0 18px; font-size:13.5px;}
@@ -96,9 +109,7 @@
   .comp-names{margin-top:8px; font-size:12.5px; font-weight:600;}
   .veh-icon{font-size:30px; margin:4px 0;}
   .veh-name{font-size:12.5px; font-weight:600; overflow-wrap:break-word;}
-  .legal summary{cursor:pointer; font-weight:600; padding:6px 0;}
-  .legal details + details{border-top:1px solid var(--border); margin-top:6px; padding-top:6px;}
-  .legal p, .legal li{font-size:12.5px; color:var(--text-dim); line-height:1.45; margin:6px 0;}
+  .legal p, .legal li{font-size:13.5px; color:var(--text-dim); line-height:1.45; margin:6px 0;}
   .legal ul{padding-left:18px; margin:6px 0;}
   .legal a{color:var(--accent);}
   .legal b{color:var(--text);}
@@ -211,8 +222,26 @@
         <p>Reise-Co-Pilot für Mensch, Hund &amp; Auto</p>
       </div>
     </div>
-    <div class="header-tag">GEMEINSAM<br>WEITER</div>
+    <div class="header-right">
+      <div class="header-tag">GEMEINSAM<br>WEITER</div>
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="menuPanel">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </header>
+
+  <div class="menu-backdrop" id="menuBackdrop" hidden></div>
+  <aside class="menu-panel" id="menuPanel" aria-label="Menü" hidden>
+    <div class="menu-head">
+      <span>Menü</span>
+      <button class="menu-close" id="menuClose" type="button" aria-label="Menü schließen">✕</button>
+    </div>
+    <div class="menu-group">Rechtliches</div>
+    <button class="menu-item" type="button" data-legal="impressum">Impressum</button>
+    <button class="menu-item" type="button" data-legal="datenschutz">Datenschutzerklärung</button>
+    <button class="menu-item" type="button" data-legal="quellen">Quellen &amp; Lizenzen</button>
+    <div class="menu-tagline">DOGPILOT · GEMEINSAM WEITER</div>
+  </aside>
 
   <main id="main"></main>
 
@@ -975,48 +1004,48 @@ function formatAge(timestamp){
 
 // Impressum, Datenschutz und Quellen – Platzhalter in [eckigen Klammern] (Klasse .todo)
 // müssen vor einer Veröffentlichung durch echte Angaben ersetzt werden.
-function renderLegal(){
+function legalPages(){
   const todo = t => `<span class="todo">[${t}]</span>`;
+  return {
+    impressum: { title: 'Impressum', html: `
+    <p>Angaben gemäß § 5 DDG</p>
+    <p>${todo('Vorname Nachname')}<br>${todo('Straße Hausnummer')}<br>${todo('PLZ Ort')}<br>Deutschland</p>
+    <p>E-Mail: ${todo('E-Mail-Adresse')}</p>
+    <p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${todo('Vorname Nachname, Anschrift wie oben')}</p>` },
+    datenschutz: { title: 'Datenschutzerklärung', html: `
+    <p><b>Verantwortlich:</b> siehe Impressum.</p>
+    <p><b>Keine Konten, kein Tracking, keine Cookies.</b> DogPilot setzt keine Analyse- oder Werbedienste ein.</p>
+    <p><b>Speicherung auf deinem Gerät:</b> Deine Einstellungen (Fahrzeug, Verbrauch, TomTom-Key, Ladeleistung), hochgeladene Dateien und Fotos werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst sie jederzeit über die Browser-Einstellungen („Websitedaten löschen“) entfernen.</p>
+    <p><b>Hosting:</b> Die App wird über Cloudflare (Cloudflare, Inc., USA) ausgeliefert. Dabei verarbeitet Cloudflare technisch notwendige Verbindungsdaten wie IP-Adresse und Zeitpunkt des Abrufs (Art. 6 Abs. 1 lit. f DSGVO).</p>
+    <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
+    <ul>
+      <li>OpenStreetMap Foundation (Großbritannien) – Ortssuche „Nominatim“ (eingegebener Start/Ziel-Text) und Kartenkacheln</li>
+      <li>OSRM-Routingdienst (router.project-osrm.org) – Koordinaten von Start und Ziel, wenn kein TomTom-Key hinterlegt ist</li>
+      <li>TomTom International B.V. (Niederlande) – Koordinaten von Start und Ziel sowie dein Key, nur wenn du einen TomTom-Key einträgst</li>
+      <li>Open Charge Map (Großbritannien) – Koordinaten eines Ladestopps beim Abruf des Ladesäulen-Status</li>
+      <li>cdnjs / Cloudflare – Laden der Kartenbibliothek Leaflet</li>
+    </ul>
+    <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
+    <p class="hint">Stand: ${todo('Datum')}. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>` },
+    quellen: { title: 'Quellen & Lizenzen', html: `
+    <ul>
+      <li><b>Fahrzeugverbrauch:</b> Europäische Umweltagentur (EEA), CO2-Monitoringdaten Pkw – <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank">Nutzungsbedingungen der EEA</a>; Werte aufbereitet und zusammengefasst.</li>
+      <li><b>Ladesäulen:</b> Bundesnetzagentur, Ladesäulenregister – <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur.html" target="_blank">bundesnetzagentur.de</a>, Lizenz: ${todo('laut Downloadseite prüfen, z. B. CC BY 4.0')}.</li>
+      <li><b>Rastanlagen:</b> Die Autobahn GmbH des Bundes, SID/ITP über die Mobilithek – Lizenz: ${todo('laut Mobilithek-Angebot')}.</li>
+      <li><b>Ladesäulen-Status:</b> Open Charge Map – <a href="https://openchargemap.org" target="_blank">openchargemap.org</a>.</li>
+      <li><b>Karte &amp; Ortssuche:</b> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap-Mitwirkende</a> (ODbL).</li>
+      <li><b>Routing:</b> OSRM (Project OSRM) bzw. © TomTom bei eigenem Key.</li>
+      <li><b>Kartenbibliothek:</b> Leaflet (BSD-2-Clause).</li>
+    </ul>` },
+  };
+}
+
+function renderLegalPage(key){
+  const page = legalPages()[key];
   return `
-  <div class="section-head"><h3>RECHTLICHES &amp; QUELLEN</h3></div>
-  <div class="card legal">
-    <details>
-      <summary>Impressum</summary>
-      <p>Angaben gemäß § 5 DDG</p>
-      <p>${todo('Vorname Nachname')}<br>${todo('Straße Hausnummer')}<br>${todo('PLZ Ort')}<br>Deutschland</p>
-      <p>E-Mail: ${todo('E-Mail-Adresse')}</p>
-      <p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${todo('Vorname Nachname, Anschrift wie oben')}</p>
-    </details>
-    <details>
-      <summary>Datenschutzerklärung</summary>
-      <p><b>Verantwortlich:</b> siehe Impressum.</p>
-      <p><b>Keine Konten, kein Tracking, keine Cookies.</b> DogPilot setzt keine Analyse- oder Werbedienste ein.</p>
-      <p><b>Speicherung auf deinem Gerät:</b> Deine Einstellungen (Fahrzeug, Verbrauch, TomTom-Key, Ladeleistung), hochgeladene Dateien und Fotos werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst sie jederzeit über die Browser-Einstellungen („Websitedaten löschen“) entfernen.</p>
-      <p><b>Hosting:</b> Die App wird über Cloudflare (Cloudflare, Inc., USA) ausgeliefert. Dabei verarbeitet Cloudflare technisch notwendige Verbindungsdaten wie IP-Adresse und Zeitpunkt des Abrufs (Art. 6 Abs. 1 lit. f DSGVO).</p>
-      <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
-      <ul>
-        <li>OpenStreetMap Foundation (Großbritannien) – Ortssuche „Nominatim“ (eingegebener Start/Ziel-Text) und Kartenkacheln</li>
-        <li>OSRM-Routingdienst (router.project-osrm.org) – Koordinaten von Start und Ziel, wenn kein TomTom-Key hinterlegt ist</li>
-        <li>TomTom International B.V. (Niederlande) – Koordinaten von Start und Ziel sowie dein Key, nur wenn du einen TomTom-Key einträgst</li>
-        <li>Open Charge Map (Großbritannien) – Koordinaten eines Ladestopps beim Abruf des Ladesäulen-Status</li>
-        <li>cdnjs / Cloudflare – Laden der Kartenbibliothek Leaflet</li>
-      </ul>
-      <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
-      <p class="hint">Stand: ${todo('Datum')}. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>
-    </details>
-    <details>
-      <summary>Quellen &amp; Lizenzen</summary>
-      <ul>
-        <li><b>Fahrzeugverbrauch:</b> Europäische Umweltagentur (EEA), CO2-Monitoringdaten Pkw – <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank">Nutzungsbedingungen der EEA</a>; Werte aufbereitet und zusammengefasst.</li>
-        <li><b>Ladesäulen:</b> Bundesnetzagentur, Ladesäulenregister – <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur.html" target="_blank">bundesnetzagentur.de</a>, Lizenz: ${todo('laut Downloadseite prüfen, z. B. CC BY 4.0')}.</li>
-        <li><b>Rastanlagen:</b> Die Autobahn GmbH des Bundes, SID/ITP über die Mobilithek – Lizenz: ${todo('laut Mobilithek-Angebot')}.</li>
-        <li><b>Ladesäulen-Status:</b> Open Charge Map – <a href="https://openchargemap.org" target="_blank">openchargemap.org</a>.</li>
-        <li><b>Karte &amp; Ortssuche:</b> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap-Mitwirkende</a> (ODbL).</li>
-        <li><b>Routing:</b> OSRM (Project OSRM) bzw. © TomTom bei eigenem Key.</li>
-        <li><b>Kartenbibliothek:</b> Leaflet (BSD-2-Clause).</li>
-      </ul>
-    </details>
-  </div>
+  <button class="back-link" id="legalBack" type="button">‹ Zurück</button>
+  <h2 class="title">${escapeAttr(page.title)}</h2>
+  <div class="card legal">${page.html}</div>
   `;
 }
 
@@ -1092,7 +1121,6 @@ function renderProfil(){
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Wie weit seitlich der Fahrtstrecke nach Ladesäulen/Rastanlagen gesucht wird (z. B. 5 km bedeutet: bis zu 5 km links und rechts der Route). Wird beim nächsten "Fahrt planen" verwendet.</p>
   </div>
 
-  ${renderLegal()}
   `;
 }
 
@@ -1164,17 +1192,22 @@ function attachProfilEvents(){
 }
 
 let currentTab = 'fahrt';
+let legalView = null; // 'impressum' | 'datenschutz' | 'quellen' – über das Menü geöffnet
 let stopView = false;
 
 function render(){
   const main = document.getElementById('main');
-  if(stopView){ main.innerHTML = renderStopDetail(activeStop); attachStopEvents(); }
+  if(legalView){
+    main.innerHTML = renderLegalPage(legalView);
+    document.getElementById('legalBack').addEventListener('click', ()=>{ legalView = null; render(); });
+  }
+  else if(stopView){ main.innerHTML = renderStopDetail(activeStop); attachStopEvents(); }
   else if(currentTab==='fahrt'){ main.innerHTML = renderFahrt(); attachFahrtEvents(); }
   else if(currentTab==='stopps'){ main.innerHTML = renderStopsList(); attachListEvents(); }
   else { main.innerHTML = renderProfil(); attachProfilEvents(); }
 
   document.querySelectorAll('.tab').forEach(b=>{
-    b.classList.toggle('active', !stopView && b.dataset.tab===currentTab);
+    b.classList.toggle('active', !stopView && !legalView && b.dataset.tab===currentTab);
   });
 }
 
@@ -1303,7 +1336,26 @@ function attachStopEvents(){
 }
 
 document.querySelectorAll('nav .tab').forEach(b=>{
-  b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; stopView=false; render(); });
+  b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; stopView=false; legalView=null; render(); });
+});
+
+// ---------- Menü (Hamburger) ----------
+function setMenuOpen(open){
+  document.getElementById('menuPanel').hidden = !open;
+  document.getElementById('menuBackdrop').hidden = !open;
+  document.getElementById('menuBtn').setAttribute('aria-expanded', String(open));
+}
+document.getElementById('menuBtn').addEventListener('click', ()=>setMenuOpen(true));
+document.getElementById('menuClose').addEventListener('click', ()=>setMenuOpen(false));
+document.getElementById('menuBackdrop').addEventListener('click', ()=>setMenuOpen(false));
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') setMenuOpen(false); });
+document.querySelectorAll('.menu-item[data-legal]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    legalView = b.dataset.legal;
+    setMenuOpen(false);
+    render();
+    document.getElementById('main').scrollTop = 0;
+  });
 });
 
 // ---------- Live-Karte ("Fahrt starten") ----------
