@@ -21,8 +21,8 @@ const AMENITY_RADIUS_M = 250; // Einrichtungen, die zur Anlage selbst gehören
 const GREEN_RADIUS_M = 600;   // Grün und Hundewiesen in Gassi-Entfernung
 
 // Deutschland (samt Grenzregionen) in Kacheln abfragen – eine einzige Abfrage überfordert die
-// öffentlichen Overpass-Server. Grünflächen werden über ihre Randpunkte im Umkreis gefunden, damit
-// auch große Wälder zählen, deren Mittelpunkt weit entfernt liegt.
+// öffentlichen Overpass-Server. Grünflächen kommen nur als Umriss-Rechteck (out bb), damit auch große
+// Wälder zählen, deren Mittelpunkt weit entfernt liegt, ohne alle Randpunkte zu laden.
 const TILE_DEG = 1.5;
 const BOUNDS = { south: 47.2, north: 55.1, west: 5.8, east: 15.1 };
 
@@ -39,18 +39,13 @@ make grp name="amenity"; out;
   nwr(around.r:${GREEN_RADIUS_M})[leisure=dog_park];
 );
 out center tags;
-make grp name="park"; out;
-(way(around.r:${GREEN_RADIUS_M})[leisure=park]; way(around.r:${GREEN_RADIUS_M})[landuse=recreation_ground];);
-node(w)(around.r:${GREEN_RADIUS_M});
-out skel qt;
-make grp name="forest"; out;
-(way(around.r:${GREEN_RADIUS_M})[landuse=forest]; way(around.r:${GREEN_RADIUS_M})[natural=wood];);
-node(w)(around.r:${GREEN_RADIUS_M});
-out skel qt;
-make grp name="meadow"; out;
-(way(around.r:${GREEN_RADIUS_M})[landuse=meadow]; way(around.r:${GREEN_RADIUS_M})[natural~"^(grassland|heath)$"];);
-node(w)(around.r:${GREEN_RADIUS_M});
-out skel qt;
+make grp name="green"; out;
+(
+  way(around.r:${GREEN_RADIUS_M})[leisure=park];
+  way(around.r:${GREEN_RADIUS_M})[landuse~"^(forest|meadow|recreation_ground)$"];
+  way(around.r:${GREEN_RADIUS_M})[natural~"^(wood|grassland|heath)$"];
+);
+out bb tags;
 `;
 
 function tiles() {
@@ -71,8 +66,8 @@ const F = {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function overpass(query) {
-  for (let round = 0; round < 2; round++) {
+async function overpass(query, rounds = 2) {
+  for (let round = 0; round < rounds; round++) {
     for (const url of ENDPOINTS) {
       try {
         const res = await fetch(url, {
@@ -130,23 +125,48 @@ function ownFlags(tags) {
   return f;
 }
 
-const areas = [], pois = [], seen = new Set();
+const areas = [], pois = [], greens = [], seen = new Set();
+
+// Kachel abfragen; scheitert sie, in vier kleinere Kacheln teilen. Liefert eine Liste von Antworten.
+async function fetchTile(tile, depth = 0) {
+  try {
+    return [await overpass(tileQuery(tile), depth ? 1 : 2)];
+  } catch (err) {
+    if (depth >= 2) throw err;
+    const [s, w, n, e] = tile, ms = +((s + n) / 2).toFixed(3), mw = +((w + e) / 2).toFixed(3);
+    console.log(`  Kachel [${tile.join(', ')}] wird geteilt`);
+    const parts = [];
+    for (const t of [[s, w, ms, mw], [s, mw, ms, e], [ms, w, n, mw], [ms, mw, n, e]]) parts.push(...await fetchTile(t, depth + 1));
+    return parts;
+  }
+}
+
 const all = tiles();
 for (const [i, tile] of all.entries()) {
-  const elements = await overpass(tileQuery(tile));
-  let group = null, nA = 0, nP = 0;
-  for (const el of elements) {
-    if (el.type === 'grp') { group = el.tags?.name; continue; }
-    const p = pos(el);
-    if (!p) continue;
-    if (group === null) {
-      if (!seen.has(el.type + el.id)) { seen.add(el.type + el.id); areas.push({ el, p }); nA++; }
-      continue;
+  let nA = 0, nP = 0, nG = 0;
+  for (const elements of await fetchTile(tile)) {
+    let group = null;
+    for (const el of elements) {
+      if (el.type === 'grp') { group = el.tags?.name; continue; }
+      if (group === 'green') {
+        const b = el.bounds, t = el.tags || {};
+        if (!b) continue;
+        const bit = t.leisure === 'park' || t.landuse === 'recreation_ground' ? F.park
+          : t.landuse === 'forest' || t.natural === 'wood' ? F.forest : F.meadow;
+        greens.push({ b, bit }); nG++;
+        continue;
+      }
+      const p = pos(el);
+      if (!p) continue;
+      if (group === null) {
+        if (!seen.has(el.type + el.id)) { seen.add(el.type + el.id); areas.push({ el, p }); nA++; }
+        continue;
+      }
+      const bit = featureOf(el.tags || {});
+      if (bit) { pois.push({ p, bit: bit[0], radius: bit[1] }); nP++; }
     }
-    const bit = group === 'amenity' ? featureOf(el.tags || {}) : [F[{ park: 'park', forest: 'forest', meadow: 'meadow' }[group]], GREEN_RADIUS_M];
-    if (bit && bit[0]) { pois.push({ p, bit: bit[0], radius: bit[1] }); nP++; }
   }
-  console.log(`Kachel ${i + 1}/${all.length} [${tile.join(', ')}]: ${nA} Anlagen, ${nP} Einrichtungen/Grünpunkte`);
+  console.log(`Kachel ${i + 1}/${all.length} [${tile.join(', ')}]: ${nA} Anlagen, ${nP} Einrichtungen, ${nG} Grünflächen`);
   await sleep(2000);
 }
 console.log(`${areas.length} Anlagen, ${pois.length} Einrichtungen in der Nähe`);
@@ -169,6 +189,19 @@ for (const poi of pois) {
     for (const a of grid.get(`${ci + di}:${cj + dj}`) || []) {
       if (distM(a.p, poi.p) <= poi.radius) a.flags |= poi.bit;
     }
+  }
+}
+
+// Grünflächen: Abstand der Anlage zum Umriss-Rechteck (0 innerhalb)
+const M_PER_DEG = 111320;
+for (const g of greens) {
+  const { minlat, minlon, maxlat, maxlon } = g.b;
+  const padLat = GREEN_RADIUS_M / M_PER_DEG, padLon = padLat / Math.cos(minlat * Math.PI / 180);
+  for (const a of out) {
+    const [lat, lon] = a.p;
+    if (lat < minlat - padLat || lat > maxlat + padLat || lon < minlon - padLon || lon > maxlon + padLon) continue;
+    const q = [Math.min(maxlat, Math.max(minlat, lat)), Math.min(maxlon, Math.max(minlon, lon))];
+    if (distM(a.p, q) <= GREEN_RADIUS_M) a.flags |= g.bit;
   }
 }
 
