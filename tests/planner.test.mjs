@@ -45,7 +45,8 @@ test('planTrip: lange Strecke mit Stopps, Akku nie unter Reserve', () => {
   assert.ok(plan.stops.length >= 2 && plan.stops.length <= 3, plan.stops.length);
   for (const st of plan.stops) {
     assert.ok(st.arriveSoc >= 10, `Ankunft ${st.arriveSoc} %`);
-    assert.ok(st.targetSoc <= 80);
+    // höchstens 80 %, im letzten Abschnitt bis 90 %, wenn das einen weiteren Stopp spart
+    assert.ok(st.targetSoc <= 80 || (st === plan.stops.at(-1) && st.targetSoc <= 90), `Ziel-Akku ${st.targetSoc} %`);
     assert.ok(st.chargeMin > 0);
   }
   assert.ok(plan.arrivalSoc >= 15, plan.arrivalSoc);
@@ -102,4 +103,29 @@ test('attachRestAreas: Fußwege vom nächsten Schnelllader überschreiben die Be
   assert.ok(hub.dog < 2 && hub.human <= 2);
   const [noSite] = attachRestAreas([{ lat: 49.998, lon: 6.0005, maxKw: 300, points: 4, operators: new Set(['A']), alongKm: 71, offsetKm: 0.1 }], [area], null, []);
   assert.ok(noSite.dog >= 3 && noSite.walk === undefined);
+});
+
+test('planTrip: Pausenrhythmus – spätestens alle 150 km ein Ladestopp, Laden während der Pause', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const kms = Array.from({ length: 14 }, (_, i) => 50 + i * 50);
+  const hubs = attachRestAreas(findHubs(route, kms.map(km => charger(km, 150)), { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15, minBreakMin: 15, maxDriveKm: 150 } });
+  assert.ok(plan.feasible, plan.warnings.join());
+  const marks = [0, ...plan.stops.map(s => s.alongKm), route.lengthKm];
+  for (let i = 1; i < marks.length; i++) assert.ok(marks[i] - marks[i - 1] <= 150.5, `Abschnitt ${Math.round(marks[i] - marks[i - 1])} km`);
+  assert.ok(plan.stops.length >= 4, plan.stops.length);
+  for (const st of plan.stops) assert.ok(st.arriveSoc >= 10 && st.targetSoc <= 80);
+  // Ohne Pausenvorgabe reichen weniger Stopps
+  const free = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15 } });
+  assert.ok(free.stops.length < plan.stops.length);
+});
+
+test('planTrip: kein Mini-Stopp kurz vor dem Ziel – letzter Stopp lädt bis zum Bedarf fürs Ziel', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 24 });
+  const kms = Array.from({ length: 19 }, (_, i) => 25 + i * 35);
+  const hubs = attachRestAreas(findHubs(route, kms.map(km => charger(km, 300)), { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15, minBreakMin: 15, maxDriveKm: 200 } });
+  assert.ok(plan.feasible, plan.warnings.join());
+  assert.ok(route.lengthKm - plan.stops.at(-1).alongKm > 60, `letzter Stopp bei km ${Math.round(plan.stops.at(-1).alongKm)}`);
+  assert.ok(plan.arrivalSoc >= 15);
 });
