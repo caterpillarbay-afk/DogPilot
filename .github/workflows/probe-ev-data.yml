@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          git clone --depth 1 https://github.com/chargeprice/open-ev-data oed || git clone --depth 1 https://github.com/KilowattApp/open-ev-data oed
-          cd oed; ls -la; ls data | head
-          echo "=== LICENSE"; cat LICENSE* 2>/dev/null | head -30
-          echo "=== README"; head -80 README.md
-          echo "=== Q4/Model 3 Beispiele"
+          git clone --depth 1 https://github.com/KilowattApp/open-ev-data oed; cd oed; git log -1 --format=%cd
           node -e '
-            const d = require("./data/ev-data.json"); const list = d.data || d;
-            console.log("Einträge:", list.length, "Schlüssel:", Object.keys(list[0]).join(","));
-            for (const v of list.filter(v => /Q4|Model 3/.test(v.model)).slice(0, 8)) console.log(JSON.stringify({brand: v.brand, model: v.model, variant: v.variant, year: v.release_year, bat: v.usable_battery_size, dc: v.dc_charger && v.dc_charger.max_power}));
-            const brands = {}; for (const v of list) brands[v.brand] = (brands[v.brand]||0)+1; console.log(JSON.stringify(brands));
+            const list = require("./data/ev-data.json").data;
+            console.log(JSON.stringify(list.find(v => v.model === "Q4 Sportback e-tron 45"), null, 1));
+            console.log(JSON.stringify(list.find(v => /Model 3/.test(v.model)), null, 1));
+            const ec = list.map(v => v.energy_consumption && v.energy_consumption.average_consumption).filter(Boolean); console.log("Verbrauch vorhanden:", ec.length, "Beispiele", ec.slice(0, 10).join(","));
+            console.log("mit Kurve:", list.filter(v => v.dc_charger && v.dc_charger.charging_curve && v.dc_charger.charging_curve.length).length, "ohne DC:", list.filter(v => !v.dc_charger).length);
+            console.log("Typen:", JSON.stringify([...new Set(list.map(v => v.vehicle_type))]));
+            for (const v of list.filter(v => v.brand === "Audi" && /Q4/.test(v.model))) console.log(v.model, "|", v.variant, "|", v.release_year, "|", v.usable_battery_size, "|", v.dc_charger && v.dc_charger.max_power);
           '
+          ls data/v2 | head; head -c 600 data/v2/README.md
