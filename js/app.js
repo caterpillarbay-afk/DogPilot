@@ -797,22 +797,19 @@ document.addEventListener('click', async e => {
     await resetAll();
     state.settings = structuredClone(DEFAULT_SETTINGS);
     state.onboardingStep = 0;
-    state.form = { from: null, to: null, departure: defaultDeparture(), startSoc: 80 };
+    state.form = emptyForm();
     go('#/plan');
   }
 });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#drawerRoot').innerHTML) closeMenu(); });
 
+const emptyForm = () => ({ from: null, to: null, departure: defaultDeparture(), startSoc: 80, load: 'normal' });
+
 async function start() {
   state.settings = await loadSettings();
-  const t = state.settings.lastTrip;
-  state.form = {
-    from: t?.from || null, to: t?.to || null,
-    departure: defaultDeparture(),
-    startSoc: t?.startSoc ?? 80,
-    load: t?.load || (t?.roofBox ? 'roof' : 'normal'),
-  };
+  // Jede neue Planung beginnt mit leerem Formular; die letzte Fahrt bleibt über „Letzte Fahrt“ erreichbar
+  state.form = emptyForm();
   state.draftDogs = structuredClone(state.settings.dogs);
   $$('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon); });
   $('#menuBtn').addEventListener('click', openMenu);
