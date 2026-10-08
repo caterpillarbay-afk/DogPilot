@@ -334,7 +334,6 @@ function viewPlan() {
         ${placeField('to', 'Ziel', f.to, 'Ziel – Ort oder Adresse')}
         <button class="icon-btn swap" type="button" id="swap" aria-label="Start und Ziel tauschen">${icon('arrow-up-down')}</button>
       </div>
-      <p class="hint">Ort nicht gefunden? In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</p>
       <div class="grid-2 depart-row" style="margin-top:16px">
         ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
@@ -353,7 +352,7 @@ function viewPlan() {
 
 function bindPlace(root, id) {
   const inp = $('#' + id, root), list = $('#' + id + '-list', root);
-  let results = [], active = -1, timer, seq = 0;
+  let results = [], active = -1, timer, seq = 0, noHits = false;   // noHits: Suche lief, aber ohne Treffer
   const close = () => { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); active = -1; };
   const choose = r => {
     state.form[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
@@ -363,9 +362,11 @@ function bindPlace(root, id) {
   };
   const show = () => {
     const opts = [...results];
-    list.innerHTML = opts.map((r, i) => `<button type="button" role="option" data-i="${i}" class="${i === active ? 'active' : ''}">
+    // Tipp zur Koordinaten-Eingabe erst, wenn die Suche wirklich nichts gefunden hat
+    const tip = !opts.length && noHits ? `<div class="suggest-empty">${icon('search', 'sm')}<span><span class="main">Nichts gefunden</span><br><span class="sub">Tipp: In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</span></span></div>` : '';
+    list.innerHTML = tip + opts.map((r, i) => `<button type="button" role="option" data-i="${i}" class="${i === active ? 'active' : ''}">
       ${icon(r.here ? 'locate' : 'map-pin', 'sm')}<span><span class="main">${esc(r.main)}</span>${r.sub ? `<br><span class="sub">${esc(r.sub)}</span>` : ''}</span></button>`).join('');
-    list.hidden = !opts.length;
+    list.hidden = !opts.length && !tip;
     inp.setAttribute('aria-expanded', String(!list.hidden));
     $$('button', list).forEach(b => b.addEventListener('mousedown', e => { e.preventDefault(); pick(+b.dataset.i); }));
   };
@@ -386,6 +387,7 @@ function bindPlace(root, id) {
   inp.addEventListener('blur', () => setTimeout(close, 150));
   inp.addEventListener('input', () => {
     state.form[id] = null;
+    noHits = false;
     clearTimeout(timer);
     const q = inp.value;
     if (q.trim().length < 2) { results = q ? [] : [here]; show(); return; }
@@ -395,7 +397,7 @@ function bindPlace(root, id) {
         const near = state.form.from && id === 'to' ? [state.form.from.lat, state.form.from.lon] : null;
         const r = await searchPlaces(q, near);
         if (my !== seq) return;
-        results = r; active = -1; show();
+        results = r; active = -1; noHits = !r.length; show();
       } catch (err) {
         if (my === seq) { results = []; show(); toast(err.message); }
       }

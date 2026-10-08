@@ -170,6 +170,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .suggest button { display: flex; gap: var(--s3); align-items: center; width: 100%; padding: 10px var(--s3); background: none; border: 0; text-align: left; cursor: pointer; }
 .suggest button + button { border-top: 1px solid var(--line); }
 .suggest button:hover, .suggest button.active { background: var(--surface-2); }
+.suggest-empty { display: flex; gap: var(--s3); align-items: flex-start; padding: 10px var(--s3); color: var(--text-2); }
+.suggest-empty .icon { margin-top: 3px; }
 .suggest .main { font-weight: 600; }
 .suggest .sub { font-size: var(--fs-xs); color: var(--text-2); }
 .route-fields { position: relative; }
