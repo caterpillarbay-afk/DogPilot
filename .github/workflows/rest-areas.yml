@@ -1,7 +1,7 @@
 name: Rastanlagen aktualisieren
 
-# Lädt Rastanlagen samt Ausstattung aus OpenStreetMap und committet
-# rest-areas.json, falls sich etwas geändert hat.
+# Lädt Rastanlagen samt Ausstattung aus OpenStreetMap (Geofabrik-Extrakt, gefiltert mit osmium)
+# und committet rest-areas.json, falls sich etwas geändert hat.
 # - automatisch am 1. jedes Monats (OpenStreetMap wird laufend gepflegt)
 # - bei Änderungen am Generator-Skript
 # - manuell: GitHub → Actions → "Rastanlagen aktualisieren" → Run workflow
@@ -23,14 +23,32 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Daten abrufen
-        run: set -o pipefail; node scripts/build-rest-areas.mjs | tee build.log
+      - name: osmium installieren
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: OpenStreetMap-Extrakt Deutschland laden (Geofabrik)
+        run: curl -sSfL --retry 3 -o germany.osm.pbf https://download.geofabrik.de/europe/germany-latest.osm.pbf && ls -lh germany.osm.pbf
+      - name: Rastanlagen, Einrichtungen und Grünflächen herausfiltern
+        run: |
+          osmium tags-filter germany.osm.pbf \
+            nwr/highway=services,rest_area \
+            nwr/amenity=toilets,restaurant,fast_food,cafe,drinking_water,fuel \
+            nwr/shop=convenience,kiosk \
+            nwr/leisure=picnic_table,playground,dog_park,park \
+            nwr/tourism=picnic_site \
+            wr/landuse=forest,meadow,recreation_ground \
+            wr/natural=wood,grassland,heath \
+            -o filtered.osm.pbf
+          rm germany.osm.pbf
+          osmium export filtered.osm.pbf -f geojsonseq -o features.geojsonseq
+          ls -lh filtered.osm.pbf features.geojsonseq
+      - name: rest-areas.json erzeugen
+        run: set -o pipefail; node scripts/build-rest-areas.mjs features.geojsonseq | tee build.log
       - name: Commit rest-areas.json
         run: |
           git add rest-areas.json
