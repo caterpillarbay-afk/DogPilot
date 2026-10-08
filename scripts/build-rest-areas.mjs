@@ -20,22 +20,48 @@ const UA = 'DogPilot-DataBuilder (+https://github.com/caterpillarbay-afk/DogPilo
 const AMENITY_RADIUS_M = 250; // Einrichtungen, die zur Anlage selbst gehören
 const GREEN_RADIUS_M = 600;   // Grün und Hundewiesen in Gassi-Entfernung
 
-const QUERY = `
-[out:json][timeout:900][maxsize:1073741824];
-area["ISO3166-1"="DE"][admin_level=2]->.de;
-nwr[highway~"^(services|rest_area)$"](area.de)->.r;
+// Deutschland (samt Grenzregionen) in Kacheln abfragen – eine einzige Abfrage überfordert die
+// öffentlichen Overpass-Server. Grünflächen werden über ihre Randpunkte im Umkreis gefunden, damit
+// auch große Wälder zählen, deren Mittelpunkt weit entfernt liegt.
+const TILE_DEG = 1.5;
+const BOUNDS = { south: 47.2, north: 55.1, west: 5.8, east: 15.1 };
+
+const tileQuery = ([s, w, n, e]) => `
+[out:json][timeout:300];
+nwr[highway~"^(services|rest_area)$"](${s},${w},${n},${e})->.r;
 .r out center tags;
+make grp name=amenity; out;
 (
   nwr(around.r:${AMENITY_RADIUS_M})[amenity~"^(toilets|restaurant|fast_food|cafe|drinking_water|fuel)$"];
   nwr(around.r:${AMENITY_RADIUS_M})[shop~"^(convenience|kiosk)$"];
   nwr(around.r:${AMENITY_RADIUS_M})[leisure~"^(picnic_table|playground)$"];
   nwr(around.r:${AMENITY_RADIUS_M})[tourism=picnic_site];
-  nwr(around.r:${GREEN_RADIUS_M})[leisure~"^(dog_park|park)$"];
-  way(around.r:${GREEN_RADIUS_M})[landuse~"^(forest|meadow|grass|recreation_ground)$"];
-  way(around.r:${GREEN_RADIUS_M})[natural~"^(wood|grassland|heath)$"];
-)->.p;
-.p out center tags;
+  nwr(around.r:${GREEN_RADIUS_M})[leisure=dog_park];
+);
+out center tags;
+make grp name=park; out;
+(way(around.r:${GREEN_RADIUS_M})[leisure=park]; way(around.r:${GREEN_RADIUS_M})[landuse=recreation_ground];);
+node(w)(around.r:${GREEN_RADIUS_M});
+out skel qt;
+make grp name=forest; out;
+(way(around.r:${GREEN_RADIUS_M})[landuse=forest]; way(around.r:${GREEN_RADIUS_M})[natural=wood];);
+node(w)(around.r:${GREEN_RADIUS_M});
+out skel qt;
+make grp name=meadow; out;
+(way(around.r:${GREEN_RADIUS_M})[landuse=meadow]; way(around.r:${GREEN_RADIUS_M})[natural~"^(grassland|heath)$"];);
+node(w)(around.r:${GREEN_RADIUS_M});
+out skel qt;
 `;
+
+function tiles() {
+  const out = [];
+  for (let s = BOUNDS.south; s < BOUNDS.north; s += TILE_DEG) {
+    for (let w = BOUNDS.west; w < BOUNDS.east; w += TILE_DEG) {
+      out.push([s, w, Math.min(s + TILE_DEG, BOUNDS.north), Math.min(w + TILE_DEG, BOUNDS.east)].map(x => +x.toFixed(3)));
+    }
+  }
+  return out;
+}
 
 // Ausstattungs-Bits (gleiche Reihenfolge wie FEATURES in js/data.js der App)
 const F = {
@@ -43,23 +69,28 @@ const F = {
   playground: 64, dogPark: 128, park: 256, forest: 512, meadow: 1024,
 };
 
-async function overpass() {
-  for (const url of ENDPOINTS) {
-    try {
-      console.log(`Overpass: ${url}`);
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(QUERY),
-        signal: AbortSignal.timeout(20 * 60 * 1000),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-      const json = await res.json();
-      if (!json.elements?.length) throw new Error('leere Antwort');
-      return json.elements;
-    } catch (err) {
-      console.warn(`  fehlgeschlagen: ${err.message}`);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function overpass(query) {
+  for (let round = 0; round < 2; round++) {
+    for (const url of ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'data=' + encodeURIComponent(query),
+          signal: AbortSignal.timeout(6 * 60 * 1000),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
+        return json.elements || [];
+      } catch (err) {
+        console.warn(`  ${new URL(url).host}: ${err.message}`);
+        await sleep(5000);
+      }
     }
+    await sleep(30000);
   }
   throw new Error('Kein Overpass-Server lieferte Daten.');
 }
@@ -99,16 +130,24 @@ function ownFlags(tags) {
   return f;
 }
 
-const elements = await overpass();
-const areas = [], pois = [];
-for (const el of elements) {
-  const p = pos(el);
-  if (!p) continue;
-  if (el.tags?.highway === 'services' || el.tags?.highway === 'rest_area') areas.push({ el, p });
-  else {
-    const f = featureOf(el.tags || {});
-    if (f) pois.push({ p, bit: f[0], radius: f[1] });
+const areas = [], pois = [], seen = new Set();
+const all = tiles();
+for (const [i, tile] of all.entries()) {
+  const elements = await overpass(tileQuery(tile));
+  let group = null, nA = 0, nP = 0;
+  for (const el of elements) {
+    if (el.type === 'grp') { group = el.tags?.name; continue; }
+    const p = pos(el);
+    if (!p) continue;
+    if (group === null) {
+      if (!seen.has(el.type + el.id)) { seen.add(el.type + el.id); areas.push({ el, p }); nA++; }
+      continue;
+    }
+    const bit = group === 'amenity' ? featureOf(el.tags || {}) : [F[{ park: 'park', forest: 'forest', meadow: 'meadow' }[group]], GREEN_RADIUS_M];
+    if (bit && bit[0]) { pois.push({ p, bit: bit[0], radius: bit[1] }); nP++; }
   }
+  console.log(`Kachel ${i + 1}/${all.length} [${tile.join(', ')}]: ${nA} Anlagen, ${nP} Einrichtungen/Grünpunkte`);
+  await sleep(2000);
 }
 console.log(`${areas.length} Anlagen, ${pois.length} Einrichtungen in der Nähe`);
 if (areas.length < 500) throw new Error(`Nur ${areas.length} Anlagen – Antwort unvollständig?`);

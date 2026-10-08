@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 22
       - name: Daten abrufen
-        run: node scripts/build-vehicle-database.mjs | tee build.log
+        run: set -o pipefail; node scripts/build-vehicle-database.mjs | tee build.log
       - name: Commit vehicle-database.json
         run: |
           git add vehicle-database.json
