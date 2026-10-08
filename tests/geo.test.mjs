@@ -46,3 +46,22 @@ test('RouteLine: Seite in Fahrtrichtung (nach Norden: Osten = rechts)', () => {
   const south = new RouteLine([[51, 8], [50, 8]]);
   assert.equal(south.project(50.5, 8.002, 1).side, 'left');
 });
+
+test('parseCoordinates: Formate aus Google Maps und Handy', async () => {
+  const { parseCoordinates } = await import('../js/geo.js');
+  const near = (r, lat, lon) => { assert.ok(r, 'nicht erkannt'); assert.ok(Math.abs(r[0] - lat) < 1e-4 && Math.abs(r[1] - lon) < 1e-4, String(r)); };
+  near(parseCoordinates('54.7886, 8.8291'), 54.7886, 8.8291);
+  near(parseCoordinates('54.7886,8.8291'), 54.7886, 8.8291);
+  near(parseCoordinates(' 54.7886 8.8291 '), 54.7886, 8.8291);
+  near(parseCoordinates('54,7886 8,8291'), 54.7886, 8.8291);
+  near(parseCoordinates('54,7886, 8,8291'), 54.7886, 8.8291);
+  near(parseCoordinates('54,7886; 8,8291'), 54.7886, 8.8291);
+  near(parseCoordinates('N 54.7886 E 8.8291'), 54.7886, 8.8291);
+  near(parseCoordinates('54.7886° N, 8.8291° O'), 54.7886, 8.8291);
+  near(parseCoordinates(`54°47'19.0"N 8°49'44.8"E`), 54.78861, 8.82911);
+  near(parseCoordinates('54°47′19″N, 8°49′45″E'), 54.78861, 8.82917);
+  near(parseCoordinates('40.7128, -74.0060'), 40.7128, -74.006);
+  near(parseCoordinates('https://www.google.com/maps/place/Niebüll/@54.7886,8.8291,15z'), 54.7886, 8.8291);
+  near(parseCoordinates('https://maps.google.com/?q=54.7886,8.8291'), 54.7886, 8.8291);
+  for (const no of ['Niebüll', 'Hauptstraße 5, 25899 Niebüll', '25899', '12 34', '95.1, 8.2', 'https://maps.app.goo.gl/abc123', '']) assert.equal(parseCoordinates(no), null, no);
+});
