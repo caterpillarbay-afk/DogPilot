@@ -30,7 +30,6 @@ export class EnergyProfile {
     this.km = [0];
     this.kwh = [0];
     this.climbM = 0;
-    this.descentM = 0;
     const pts = (heights && heights.length > 1)
       ? heights.filter(h => h[1] != null).map(([d, h]) => [d / 1000, h])
       : [[0, 0], [lengthKm, 0]];
@@ -42,7 +41,7 @@ export class EnergyProfile {
     for (let i = 1; i < pts.length; i++) {
       const dh = pts[i][1] - pts[i - 1][1];
       segs.push({ dKm: (pts[i][0] - pts[i - 1][0]) * scale, elev: elevKWh(dh) });
-      if (dh > 0) this.climbM += dh; else this.descentM -= dh;
+      if (dh > 0) this.climbM += dh;
     }
     // Übliches Auf und Ab steckt schon im Verbrauch: höchstens so viel abziehen, wie über den reinen
     // Höhenunterschied Start → Ziel hinaus anfällt, und nicht mehr als das übliche Maß

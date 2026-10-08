@@ -64,7 +64,7 @@ function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
   return result;
 }
 
-function socAt(plan, stops, energy, s, km) {
+function socAt(stops, energy, s, km) {
   let soc = s.startSoc, pos = 0;
   for (const st of stops) {
     if (st.kind === 'break' || st.alongKm > km) continue;
@@ -105,7 +105,7 @@ export async function computeTrip({ from, to, departure, startSoc, load = 'norma
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
   const stops = addDogBreaks(chargeStops, line, route.durationMin, restAreasAlong(line, restAreas), s.maxDriveMin, s.minBreakMin);
-  for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(plan, stops, energy, s, st.alongKm);
+  for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(stops, energy, s, st.alongKm);
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
 
   return {

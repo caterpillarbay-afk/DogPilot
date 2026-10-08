@@ -280,14 +280,18 @@ function bindOnboarding(root) {
 // ---------- Planen ----------
 
 // Zeigt, mit welchem Verbrauch geplant wird – so fällt ein falsch eingetragener Grundverbrauch sofort auf
+// Beladung: Auswahl-Chip, Kurzform in der Fahrtübersicht, Erklärung (Aufschlag aus LOAD_FACTORS)
+const LOAD = {
+  normal: { label: 'Normal', short: '', text: 'Alltagsbeladung' },
+  roof: { label: 'Mit Dachbox', short: 'mit Dachbox', text: 'Dachbox oder Fahrradträger auf dem Dach' },
+  full: { label: 'Voll beladen', short: 'voll beladen', text: 'Urlaubsgepäck bis unters Dach, alle Plätze besetzt, meist mit Dachbox' },
+};
+
 function loadHint(load) {
   const base = state.settings.vehicle.consumptionKWh100;
   const f = LOAD_FACTORS[load] || 1;
-  const what = { normal: 'Alltagsbeladung', roof: 'Dachbox oder Fahrradträger auf dem Dach, +12 %', full: 'Urlaubsgepäck bis unters Dach, alle Plätze besetzt, meist mit Dachbox, +20 %' }[load] || '';
-  return `${what} – geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
+  return `${LOAD[load]?.text || ''}${f > 1 ? `, +${Math.round((f - 1) * 100)} %` : ''} – geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
 }
-
-const LOAD_OPTIONS = [['normal', 'Normal'], ['roof', 'Mit Dachbox'], ['full', 'Voll beladen']];
 
 function placeField(id, label, value, placeholder) {
   return `<div class="place" data-place="${id}">
@@ -335,7 +339,7 @@ function viewPlan() {
         ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
-      <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${LOAD_OPTIONS.map(([k, label]) =>
+      <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
@@ -489,7 +493,7 @@ function viewTrip() {
     t.temperature != null ? `${icon('thermometer', 'sm')} ${num(t.temperature)} °C` : '',
     t.climbM != null ? `${icon('mountain', 'sm')} ${num(t.climbM)} m bergauf` : '',
     t.trafficDelayMin ? `${icon('timer', 'sm')} ${num(t.trafficDelayMin)} min Stau` : '',
-    t.load && t.load !== 'normal' ? `${icon('car', 'sm')} ${t.load === 'full' ? 'voll beladen' : 'mit Dachbox'}` : '',
+    LOAD[t.load]?.short ? `${icon('car', 'sm')} ${LOAD[t.load].short}` : '',
   ].filter(Boolean);
   let prevKm = 0;
   const minPerKm = t.driveMin / t.lengthKm;
@@ -606,7 +610,7 @@ function viewStop(i) {
         <div class="live" id="live-${i}">${liveLine(i, true)}</div>
         <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
       </div>`
-      : `<p class="muted small" style="margin:0">Pause für den Hund – nach spätestens 2,5 Stunden Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
+      : `<p class="muted small" style="margin:0">Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     <h3 class="section-title">Für Hund und Mensch</h3>
     ${st.dog != null ? `<div class="rating">
@@ -631,7 +635,8 @@ function viewStop(i) {
 // ---------- Live-Belegung der Ladestopps ----------
 // Zustand je Stopp: { loading } | { data, at } | { error, at }. Gilt für die aktuelle Fahrt, max. 2 min alt.
 const LIVE_MAX_AGE_MS = 2 * 60000;
-const liveKey = i => `${trip()?.departure}|${i}`;
+// Schlüssel über die Position: nach einer Neuplanung gehört Index i evtl. zu einem anderen Stopp
+const liveKey = i => { const st = trip()?.stops[i]; return st ? `${st.lat.toFixed(4)},${st.lon.toFixed(4)}` : ''; };
 
 function liveLine(i, detail = false) {
   const s = state.live[liveKey(i)];
