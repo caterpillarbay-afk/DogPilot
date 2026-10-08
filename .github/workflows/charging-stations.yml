@@ -1,0 +1,41 @@
+name: Ladesäulenregister aktualisieren
+
+# Lädt das Ladesäulenregister der Bundesnetzagentur und committet
+# charging-stations.json, falls sich etwas geändert hat.
+# - automatisch am 1. jedes Monats (die BNetzA aktualisiert das Register laufend)
+# - bei Änderungen am Generator-Skript
+# - manuell: GitHub → Actions → "Ladesäulenregister aktualisieren" → Run workflow
+on:
+  schedule:
+    - cron: '37 4 1 * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - scripts/build-charging-stations.mjs
+      - .github/workflows/charging-stations.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: charging-stations-${{ github.ref }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Daten abrufen
+        run: node scripts/build-charging-stations.mjs | tee build.log
+      - name: Commit charging-stations.json
+        run: |
+          git add charging-stations.json
+          if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
+          SUMMARY=$(grep -oE '[0-9]+ Ladepunkte \(≥ [0-9]+ kW\)' build.log || echo "neue Daten")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Ladesäulenregister aktualisiert: $SUMMARY"
+          git push

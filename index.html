@@ -517,6 +517,7 @@ let importedCharging = null;   // Array von {lat,lon,kw,anzahlLadepunkte,betreib
 let importedAreas = null;      // Array von {id,name,lat,lon,equipment,services,spaces}
 let computedStops = null;      // Ergebnis von computeRouteStops
 let lastEmergencyStop = null;  // zuletzt gefundener Notfall-Ladepunkt (kein Rastanlagen-Datensatz)
+let chargingAutoPromise = null; // läuft beim Start: lädt charging-stations.json (Bundesnetzagentur)
 let chargingUpdatedAt = null;  // Zeitstempel des letzten Ladesäulenregister-Uploads
 let areasUpdatedAt = null;     // Zeitstempel des letzten Rastanlagen-Uploads
 const DATA_MAX_AGE_DAYS = 30;  // ab diesem Alter wird eine Update-Erinnerung angezeigt
@@ -611,34 +612,6 @@ function pointToSegmentKm(lat, lon, lat1, lon1, lat2, lon2){
   return { dist: haversineKm(lat, lon, cy, cx), t };
 }
 
-function parseChargingCSV(text){
-  const lines = text.split(/\r?\n/);
-  let headerIdx = -1, header = null;
-  for(let i=0;i<lines.length;i++){
-    const cells = lines[i].split(';');
-    if(cells[0] && cells[0].replace(/^\uFEFF/,'').trim() === 'Ladeeinrichtungs-ID'){
-      headerIdx = i; header = cells.map(c=>c.trim()); break;
-    }
-  }
-  if(headerIdx === -1) throw new Error('Header "Ladeeinrichtungs-ID" nicht gefunden');
-  const col = {}; header.forEach((h,i)=>{ col[h]=i; });
-  const points = [];
-  for(let i=headerIdx+1;i<lines.length;i++){
-    const r = lines[i].split(';');
-    if(r.length < header.length || !r[0]) continue;
-    const lat = parseFloat((r[col['Breitengrad']]||'').replace(',','.'));
-    const lon = parseFloat((r[col['Längengrad']]||'').replace(',','.'));
-    const kw = parseFloat((r[col['Nennleistung Ladeeinrichtung [kW]']]||'').replace(',','.'));
-    if(Number.isNaN(lat) || Number.isNaN(lon)) continue;
-    points.push({
-      lat, lon, kw: Number.isNaN(kw) ? 0 : kw,
-      anzahlLadepunkte: parseInt(r[col['Anzahl Ladepunkte']]||'0', 10) || 0,
-      betreiber: r[col['Betreiber']] || '',
-    });
-  }
-  return points;
-}
-
 function parseRestAreasXML(text){
   const doc = new DOMParser().parseFromString(text, 'application/xml');
   const err = doc.querySelector('parsererror');
@@ -708,6 +681,24 @@ function computeRouteStops(charging, areas, start, end, corridorKm=15, chargeRad
   }
   stops.sort((x,y)=>x.km-y.km);
   return stops;
+}
+
+// Ladesäulenregister kommt automatisch aus charging-stations.json (monatlich per GitHub Actions
+// aus den Daten der Bundesnetzagentur erzeugt, siehe scripts/build-charging-stations.mjs).
+// Eine Kopie liegt in IndexedDB, damit die App auch offline planen kann.
+async function loadChargingAuto(){
+  try{
+    const res = await fetch('charging-stations.json', { cache: 'no-cache' });
+    if(!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    const points = d.punkte.map(([lat, lon, kw, n, b]) => ({ lat, lon, kw, anzahlLadepunkte: n, betreiber: d.betreiber[b] || '' }));
+    if(!points.length) throw new Error('leer');
+    importedCharging = points;
+    chargingUpdatedAt = Date.parse(d.datenstand || d.stand) || Date.now();
+    idbSet('charging', importedCharging);
+    idbSet('chargingUpdatedAt', chargingUpdatedAt);
+    if(!stopView && currentTab==='profil') render();
+  }catch(e){ /* offline o. ä.: gespeicherte Kopie aus IndexedDB bleibt in Benutzung */ }
 }
 
 function readFileAsText(file, encoding){
@@ -822,6 +813,7 @@ async function planTrip(){
     return;
   }
   await loadRouteInfo(start, end);
+  if(chargingAutoPromise) await chargingAutoPromise;
   routeStartCoords = start;
   routeEndCoords = end;
   routeStraightLineKm = haversineKm(start[0], start[1], end[0], end[1]);
@@ -830,7 +822,9 @@ async function planTrip(){
     planStatus = { ok:true, text: `${start.label} → ${end.label} · ${computedStops.length} Stopps im Korridor` };
   } else {
     computedStops = [];
-    planStatus = { ok:true, text: 'Route berechnet – für Stopps bitte im Profil-Tab die Dateien laden' };
+    planStatus = { ok:true, text: importedCharging
+      ? 'Route berechnet – für Stopps bitte im Profil-Tab die Rastanlagen-Datei laden'
+      : 'Route berechnet – Ladesäulendaten konnten nicht geladen werden (offline?)' };
   }
   render();
 }
@@ -1029,11 +1023,10 @@ function renderLegal(){
 function renderProfil(){
   const csvAge = formatAge(chargingUpdatedAt);
   const xmlAge = formatAge(areasUpdatedAt);
-  const csvStale = csvAge && csvAge.days > DATA_MAX_AGE_DAYS;
   const xmlStale = xmlAge && xmlAge.days > DATA_MAX_AGE_DAYS;
   const csvName = importedCharging
-    ? `${importedCharging.length.toLocaleString('de-DE')} Ladepunkte geladen${csvAge ? ` · Stand ${csvAge.dateStr} (vor ${csvAge.days} Tagen)` : ''}`
-    : 'Noch keine Datei gewählt';
+    ? `${importedCharging.length.toLocaleString('de-DE')} Ladepunkte (ab 11 kW)${csvAge ? ` · Datenstand ${csvAge.dateStr}` : ''}`
+    : 'Wird geladen …';
   const xmlName = importedAreas
     ? `${importedAreas.length.toLocaleString('de-DE')} Rastanlagen geladen${xmlAge ? ` · Stand ${xmlAge.dateStr} (vor ${xmlAge.days} Tagen)` : ''}`
     : 'Noch keine Datei gewählt';
@@ -1043,11 +1036,10 @@ function renderProfil(){
   <p class="subtitle">Deine Angaben zu Hund, Mensch und Fahrzeug.</p>
   <div class="placeholder" style="padding:24px 10px;">👤 Profilverwaltung folgt in einer späteren Version.</div>
 
-  ${(csvStale || xmlStale) ? `
+  ${xmlStale ? `
   <div class="card" style="border-color:var(--danger); background:rgba(229,86,107,0.1);">
     <div class="card-label"><span style="color:var(--danger);">⏰ Update fällig</span></div>
-    <p style="font-size:13px; margin:0 0 10px;">${csvStale ? `Ladesäulenregister ist ${csvAge.days} Tage alt. ` : ''}${xmlStale ? `Rastanlagen-Datei ist ${xmlAge.days} Tage alt. ` : ''}Beide Quellen werden monatlich aktualisiert – bitte neue Version laden.</p>
-    <p style="font-size:12px; color:var(--text-dim); margin:0 0 4px;">📄 Ladesäulenregister: <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur.html?nn=659906" target="_blank" style="color:var(--accent);">bundesnetzagentur.de/ladeinfrastruktur</a></p>
+    <p style="font-size:13px; margin:0 0 10px;">Rastanlagen-Datei ist ${xmlAge.days} Tage alt. Die Quelle wird monatlich aktualisiert – bitte neue Version laden.</p>
     <p style="font-size:12px; color:var(--text-dim); margin:0;">📄 SID/ITP-Rastanlagen: über dein Mobilithek-Konto (siehe README)</p>
   </div>
   ` : ''}
@@ -1075,13 +1067,12 @@ function renderProfil(){
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">Kostenlos (2.500 Anfragen/Tag, keine Kreditkarte) unter <a href="https://developer.tomtom.com" target="_blank" style="color:var(--accent);">developer.tomtom.com</a> registrieren, "Routing API"-Key erstellen und hier einfügen. Ohne Key funktioniert die Planung weiter wie bisher (OSRM, ohne Live-Stauinfo) – Verbrauch/Reichweite werden dann nicht an Stau angepasst.</p>
   </div>
 
-  <div class="section-head"><h3>ECHTE STRECKENDATEN (EINMALIG EINRICHTEN)</h3></div>
-  <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Wird nach dem Hochladen dauerhaft im Browser gespeichert – kein erneuter Upload beim nächsten Öffnen nötig.</p>
+  <div class="section-head"><h3>STRECKENDATEN</h3></div>
+  <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Ladesäulen kommen automatisch. Die Rastanlagen-Datei wird nach dem Hochladen dauerhaft im Browser gespeichert – kein erneuter Upload nötig.</p>
   <div class="card">
-    <div class="card-label"><span>📄 LADESÄULENREGISTER (CSV)</span></div>
-    <label class="btn-outline" for="csvInput" style="display:block; text-align:center; cursor:pointer;">Datei wählen</label>
-    <input type="file" id="csvInput" accept=".csv" style="display:none;">
-    <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">${csvName}</p>
+    <div class="card-label"><span>⚡ LADESÄULENREGISTER</span></div>
+    <p style="font-size:13px; margin:0;">✓ Automatisch von der Bundesnetzagentur, monatlich aktualisiert</p>
+    <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0;">${csvName}</p>
   </div>
   <div class="card">
     <div class="card-label"><span>📄 LKW-RASTANLAGEN (SID/ITP XML)</span></div>
@@ -1089,8 +1080,8 @@ function renderProfil(){
     <input type="file" id="xmlInput" accept=".xml" style="display:none;">
     <p style="font-size:12px; color:var(--text-dim); margin:8px 0 0;">${xmlName}</p>
   </div>
-  ${(importedCharging || importedAreas) ? `
-  <button class="btn-outline" id="clearDataBtn" style="margin-bottom:16px; color:var(--danger); border-color:var(--danger);">Gespeicherte Dateien löschen</button>
+  ${importedAreas ? `
+  <button class="btn-outline" id="clearDataBtn" style="margin-bottom:16px; color:var(--danger); border-color:var(--danger);">Rastanlagen-Datei löschen</button>
   ` : ''}
   <div class="card">
     <div class="card-label"><span>Korridorbreite</span></div>
@@ -1146,19 +1137,6 @@ function attachProfilEvents(){
     toast(tomtomApiKey ? 'TomTom-Key gespeichert' : 'TomTom-Key entfernt');
     render();
   });
-  document.getElementById('csvInput').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    try{
-      const text = await readFileAsText(file, 'utf-8');
-      importedCharging = parseChargingCSV(text);
-      chargingUpdatedAt = Date.now();
-      idbSet('charging', importedCharging);
-      idbSet('chargingUpdatedAt', chargingUpdatedAt);
-      toast(`${importedCharging.length} Ladepunkte importiert & gespeichert`);
-    }catch(err){ toast('CSV konnte nicht gelesen werden'); }
-    render();
-  });
   document.getElementById('xmlInput').addEventListener('change', async (e)=>{
     const file = e.target.files[0];
     if(!file) return;
@@ -1177,11 +1155,10 @@ function attachProfilEvents(){
   });
   const clearBtn = document.getElementById('clearDataBtn');
   if(clearBtn) clearBtn.addEventListener('click', async ()=>{
-    await Promise.all([idbDelete('charging'), idbDelete('areas')]);
-    importedCharging = null;
+    await idbDelete('areas');
     importedAreas = null;
     computedStops = null;
-    toast('Gespeicherte Dateien gelöscht');
+    toast('Rastanlagen-Datei gelöscht');
     render();
   });
 }
@@ -1207,7 +1184,7 @@ function renderStopsList(){
     if(!plan.length){
       if(!importedCharging || !importedAreas){
         return `<h2 class="title">Stopps</h2><p class="subtitle">Für ${routeStart} → ${routeZiel} liegen keine Daten vor.</p>
-        <div class="placeholder">Bitte im Profil-Tab Ladesäulenregister und Rastanlagen-Datei laden.</div>`;
+        <div class="placeholder">Bitte im Profil-Tab die Rastanlagen-Datei laden.</div>`;
       }
       return `<h2 class="title">Stopps</h2><p class="subtitle">${routeStart} → ${routeZiel} · Start-Akku ${startBattery}%</p>
       <div class="placeholder">Reichweite reicht laut Planung ohne Ladestopp bis zum Ziel.</div>`;
@@ -1449,6 +1426,7 @@ render();
     if(vModel) vehicleModel = vModel;
     if(c || a || p || cap || cons || minKw || ttKey || vModel){ render(); toast('Gespeicherte Daten geladen'); }
   }catch(e){ /* IndexedDB nicht verfügbar - einfach normal weiter mit Upload */ }
+  chargingAutoPromise = loadChargingAuto();
 })();
 
 // Service Worker registrieren - Voraussetzung für "App installieren" auf Android
