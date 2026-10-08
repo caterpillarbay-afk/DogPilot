@@ -182,7 +182,10 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
     const nextLeg = Math.min(L, hub.alongKm + s.maxDriveKm);
     const neededNext = energy.between(hub.alongKm, nextLeg) / s.capacityKWh * 100 + s.reserveSoc + 3;
     const breakSoc = socAfterCharging({ capacityKWh: s.capacityKWh, socFrom: Math.max(0, arriveSoc), minutes: s.minBreakMin, chargerKw: hub.maxKw, carMaxKw: s.carMaxKw, cap: s.maxChargeSoc });
-    const targetSoc = Math.max(arriveSoc, Math.min(s.maxChargeSoc, needed, Math.max(neededNext, breakSoc, arriveSoc + 10)));
+    let targetSoc = Math.max(arriveSoc, Math.min(s.maxChargeSoc, needed, Math.max(neededNext, breakSoc, arriveSoc + 10)));
+    // Letzter Abschnitt: bis zum Ziel laden – notfalls bis 10 % über das Limit, statt kurz vor dem Ziel
+    // noch einmal anzuhalten
+    if (L - hub.alongKm <= s.maxDriveKm && needed > targetSoc && needed <= Math.min(100, s.maxChargeSoc + 10)) targetSoc = needed;
     const chargeMin = chargeMinutes({ capacityKWh: s.capacityKWh, socFrom: Math.max(0, arriveSoc), socTo: targetSoc, chargerKw: hub.maxKw, carMaxKw: s.carMaxKw });
 
     stops.push({

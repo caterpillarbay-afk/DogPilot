@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS = {
   onboarded: false,
   vehicle: { make: '', model: '', capacityKWh: 77, consumptionKWh100: 20, carMaxKw: 135, photo: null },
   dogs: [],
-  charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 90, corridorKm: 2 },
+  charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
   keys: { tomtom: '', ocm: '' },
   lastTrip: null,
 };

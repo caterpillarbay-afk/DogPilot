@@ -164,7 +164,7 @@ function chargingFormHtml(c) {
       ${field('Pause mindestens', numberInput('cBreak', c.minBreakMin, { min: 0, max: 60, suffix: 'min' }))}
     </div>
     <div style="margin-top:12px">
-      ${field('Pause spätestens nach', numberInput('cMaxDrive', c.maxDriveMin ?? 90, { min: 45, max: 240, step: 15, suffix: 'min Fahrt' }),
+      ${field('Pause spätestens nach', numberInput('cMaxDrive', c.maxDriveMin ?? 120, { min: 45, max: 240, step: 15, suffix: 'min Fahrt' }),
         'Spätestens nach dieser Fahrzeit plant DogPilot einen Stopp – wenn möglich an einer Ladesäule, damit während der Pause geladen wird, sonst als Gassi-Pause an einer hundefreundlichen Rastanlage.')}
     </div>
     <p class="hint">Über 80 % lädt fast jedes Elektroauto deutlich langsamer. Während der Pause lädt DogPilot so viel, wie in der Pausenzeit möglich ist, aber nicht mehr als bis zum Ziel nötig.</p>`;

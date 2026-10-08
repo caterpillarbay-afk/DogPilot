@@ -6,7 +6,7 @@ import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide
 import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
-const DEFAULT_MAX_DRIVE_MIN = 90;   // spätestens nach 1,5 h Fahrt eine Pause für die Hunde
+const DEFAULT_MAX_DRIVE_MIN = 120;  // spätestens nach 2 h Fahrt eine Pause für die Hunde
 // Beladung relativ zum eingetragenen Verbrauch (normal beladen, übliches Autobahntempo):
 // Dachbox ≈ +12 % Luftwiderstand; voll beladen (Dachbox, Kofferraum, Rückbank, 2 Personen, Hunde) ≈ +20 %
 export const LOAD_FACTORS = { normal: 1, roof: 1.12, full: 1.2 };
