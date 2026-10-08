@@ -69,7 +69,7 @@ function socAt(plan, stops, energy, s, km) {
   return Math.round(soc - energy.between(pos, km) / s.capacityKWh * 100);
 }
 
-export async function computeTrip({ from, to, departure, startSoc, settings, chargers, restAreas, onProgress = () => {} }) {
+export async function computeTrip({ from, to, departure, startSoc, settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -90,9 +90,9 @@ export async function computeTrip({ from, to, departure, startSoc, settings, cha
   const s = settingsForPlanner(settings, startSoc);
   const factor = temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin);
   const energy = new EnergyProfile({ lengthKm: line.lengthKm, baseKWh100: s.baseKWh100, factor, heights });
-  const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line);
+  const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
-    findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line);
+    findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line, sites);
   const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));

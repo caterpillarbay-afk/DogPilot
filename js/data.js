@@ -43,6 +43,40 @@ export function humanScore(flags) {
   return Math.min(5, Math.round(s * 10) / 10);
 }
 
+// Fußwege vom Schnelllader (charger-sites.json): Meter oder null (nichts innerhalb 600 m)
+export const SITE_FIELDS = ['wc', 'food', 'shop', 'water', 'picnic', 'playground', 'dogPark', 'green'];
+export const GREEN_KIND = ['', 'Park', 'Wald', 'Wiese'];
+
+export function decodeSites(d) {
+  return d.punkte.map(p => {
+    const walk = {};
+    SITE_FIELDS.forEach((f, i) => { walk[f] = p[2 + i] === 255 ? null : p[2 + i] * 10; });
+    return { lat: p[0], lon: p[1], walk, greenKind: GREEN_KIND[p[2 + SITE_FIELDS.length]] || '' };
+  });
+}
+
+// Punkte nach Fußweg: je näher, desto mehr
+const steps = (m, table) => {
+  if (m == null) return 0;
+  for (const [max, pts] of table) if (m <= max) return pts;
+  return 0;
+};
+
+// Hund, gemessen vom Ladeplatz: Grün direkt am Auto ist das Wichtigste
+export function siteDogScore(w) {
+  const green = steps(w.green, [[100, 2], [250, 1.5], [400, 1], [600, 0.5]]);
+  const dogPark = steps(w.dogPark, [[300, 2.5], [600, 2]]);
+  const s = 1 + Math.max(green, dogPark) + steps(w.picnic, [[200, 0.75], [400, 0.4]]) + steps(w.water, [[300, 0.5]]);
+  return Math.min(5, Math.round(s * 10) / 10);
+}
+
+// Mensch, gemessen vom Ladeplatz: WC und Essen in kurzer Entfernung
+export function siteHumanScore(w) {
+  const s = 1 + steps(w.wc, [[150, 1.5], [300, 1], [600, 0.5]]) + steps(w.food, [[200, 1.5], [400, 1], [600, 0.5]])
+    + steps(w.shop, [[300, 0.75], [600, 0.4]]) + steps(w.water, [[300, 0.25]]);
+  return Math.min(5, Math.round(s * 10) / 10);
+}
+
 async function fetchJson(url) {
   const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
@@ -57,6 +91,11 @@ export async function loadChargers() {
 export async function loadRestAreas() {
   const d = await fetchJson('rest-areas.json');
   return { list: decodeRestAreas(d), datenstand: d.stand };
+}
+
+export async function loadChargerSites() {
+  const d = await fetchJson('charger-sites.json');
+  return { list: decodeSites(d), datenstand: d.stand };
 }
 
 export async function loadVehicles() {

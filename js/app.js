@@ -3,7 +3,7 @@
 import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
-import { loadChargers, loadRestAreas, loadVehicles, FEATURES } from './data.js';
+import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, FEATURES } from './data.js';
 import { searchPlaces, getChargerStatus } from './services.js';
 import { computeTrip } from './trip.js';
 import { LEGAL } from './legal.js';
@@ -15,7 +15,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 const state = {
   settings: null,
-  data: { chargers: null, restAreas: null, vehicles: null, errors: {} },
+  data: { chargers: null, restAreas: null, sites: null, vehicles: null, errors: {} },
   dataPromise: null,
   form: null,          // { from, to, departure, startSoc }
   computing: null,     // Fortschrittstext während der Berechnung
@@ -47,6 +47,7 @@ function loadData(force = false) {
   state.dataPromise = Promise.all([
     wrap('chargers', loadChargers),
     wrap('restAreas', loadRestAreas),
+    wrap('sites', loadChargerSites),
     wrap('vehicles', loadVehicles),
   ]);
   return state.dataPromise;
@@ -382,7 +383,7 @@ async function plan() {
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
     const result = await computeTrip({
       from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, settings: state.settings,
-      chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], onProgress: setProgress,
+      chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     });
     state.settings.lastTrip = result;
     await save();
@@ -493,6 +494,24 @@ const FEATURE_LIST = [
   ['dogPark', 'dog', 'Hundewiese'], ['park', 'trees', 'Park'], ['forest', 'trees', 'Wald'], ['meadow', 'trees', 'Wiese'],
 ];
 
+// Fußwege vom Ladeplatz, nächste zuerst (80 m pro Minute)
+const WALK_LIST = [
+  ['green', 'trees', 'Grün'], ['dogPark', 'dog', 'Hundewiese'], ['wc', 'toilet', 'WC'], ['food', 'utensils', 'Essen'],
+  ['shop', 'store', 'Einkauf'], ['water', 'droplet', 'Trinkwasser'], ['picnic', 'coffee', 'Picknickplatz'], ['playground', 'ferris-wheel', 'Spielplatz'],
+];
+
+function walkCard(st) {
+  const rows = WALK_LIST.map(([k, ic, label]) => ({ k, ic, label: k === 'green' && st.greenKind ? st.greenKind : label, m: st.walk[k] }))
+    .sort((a, b) => (a.m ?? 1e9) - (b.m ?? 1e9));
+  return `<div class="card" style="margin-top:12px">
+    <div class="card-head">${icon('paw-print')} Zu Fuß vom Ladeplatz</div>
+    <dl class="kv">
+      ${rows.map(r => `<dt class="feature ${r.m == null ? 'off' : ''}">${icon(r.m == null ? 'x' : r.ic, 'sm')} ${esc(r.label)}</dt>
+        <dd class="${r.m == null ? 'muted' : ''}">${r.m == null ? 'nicht in der Nähe' : r.m < 20 ? 'direkt am Ladeplatz' : `ca. ${num(Math.round(r.m / 10) * 10)} m · ${Math.max(1, Math.round(r.m / 80))} min`}</dd>`).join('')}
+    </dl>
+  </div>`;
+}
+
 function viewStop(i) {
   const t = trip(), st = t?.stops[i];
   if (!st) return emptyState('map-pin', 'Stopp nicht gefunden', '#/trip', 'Zur Fahrt');
@@ -521,15 +540,18 @@ function viewStop(i) {
       : `<p class="muted small" style="margin:0">Pause für den Hund – nach spätestens 2,5 Stunden Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     <h3 class="section-title">Für Hund und Mensch</h3>
-    ${ra ? `<div class="rating">
+    ${st.dog != null ? `<div class="rating">
       <div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>
       <div class="metric"><div class="label">${icon('coffee')} Mensch</div><div class="value">${num(st.human, 1)}<small>/5</small></div></div>
       <div class="metric"><div class="label">${icon('info')} Typ</div><div class="value" style="font-size:15px">${typeLabel}</div></div>
-    </div>
-    <div class="card" style="margin-top:12px"><div class="features">
+    </div>` : ''}
+    ${st.walk ? walkCard(st) : ''}
+    ${ra ? `<div class="card" style="margin-top:12px">
+      <div class="card-head">${icon('map-pin')} Auf der ${typeLabel}</div>
+      <div class="features">
       ${FEATURE_LIST.map(([k, ic, label]) => { const on = (ra.flags & FEATURES[k]) !== 0; return `<div class="feature ${on ? '' : 'off'}">${icon(on ? ic : 'x')} ${label}</div>`; }).join('')}
-    </div></div>
-    <p class="hint">Ausstattung aus OpenStreetMap im Umkreis der Anlage (WC und Essen bis 250 m, Park, Wald und Wiese bis 300 m, Hundewiese bis 600 m). Nicht eingetragene Einrichtungen können trotzdem vorhanden sein.</p>`
+    </div></div>` : ''}
+    ${st.walk || ra ? `<p class="hint">${st.walk ? 'Fußwege vom Ladeplatz bis 600 m. ' : ''}${ra ? 'Ausstattung der Anlage: WC und Essen auf dem Gelände oder bis 250 m daneben, Park, Wald und Wiese bis 300 m, Hundewiese bis 600 m. ' : ''}Quelle OpenStreetMap – nicht eingetragene Einrichtungen können trotzdem vorhanden sein.</p>`
     : `<div class="notice info">${icon('info')}<span>Zu diesem Standort sind keine Rastanlagen-Daten bekannt. Ausstattung bitte vor Ort prüfen.</span></div>`}
     <div class="btn-row" style="margin-top:24px">
       <button class="btn btn-secondary" type="button" data-href="#/map/${i}">${icon('map')} Karte</button>
@@ -595,6 +617,7 @@ function viewSettings() {
     <h3 class="section-title">Daten</h3>
     <div class="list">
       ${dataRow('plug-zap', 'Ladesäulen', d.chargers ? `${num(d.chargers.list.length)} · ${dateLabel(d.chargers.datenstand)}` : d.errors.chargers ? 'Fehler' : '…')}
+      ${dataRow('paw-print', 'Fußwege an Schnellladern', d.sites ? `${num(d.sites.list.length)} · ${dateLabel(d.sites.datenstand)}` : d.errors.sites ? 'Nicht verfügbar' : '…')}
       ${dataRow('trees', 'Rastanlagen', d.restAreas ? `${num(d.restAreas.list.length)} · ${dateLabel(d.restAreas.datenstand)}` : d.errors.restAreas ? 'Nicht verfügbar' : '…')}
       ${dataRow('database', 'Fahrzeugmodelle', d.vehicles ? num(d.vehicles.length) : d.errors.vehicles ? 'Fehler' : '…')}
     </div>
