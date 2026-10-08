@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>DogPilot</title>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="72%"><stop offset="0" stop-color="#123430"/><stop offset="1" stop-color="#050f0e"/></radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(-26 -29)">
+    <g fill="none" stroke="#f4fbfa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <path d="M182 200 C188 150 232 108 290 104 C318 102 336 112 346 130 C352 142 356 150 368 152 C392 154 414 156 432 162 C452 168 456 192 438 198 C424 206 404 212 388 212 C376 220 366 232 352 238 C338 252 332 266 330 284"/>
+      <path d="M238 128 C206 136 186 180 188 232 C190 268 206 290 222 282 C238 274 246 238 250 200 C252 176 248 150 238 128 Z"/>
+      <path d="M182 200 C172 250 176 310 160 360 C150 400 130 440 108 466"/>
+      <path d="M330 284 C336 340 366 410 404 466"/>
+      <path d="M292 186 C296 212 310 228 330 234" stroke-width="6" opacity=".55"/>
+      <path d="M306 124 C316 117 331 117 341 125" stroke-width="7"/>
+      <path d="M388 212 C374 206 362 200 354 192" stroke-width="7"/>
+    </g>
+    <g fill="#f4fbfa">
+      <path d="M309 140 C316 132 330 132 337 140 C329 145 317 145 309 140 Z"/>
+      <ellipse cx="441" cy="180" rx="15" ry="13"/>
+    </g>
+    <g fill="#2fd8c4" filter="url(#glow)">
+      <path d="M250 300 L258 300 L260 330 L248 330 Z"/>
+      <path d="M248 352 L262 352 L265 392 L245 392 Z"/>
+      <path d="M244 416 L268 416 L272 466 L240 466 Z"/>
+    </g>
+  </g>
+</svg>

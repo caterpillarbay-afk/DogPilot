@@ -183,7 +183,7 @@ function viewOnboarding() {
   if (step === 0) {
     return `<div class="onboarding">
       <div class="welcome">
-        <img src="logo.png" alt="">
+        <img src="logo.svg" alt="">
         <h1>Willkommen bei DogPilot</h1>
         <p class="muted">Dein Reiseplaner für Elektroauto, Mensch und Hund.</p>
       </div>
