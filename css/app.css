@@ -334,3 +334,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .list.list-row:hover { background: var(--surface-2); }
 .grid-2 > * { min-width: 0; }
 .input { min-width: 0; }
+
+/* Auswahl-Chips als Knöpfe (Beladung, Ladeleistung) */
+button.chip { border: 1px solid var(--line-strong); padding: 8px 14px; font-size: var(--fs-sm); cursor: pointer; min-height: 38px; }
+button.chip.on { border-color: var(--accent); }

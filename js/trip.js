@@ -7,7 +7,9 @@ import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
 const DEFAULT_MAX_DRIVE_MIN = 90;   // spätestens nach 1,5 h Fahrt eine Pause für die Hunde
-const ROOF_BOX_FACTOR = 1.12;       // Dachbox: rund 12 % Mehrverbrauch bei Autobahntempo
+// Beladung relativ zum eingetragenen Verbrauch (normal beladen, übliches Autobahntempo):
+// Dachbox ≈ +12 % Luftwiderstand; voll beladen (Dachbox, Kofferraum, Rückbank, 2 Personen, Hunde) ≈ +20 %
+export const LOAD_FACTORS = { normal: 1, roof: 1.12, full: 1.2 };
 const BREAK_CORRIDOR_KM = 1;
 
 export function settingsForPlanner(settings, startSoc) {
@@ -71,7 +73,7 @@ function socAt(plan, stops, energy, s, km) {
   return Math.round(soc - energy.between(pos, km) / s.capacityKWh * 100);
 }
 
-export async function computeTrip({ from, to, departure, startSoc, roofBox = false, settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
+export async function computeTrip({ from, to, departure, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -94,7 +96,7 @@ export async function computeTrip({ from, to, departure, startSoc, roofBox = fal
   // Linienlänge und Streckenlänge des Routendienstes weichen leicht ab: Verbrauch und angezeigte
   // Kilometer auf die offizielle Streckenlänge beziehen
   const kmScale = Math.min(1.25, Math.max(0.8, route.lengthKm / line.lengthKm));
-  const factor = kmScale * temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin) * (roofBox ? ROOF_BOX_FACTOR : 1);
+  const factor = kmScale * temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin) * (LOAD_FACTORS[load] || 1);
   const energy = new EnergyProfile({ lengthKm: line.lengthKm, baseKWh100: s.baseKWh100, factor, heights });
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
@@ -107,7 +109,7 @@ export async function computeTrip({ from, to, departure, startSoc, roofBox = fal
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
 
   return {
-    from, to, departure: departure.toISOString(), startSoc, roofBox,
+    from, to, departure: departure.toISOString(), startSoc, load,
     provider: route.provider,
     points: route.points,
     lengthKm: route.lengthKm,

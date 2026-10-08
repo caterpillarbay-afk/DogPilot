@@ -93,7 +93,7 @@ function vehicleFormHtml(v) {
     </div>
     <div class="field" style="margin-top:12px">
       ${field('Verbrauch', numberInput('vConsumption', v.consumptionKWh100, { min: 8, max: 60, step: 0.1, suffix: 'kWh/100 km' }),
-        'Bei Auswahl eines Modells wird der offizielle WLTP-Durchschnitt der EU-Zulassungsdaten übernommen. Mit Hunden, Gepäck und Autobahntempo liegt der Verbrauch meist 10–25 % höher – trage am besten deinen echten Wert ein. Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
+        'Trag deinen echten Verbrauch normal beladen bei deinem üblichen Autobahntempo ein (z. B. 115–120 km/h). Bei Auswahl eines Modells steht hier zunächst der WLTP-Normwert – der liegt meist 10–20 % zu niedrig. Dachbox oder volle Beladung wählst du pro Fahrt; Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
     </div>
     <p class="hint">Akku-Kapazität und Ladeleistung findest du im Datenblatt deines Fahrzeugs.</p>`;
 }
@@ -240,6 +240,8 @@ function bindOnboarding(root) {
 
 // ---------- Planen ----------
 
+const LOAD_OPTIONS = [['normal', 'Normal'], ['roof', 'Mit Dachbox'], ['full', 'Voll beladen']];
+
 function placeField(id, label, value, placeholder) {
   return `<div class="place" data-place="${id}">
     <label class="sr-only" for="${id}">${label}</label>
@@ -285,7 +287,9 @@ function viewPlan() {
         ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
-      <label class="row" style="margin-top:14px"><input type="checkbox" id="roofBox" ${f.roofBox ? 'checked' : ''}> <span>Dachbox montiert <span class="muted small">(ca. +12 % Verbrauch)</span></span></label>
+      <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${LOAD_OPTIONS.map(([k, label]) =>
+        `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
+        'Voll beladen: Dachbox, Kofferraum und Rückbank voll, zwei Personen und Hunde – rund 20 % mehr Verbrauch als normal beladen.')}</div>
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
       </button>
@@ -366,7 +370,10 @@ function bindPlan(root) {
     const d = new Date(e.target.value);
     if (!Number.isNaN(d.getTime())) state.form.departure = d;
   });
-  $('#roofBox', root).addEventListener('change', e => { state.form.roofBox = e.target.checked; });
+  $$('[data-load]', root).forEach(b => b.addEventListener('click', () => {
+    state.form.load = b.dataset.load;
+    $$('[data-load]', root).forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
+  }));
   $('#startSoc', root).addEventListener('change', () => {
     const v = readNumber('startSoc', 5, 100);
     if (v != null) { state.form.startSoc = Math.round(v); $('#startSoc', root).value = state.form.startSoc; }
@@ -388,7 +395,7 @@ async function plan() {
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
     const result = await computeTrip({
-      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, roofBox: f.roofBox, settings: state.settings,
+      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     });
     state.settings.lastTrip = result;
@@ -431,7 +438,7 @@ function viewTrip() {
     t.temperature != null ? `${icon('thermometer', 'sm')} ${num(t.temperature)} °C` : '',
     t.climbM != null ? `${icon('mountain', 'sm')} ${num(t.climbM)} m bergauf` : '',
     t.trafficDelayMin ? `${icon('timer', 'sm')} ${num(t.trafficDelayMin)} min Stau` : '',
-    t.roofBox ? `${icon('car', 'sm')} mit Dachbox` : '',
+    t.load && t.load !== 'normal' ? `${icon('car', 'sm')} ${t.load === 'full' ? 'voll beladen' : 'mit Dachbox'}` : '',
   ].filter(Boolean);
   let prevKm = 0;
   const minPerKm = t.driveMin / t.lengthKm;
@@ -804,7 +811,7 @@ async function start() {
     from: t?.from || null, to: t?.to || null,
     departure: defaultDeparture(),
     startSoc: t?.startSoc ?? 80,
-    roofBox: t?.roofBox ?? false,
+    load: t?.load || (t?.roofBox ? 'roof' : 'normal'),
   };
   state.draftDogs = structuredClone(state.settings.dogs);
   $$('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon); });
