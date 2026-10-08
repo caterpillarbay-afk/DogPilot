@@ -9,7 +9,8 @@ const SETTINGS_VERSION = 2;
 export const DEFAULT_SETTINGS = {
   version: SETTINGS_VERSION,
   onboarded: false,
-  vehicle: { make: '', model: '', capacityKWh: 77, consumptionKWh100: 20, carMaxKw: 135, photo: null },
+  // Akku und Ladeleistung stehen nicht in der Fahrzeugliste – bewusst leer, damit niemand mit fremden Werten plant
+  vehicle: { make: '', model: '', capacityKWh: null, consumptionKWh100: 20, carMaxKw: null, photo: null },
   dogs: [],
   charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
   keys: { tomtom: '', ocm: '' },
