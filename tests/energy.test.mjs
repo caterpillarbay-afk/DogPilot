@@ -2,9 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EnergyProfile, temperatureFactor, chargeMinutes, trafficFactor } from '../js/energy.js';
 
-test('Temperatur: 20 °C neutral, 0 °C deutlich mehr', () => {
+test('Temperatur: 15–28 °C neutral, 10 °C +4 %, 0 °C +12 %', () => {
   assert.equal(temperatureFactor(20), 1);
-  assert.ok(Math.abs(temperatureFactor(0) - 1.22) < 1e-9);
+  assert.equal(temperatureFactor(15), 1);
+  assert.ok(Math.abs(temperatureFactor(10) - 1.04) < 1e-9);
+  assert.ok(Math.abs(temperatureFactor(0) - 1.12) < 1e-9);
   assert.ok(temperatureFactor(35) > 1);
 });
 
@@ -39,4 +41,17 @@ test('Ladezeit: 10→80 % an 150 kW deutlich unter einer Stunde, an 50 kW länge
   assert.ok(fast > 25 && fast < 50, fast);
   assert.ok(slow > fast + 20, slow);
   assert.equal(chargeMinutes({ capacityKWh: 77, socFrom: 50, socTo: 40, chargerKw: 150, carMaxKw: 135 }), 0);
+});
+
+test('Übliches Auf und Ab steckt im Verbrauch, nur Mehr-Höhenmeter kosten extra', () => {
+  const wave = (amp, n = 200) => Array.from({ length: n + 1 }, (_, i) => [i * 1000, i % 2 ? amp : 0]);
+  // 200 km mit 1,5 m Hügeln je km: unter dem üblichen Maß → wie flach
+  const gentle = new EnergyProfile({ lengthKm: 200, baseKWh100: 20, heights: wave(3) });
+  assert.ok(Math.abs(gentle.totalKWh - 40) < 0.01, gentle.totalKWh);
+  // Berge (20 m je km bergauf): deutlich mehr als flach, aber weniger als ohne Abzug
+  const hilly = new EnergyProfile({ lengthKm: 200, baseKWh100: 20, heights: wave(40) });
+  const raw = 100 * (2300 * 9.81 * 40 / 3.6e6) * (1 / 0.9 - 0.6);
+  assert.ok(hilly.totalKWh > 40 + raw * 0.8 && hilly.totalKWh < 40 + raw, hilly.totalKWh);
+  // Abschnitte bergauf bleiben teurer als bergab
+  assert.ok(hilly.between(0, 1) > hilly.between(1, 2));
 });
