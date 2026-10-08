@@ -76,6 +76,8 @@ export async function loadSettings() {
     stored = await migrateLegacy();
     if (stored) await set(SETTINGS_KEY, stored);
   }
+  // Open-Charge-Map-Schlüssel wird nicht mehr gebraucht: gespeicherten Schlüssel entfernen
+  if (stored?.keys?.ocm !== undefined) { delete stored.keys.ocm; await set(SETTINGS_KEY, stored); }
   return merge(DEFAULT_SETTINGS, stored || {});
 }
 
