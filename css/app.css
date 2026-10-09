@@ -329,7 +329,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .prose p, .prose li { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.55; }
 .prose b { color: var(--text); }
 .prose ul { padding-left: 18px; }
-.prose .todo { color: var(--danger); font-weight: 650; }
 
 /* ---------- Sonstiges ---------- */
 .toast {

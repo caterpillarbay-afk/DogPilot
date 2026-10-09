@@ -1,6 +1,5 @@
-// Impressum, Datenschutz, Quellen. Rot markierte Platzhalter vor Veröffentlichung ausfüllen.
+// Impressum, Datenschutz, Quellen.
 
-const todo = t => `<span class="todo">[${t}]</span>`;
 const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
 
 export const LEGAL = {
@@ -8,9 +7,9 @@ export const LEGAL = {
     title: 'Impressum',
     html: `
 <p>Angaben gemäß § 5 DDG</p>
-<p>${todo('Vorname Nachname')}<br>${todo('Straße Hausnummer')}<br>${todo('PLZ Ort')}<br>Deutschland</p>
-<p>E-Mail: ${todo('E-Mail-Adresse')}</p>
-<p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${todo('Vorname Nachname, Anschrift wie oben')}</p>
+<p>Klaus Stumm<br>Carl-Theodor-Straße 12<br>55232 Alzey<br>Deutschland</p>
+<p>E-Mail: <a href="mailto:caterpillar.bay@gmx.de">caterpillar.bay@gmx.de</a></p>
+<p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Klaus Stumm, Anschrift wie oben</p>
 <p><b>Haftungshinweis:</b> Reichweiten, Ladezeiten und Ankunftszeiten sind Schätzungen auf Basis öffentlicher Daten. Verfügbarkeit und Zustand von Ladesäulen und Rastanlagen können abweichen. Bitte plane eine Reserve ein und beachte die Anzeige deines Fahrzeugs.</p>`,
   },
   datenschutz: {
@@ -31,7 +30,7 @@ export const LEGAL = {
   <li><b>Nahverkehrsgesellschaft Baden-Württemberg mbH (Deutschland), MobiData BW</b> – Koordinaten deiner Ladestopps, um die aktuelle Belegung abzurufen</li>
 </ul>
 <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
-<p class="hint">Stand: ${todo('Datum')}. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>`,
+<p class="hint">Stand: 9. Oktober 2026. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>`,
   },
   quellen: {
     title: 'Quellen und Lizenzen',
@@ -39,7 +38,7 @@ export const LEGAL = {
 <ul>
   <li><b>Fahrzeugverbrauch:</b> Europäische Umweltagentur (EEA), CO2-Monitoringdaten Pkw – ${link('https://www.eea.europa.eu/en/legal-notice', 'Nutzungsbedingungen der EEA')}; Werte aufbereitet und zusammengefasst, monatlich aktualisiert.</li>
   <li><b>Akku und Ladeleistung je Variante:</b> ${link('https://github.com/KilowattApp/open-ev-data', 'Open EV Data')} (KilowattApp), MIT-Lizenz mit Namensnennung; monatlich aktualisiert.</li>
-  <li><b>Ladesäulen:</b> Bundesnetzagentur, Ladesäulenregister – ${link('https://www.bundesnetzagentur.de/ladeinfrastruktur.html', 'bundesnetzagentur.de')}, Lizenz: ${todo('laut Downloadseite prüfen, z. B. CC BY 4.0')}; monatlich aktualisiert.</li>
+  <li><b>Ladesäulen:</b> Ladesäulenregister der Bundesnetzagentur – ${link('https://www.bundesnetzagentur.de/ladesaeulenkarte', 'bundesnetzagentur.de/ladesaeulenkarte')}, Lizenz ${link('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0')}. Daten verändert: auf Ladepunkte ab 11 kW gefiltert, Standorte zusammengefasst; monatlich aktualisiert. Ohne Gewähr für Richtigkeit und Vollständigkeit.</li>
   <li><b>Rastanlagen und Ausstattung:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, ODbL; über die Overpass API, monatlich aktualisiert.</li>
   <li><b>Karte:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, Kacheln der OpenStreetMap Foundation.</li>
   <li><b>Ortssuche:</b> ${link('https://photon.komoot.io', 'Photon')} von komoot, Daten © OpenStreetMap-Mitwirkende.</li>
