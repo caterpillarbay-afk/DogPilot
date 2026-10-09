@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp } from '../js/drive.js';
+import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue } from '../js/drive.js';
 import { FEATURES } from '../js/data.js';
 
 const prefs = { breaks: true, charge: true, closures: true, schedule: true };
@@ -47,4 +47,19 @@ test('Ansage-Texte', () => {
   assert.equal(closureText(events[0], 9.4), 'Achtung: In etwa 9 Kilometern Sperrung auf der A6 zwischen Weinsberg und Bretzfeld.');
   const arr = new Date(2026, 9, 10, 14, 20), by = new Date(2026, 9, 10, 14, 0);
   assert.equal(delayText(15, arr, by), 'Du liegst etwa 15 Minuten hinter dem Plan. Neue Ankunft gegen 14:20 Uhr. Das ist 20 Minuten nach 14:00 Uhr.');
+});
+
+test('Timer am Ladestopp und an der Gassi-Pause', () => {
+  const t0 = Date.UTC(2026, 9, 10, 10, 0);
+  const visit = { stop: { kind: 'charge', name: 'Ionity', stopMin: 25, targetSoc: 80 }, arrivedAt: t0, said: new Set() };
+  assert.equal(stopTimerDue(visit, t0 + 10 * 60000).length, 0);
+  const warn = stopTimerDue(visit, t0 + 21 * 60000);
+  assert.equal(warn[0].text, 'Noch etwa 5 Minuten Laden, dann ist der Akku laut Plan bei 80 Prozent.');
+  visit.said.add('warn');
+  const done = stopTimerDue(visit, t0 + 26 * 60000, { name: 'München', min: 110 });
+  assert.equal(done[0].text, 'Laut Plan ist der Akku jetzt bei 80 Prozent. Du kannst weiterfahren. Nächster Halt: München, in etwa einer Stunde und 50 Minuten.');
+  // kurze Pause: keine Vorwarnung, nur Ende
+  const pause = { stop: { kind: 'break', stopMin: 8 }, arrivedAt: t0, said: new Set() };
+  assert.deepEqual(stopTimerDue(pause, t0 + 7 * 60000), []);
+  assert.equal(stopTimerDue(pause, t0 + 8 * 60000)[0].text, "Die Gassi-Pause ist vorbei. Weiter geht's.");
 });

@@ -1,13 +1,12 @@
 // Fahrt-Modus: Sprachansagen unterwegs. Reine Funktionen (wann wird was angesagt, mit welchem Text),
 // damit sie ohne GPS und Sprachausgabe testbar sind. Ansagt wird nur, was Google Maps nicht weiß.
 import { FEATURES } from './data.js';
+import { clock } from './format.js';
 
 // Vorlauf in Minuten
 export const LEAD_MIN = { break: 10, charge: 15, closure: 10 };
-export const DEFAULT_DRIVE_PREFS = { breaks: true, charge: true, closures: true, schedule: true };
 
 const mins = m => Math.max(1, Math.round(m));
-const clock = d => d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 const until = d => (d.toDateString() === new Date().toDateString() ? '' : d.toLocaleDateString('de-DE', { weekday: 'long' }) + ', ') + clock(d) + ' Uhr';
 const meters = m => m < 1000 ? `${Math.round(m / 10) * 10} Metern` : `${(m / 1000).toFixed(1).replace('.', ',')} Kilometern`;
 
@@ -100,3 +99,28 @@ export function nextUp({ stops, events = [], km, minPerKm, prefs }) {
   ].sort((a, b) => a.km - b.km);
   return cands[0] ? { ...cands[0], min: cands[0].km * minPerKm } : null;
 }
+
+// Timer am Ladestopp bzw. an der Gassi-Pause: 5 min vor Ende und am Ende ansagen.
+// visit: { stop, arrivedAt (ms), said: Set }, next: { name, min } | null (nächster Halt bzw. Ziel)
+export function stopTimerDue(visit, now, next = null) {
+  const st = visit.stop, charge = st.kind === 'charge';
+  const end = visit.arrivedAt + st.stopMin * 60000;
+  const out = [];
+  if (st.stopMin >= 10 && now >= end - 5 * 60000 && now < end && !visit.said.has('warn')) {
+    out.push({ key: 'warn', text: charge ? `Noch etwa 5 Minuten Laden, dann ist der Akku laut Plan bei ${Math.round(st.targetSoc)} Prozent.` : 'Noch etwa 5 Minuten Gassi-Pause.' });
+  }
+  if (now >= end && !visit.said.has('done')) {
+    const then = next ? ` Nächster Halt: ${next.name}, in etwa ${durationText(next.min)}.` : '';
+    out.push({ key: 'done', text: (charge ? `Laut Plan ist der Akku jetzt bei ${Math.round(st.targetSoc)} Prozent. Du kannst weiterfahren.` : 'Die Gassi-Pause ist vorbei. Weiter geht\'s.') + then });
+  }
+  return out;
+}
+
+// „1 Stunde 50 Minuten“ zum Vorlesen
+export function durationText(min) {
+  const m = Math.max(1, Math.round(min)), h = Math.floor(m / 60), r = m % 60;
+  if (!h) return `${m} Minuten`;
+  return `${h === 1 ? 'einer Stunde' : `${h} Stunden`}${r ? ` und ${r} Minuten` : ''}`;
+}
+
+export const arrivalText = name => `Du bist am Ziel${name ? `: ${name}` : ''}. Trag in DogPilot noch kurz den Akkustand ein, dann lernt die Planung dazu.`;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EnergyProfile, temperatureFactor, chargeMinutes, trafficFactor } from '../js/energy.js';
+import { EnergyProfile, temperatureFactor, chargeMinutes, trafficFactor, learnFactor } from '../js/energy.js';
 
 test('Temperatur: 15–28 °C neutral, 10 °C +4 %, 0 °C +12 %', () => {
   assert.equal(temperatureFactor(20), 1);
@@ -63,4 +63,15 @@ test('Puffer für „Ankunft bis …“: Anteil der Fahrzeit plus Minuten je Lad
   assert.equal(bufferMinutes('generous', 420, 3), 130);   // 84 + 45 = 129 → 130
   assert.equal(bufferMinutes('custom', 420, 3, 45), 45);
   assert.equal(bufferMinutes('unbekannt', 120, 0), 10);   // Vorgabe „Normal“
+});
+
+test('Verbrauch lernen: halbe Korrektur, Grenzen, zu kurze Abschnitte', () => {
+  // geplant 15 kWh, tatsächlich 80 % → 50 % von 77 kWh = 23,1 kWh → Faktor 1,54 → gekappt auf 1,4, halb übernommen
+  let r = learnFactor(1, { fromSoc: 80, actualSoc: 50, plannedKWh: 15, capacityKWh: 77 });
+  assert.equal(r.ratio, 1.4); assert.ok(Math.abs(r.factor - 1.2) < 1e-9);
+  // 10 % weniger als geplant mit bisherigem Faktor 1,1 → 1,1 · 0,95
+  r = learnFactor(1.1, { fromSoc: 80, actualSoc: 35, plannedKWh: 77 * 0.45 / 0.9, capacityKWh: 77 });
+  assert.ok(Math.abs(r.factor - 1.045) < 1e-9, r.factor);
+  assert.equal(learnFactor(1, { fromSoc: 80, actualSoc: 77, plannedKWh: 3, capacityKWh: 77 }), null);
+  assert.equal(learnFactor(1, { fromSoc: 50, actualSoc: 60, plannedKWh: 10, capacityKWh: 77 }), null);
 });
