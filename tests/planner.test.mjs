@@ -129,3 +129,25 @@ test('planTrip: kein Mini-Stopp kurz vor dem Ziel – letzter Stopp lädt bis zu
   assert.ok(route.lengthKm - plan.stops.at(-1).alongKm > 60, `letzter Stopp bei km ${Math.round(plan.stops.at(-1).alongKm)}`);
   assert.ok(plan.arrivalSoc >= 15);
 });
+
+test('planTrip: Abfahrt unter der Reserve – nahen Schnelllader nehmen, nicht die allernächste langsame Säule', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const fast = attachRestAreas(findHubs(route, [charger(1.5, 300), ...Array.from({ length: 6 }, (_, i) => charger(150 + i * 100, 300))], { corridorKm: 2, minKw: 150 }), []);
+  const slow = attachRestAreas(findHubs(route, [charger(0.4, 22)], { corridorKm: 2, minKw: 22 }), []);
+  const plan = planTrip({ route, energy, hubs: fast, fallbackHubs: slow, settings: { capacityKWh: 77, startSoc: 5, reserveSoc: 10, arrivalSoc: 15, maxDriveKm: 250 } });
+  assert.equal(plan.stops[0].maxKw, 300, `erster Stopp ${plan.stops[0].maxKw} kW bei km ${plan.stops[0].alongKm.toFixed(1)}`);
+  assert.ok(plan.stops[0].alongKm < 3);
+  assert.ok(plan.feasible, plan.warnings.join(' | '));
+  assert.ok(plan.warnings.some(w => w.includes('unter der Reserve')));
+});
+
+test('planTrip: Abfahrt unter der Reserve – Schnelllader kurz hinter dem Start zählt mit', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const [lat, lon] = atKm(0);
+  const behind = { lat: lat + 0.004, lon: lon - 0.012, kw: 300, points: 4, operator: 'BP' };   // ~0,9 km hinter dem Start
+  const fast = attachRestAreas(findHubs(route, [behind, ...Array.from({ length: 6 }, (_, i) => charger(150 + i * 100, 300))], { corridorKm: 2, minKw: 150 }), []);
+  const slow = attachRestAreas(findHubs(route, [charger(0.4, 22)], { corridorKm: 2, minKw: 22 }), []);
+  const plan = planTrip({ route, energy, hubs: fast, fallbackHubs: slow, settings: { capacityKWh: 77, startSoc: 5, reserveSoc: 10, arrivalSoc: 15, maxDriveKm: 250 } });
+  assert.equal(plan.stops[0].maxKw, 300);
+  assert.equal(plan.stops[0].operators[0], 'BP');
+});
