@@ -2,7 +2,7 @@
 
 import { RouteLine } from './geo.js';
 import { EnergyProfile, temperatureFactor, trafficFactor } from './energy.js';
-import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide } from './planner.js';
+import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide, FINAL_LEG_TOLERANCE } from './planner.js';
 import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
@@ -43,7 +43,8 @@ function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
   let i = 0;
   for (let guard = 0; guard < 80 && i < marks.length; guard++) {
     const next = marks[i];
-    if (next - pos <= maxKm) {
+    // Letzter Abschnitt bis zum Ziel: kleine Überschreitung erlaubt (wie im Planer)
+    if (next - pos <= maxKm * (i === stops.length ? FINAL_LEG_TOLERANCE : 1)) {
       if (i < stops.length) result.push(stops[i]);
       pos = next; i++;
       continue;

@@ -112,7 +112,8 @@ test('planTrip: Pausenrhythmus – spätestens alle 150 km ein Ladestopp, Laden 
   const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15, minBreakMin: 15, maxDriveKm: 150 } });
   assert.ok(plan.feasible, plan.warnings.join());
   const marks = [0, ...plan.stops.map(s => s.alongKm), route.lengthKm];
-  for (let i = 1; i < marks.length; i++) assert.ok(marks[i] - marks[i - 1] <= 150.5, `Abschnitt ${Math.round(marks[i] - marks[i - 1])} km`);
+  // letzter Abschnitt bis zum Ziel darf 15 % länger sein
+  for (let i = 1; i < marks.length; i++) assert.ok(marks[i] - marks[i - 1] <= (i === marks.length - 1 ? 172.5 : 150.5), `Abschnitt ${Math.round(marks[i] - marks[i - 1])} km`);
   assert.ok(plan.stops.length >= 4, plan.stops.length);
   for (const st of plan.stops) assert.ok(st.arriveSoc >= 10 && st.targetSoc <= 80);
   // Ohne Pausenvorgabe reichen weniger Stopps
@@ -178,4 +179,16 @@ test('planTrip: Alternativen in der Nähe und vom Nutzer gewählter Lader', asyn
   const far = planTrip({ route, energy, hubs: mk(), settings: { ...settings, startSoc: 30 }, forced: { 0: hubKey(mk()[4]) } });
   assert.notEqual(far.stops[0].key, hubKey(mk()[4]));
   assert.ok(far.warnings.some(w => w.includes('nicht erreichbar')));
+});
+
+test('planTrip: keine schöne Anlage zu früh, wenn sie eine zusätzliche Pause kostet', () => {
+  // 700 km, Pausen spätestens alle 200 km: 3 Stopps reichen, wenn nicht schon bei km 120 gehalten wird
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 18 });
+  const kms = [120, 195, 315, 390, 510, 585];
+  const hubs = attachRestAreas(findHubs(route, kms.map(km => charger(km, 300)), { corridorKm: 2, minKw: 150 }), []);
+  const nice = hubs.find(h => Math.abs(h.alongKm - 120) < 3);
+  Object.assign(nice, { restArea: { type: 'rastanlage' }, dog: 5, human: 5 });   // sehr attraktiv, aber früh
+  const plan = planTrip({ route, energy, hubs, settings: { capacityKWh: 77, carMaxKw: 175, startSoc: 85, reserveSoc: 10, arrivalSoc: 15, minBreakMin: 15, maxDriveKm: 200 } });
+  assert.equal(plan.stops.length, 3, plan.stops.map(s => Math.round(s.alongKm)).join(', '));
+  assert.ok(plan.feasible, plan.warnings.join(' | '));
 });
