@@ -54,6 +54,21 @@ async function coordinatePlace([lat, lon]) {
   return [{ main: 'Koordinaten', sub, lat, lon }];
 }
 
+// Beschriftung für den aktuellen Standort: „Alzey, Carl-Theodor-Straße 12“ – Ort zuerst, damit die
+// Fahrtübersicht „Alzey → Chiemsee“ zeigt. Ohne Netz oder Treffer: null.
+export async function placeLabel(lat, lon) {
+  try {
+    const d = await getJson(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=de`, { timeout: 5000 });
+    const p = d.features?.[0]?.properties;
+    if (!p) return null;
+    const city = p.city || p.town || p.village || p.name || '';
+    const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+    return [city, street].filter(Boolean).join(', ') || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function searchPlaces(query, near) {
   if (!query || query.trim().length < 2) return [];
   const coords = parseCoordinates(query);
