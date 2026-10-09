@@ -159,7 +159,8 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings, for
   const minStops = new Map();
   const ordered = hubs.filter(h => !h.oppositeSide).sort((a, b) => b.alongKm - a.alongKm);
   for (const h of ordered) {
-    if (L - h.alongKm <= finalKm && energy.between(h.alongKm, L) <= (s.maxChargeSoc - s.arrivalSoc) / 100 * s.capacityKWh) { minStops.set(h, 0); continue; }
+    // letzter Abschnitt: darf bis 10 % über das Ladelimit laden (siehe targetSoc unten)
+    if (L - h.alongKm <= finalKm && energy.between(h.alongKm, L) <= (Math.min(100, s.maxChargeSoc + 10) - s.arrivalSoc - 5) / 100 * s.capacityKWh) { minStops.set(h, 0); continue; }
     const legKm = Math.min(s.maxDriveKm, energy.reachKm(h.alongKm, s.maxChargeSoc, s.capacityKWh, s.reserveSoc) - h.alongKm);
     let best = Infinity;
     for (const [h2, n] of minStops) if (h2.alongKm > h.alongKm + MIN_LEG_KM && h2.alongKm <= h.alongKm + legKm && n + 1 < best) best = n + 1;

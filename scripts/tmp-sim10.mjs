@@ -25,3 +25,4 @@ for (const [dest, userPauses] of [['Niebüll', 4], ['München', 2], ['Freiburg i
 }
 // Lauf 2: nach Planer-Verbesserung
 // Lauf 3: Mindest-Stopps rückwärts
+// Lauf 4
