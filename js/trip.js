@@ -73,7 +73,9 @@ function socAt(stops, energy, s, km) {
   return Math.round(soc - energy.between(pos, km) / s.capacityKWh * 100);
 }
 
-export async function computeTrip({ from, to, departure, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
+// Teil 1: alles, was Netz braucht (Route, Höhen, Wetter) und die Ladesäulen entlang der Route.
+// Das Ergebnis bleibt im Speicher, damit ein Wechsel auf eine Alternative ohne neue Abfragen geht.
+export async function prepareTrip({ from, to, departure, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -90,7 +92,6 @@ export async function computeTrip({ from, to, departure, startSoc, load = 'norma
     ]),
   ]);
 
-  onProgress('Ladestopps werden geplant …');
   const s = settingsForPlanner(settings, startSoc);
   s.maxDriveKm = s.maxDriveMin / (route.durationMin / line.lengthKm);
   // Linienlänge und Streckenlänge des Routendienstes weichen leicht ab: Verbrauch und angezeigte
@@ -101,10 +102,16 @@ export async function computeTrip({ from, to, departure, startSoc, load = 'norma
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
     findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line, sites);
-  const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s });
+  return { from, to, departure, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
+}
+
+// Teil 2: Stopps planen. forced: { [Nummer des Ladestopps]: hubKey } – vom Nutzer gewählte Alternativen
+export function planFromContext(ctx, forced = {}) {
+  const { from, to, departure, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas } = ctx;
+  const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s, forced });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
-  const stops = addDogBreaks(chargeStops, line, route.durationMin, restAreasAlong(line, restAreas), s.maxDriveMin, s.minBreakMin);
+  const stops = addDogBreaks(chargeStops, line, route.durationMin, areas, s.maxDriveMin, s.minBreakMin);
   for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(stops, energy, s, st.alongKm);
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
 
@@ -120,11 +127,21 @@ export async function computeTrip({ from, to, departure, startSoc, load = 'norma
     energyKWh: energy.totalKWh,
     consumptionKWh100: energy.totalKWh / route.lengthKm * 100,
     hubsOnRoute: hubs.length,
-    stops: timed.stops.map(st => ({ ...st, alongKm: st.alongKm * kmScale, arriveAt: st.arriveAt.toISOString(), departAt: st.departAt.toISOString() })),
+    stops: timed.stops.map(st => ({
+      ...st, alongKm: st.alongKm * kmScale, arriveAt: st.arriveAt.toISOString(), departAt: st.departAt.toISOString(),
+      alternatives: st.alternatives?.map(a => ({ ...a, shiftKm: a.shiftKm * kmScale })),
+    })),
+    forced,
     arrivalAt: timed.arrivalAt.toISOString(),
     totalMin: timed.totalMin,
     arrivalSoc: plan.arrivalSoc,
     warnings: plan.warnings,
     feasible: plan.feasible,
   };
+}
+
+export async function computeTrip(args) {
+  const ctx = await prepareTrip(args);
+  args.onProgress?.('Ladestopps werden geplant …');
+  return { ctx, trip: planFromContext(ctx, args.forced) };
 }

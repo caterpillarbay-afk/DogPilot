@@ -23,6 +23,9 @@ export const DEFAULT_PLAN_SETTINGS = {
 const REST_AREA_RADIUS_KM = 0.7;
 const HUB_MERGE_KM = 0.3;
 const MIN_LEG_KM = 5;
+export const hubKey = h => `${h.lat.toFixed(5)},${h.lon.toFixed(5)}`;
+const ALT_MAX = 3;          // Alternativen je Ladestopp
+const ALT_RANGE_KM = 15;    // nur Alternativen in der Nähe des gewählten Stopps (entlang der Route)
 const LOW_START_MARGIN = 4;  // % Akku, die bei Abfahrt unter der Reserve bis zum ersten Ladestopp verbraucht werden dürfen
 const OPPOSITE_CHECK_KM = 0.6;
 
@@ -120,8 +123,10 @@ export function detourOf(hub) {
   return { km, min: km / 50 * 60 + 3 };
 }
 
-function hubScore(hub, fromKm, reachKm, s) {
-  const progress = reachKm > fromKm ? (hub.alongKm - fromKm) / (reachKm - fromKm) : 0;
+// nearFirst: bei fast leerem Akku zählt Nähe statt Fortschritt – lieber der Schnelllader um die Ecke
+function hubScore(hub, fromKm, reachKm, s, nearFirst = false) {
+  const along = reachKm > fromKm ? (hub.alongKm - fromKm) / (reachKm - fromKm) : 0;
+  const progress = nearFirst ? 1 - Math.min(1, along + detourOf(hub).km / Math.max(1, reachKm - fromKm)) : along;
   const power = Math.min(hub.maxKw, s.carMaxKw) / s.carMaxKw;
   const amen = hub.restArea ? ((hub.dog ?? 2) * 0.6 + (hub.human ?? 2) * 0.4) / 5 : 0.25;
   return 0.5 * progress + 0.25 * power + 0.25 * amen - detourOf(hub).km * 0.02;
@@ -135,7 +140,8 @@ function socAfterCharging({ capacityKWh, socFrom, minutes, chargerKw, carMaxKw, 
 }
 
 // Plant die Fahrt. Liefert { stops, arrivalSoc, totalChargeMin, warnings, feasible }
-export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
+// forced: { [Nummer des Ladestopps]: hubKey } – vom Nutzer gewählte Alternative statt des Vorschlags
+export function planTrip({ route, energy, hubs, fallbackHubs = [], settings, forced = {} }) {
   const s = { ...DEFAULT_PLAN_SETTINGS, ...settings };
   const L = route.lengthKm;
   const socAfter = (soc, kwh) => soc - kwh / s.capacityKWh * 100;
@@ -177,7 +183,20 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
       warnings.push(`Der Akku reicht voraussichtlich nicht sicher bis zur nächsten Ladesäule (km ${Math.round(next.alongKm)}).`);
     }
 
-    const hub = candidates.reduce((best, h) => hubScore(h, pos, reach, s) > hubScore(best, pos, reach, s) ? h : best);
+    const score = h => hubScore(h, pos, reach, s, lowStart);
+    let hub = candidates.reduce((best, h) => score(h) > score(best) ? h : best);
+    const want = forced[stops.length];
+    if (want && hubKey(hub) !== want) {
+      // Gewählte Alternative: erlaubt, solange sie mit dem Akku erreichbar ist
+      const pick = [...hubs, ...fallbackHubs].find(h => hubKey(h) === want && !h.oppositeSide && h.alongKm >= pos && h.alongKm <= Math.max(energyReach, hub.alongKm));
+      if (pick) { hub = pick; fallback = !hubs.includes(pick); candidates = candidates.includes(pick) ? candidates : [...candidates, pick]; }
+      else warnings.push(`Stopp ${stops.length + 1}: die gewählte Alternative ist mit diesem Akkustand nicht erreichbar – Vorschlag beibehalten.`);
+    }
+    const alternatives = candidates
+      .filter(h => h !== hub && Math.abs(h.alongKm - hub.alongKm) <= ALT_RANGE_KM)
+      .sort((a, b) => score(b) - score(a)).slice(0, ALT_MAX)
+      .map(h => ({ key: hubKey(h), name: h.name, lat: h.lat, lon: h.lon, maxKw: h.maxKw, points: h.points, operators: [...h.operators].filter(Boolean),
+        shiftKm: h.alongKm - hub.alongKm, detour: detourOf(h), dog: h.dog, human: h.human }));
     const detour = detourOf(hub);
     const arriveSoc = socAfter(soc, energy.between(pos, hub.alongKm) + detour.km / 2 * s.baseKWh100 / 100);
     const toDest = energy.between(hub.alongKm, L) / s.capacityKWh * 100;
@@ -195,6 +214,9 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
 
     stops.push({
       ...hub,
+      key: hubKey(hub),
+      chargeIndex: stops.length,
+      alternatives,
       operators: [...hub.operators].filter(Boolean),
       fallback,
       arriveSoc: Math.round(arriveSoc),

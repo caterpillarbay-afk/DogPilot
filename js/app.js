@@ -5,7 +5,7 @@ import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalI
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, getLiveStatus } from './services.js';
-import { computeTrip, LOAD_FACTORS } from './trip.js';
+import { computeTrip, prepareTrip, planFromContext, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 
@@ -23,6 +23,7 @@ const state = {
   onboardingStep: 0,
   draftDogs: null,
   live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
+  tripCtx: null,       // Route & Ladesäulen der aktuellen Fahrt im Speicher (für Alternativen)
 };
 
 // ---------- Hilfen ----------
@@ -451,10 +452,11 @@ async function plan() {
     setProgress('Daten werden geladen …');
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
-    const result = await computeTrip({
+    const { ctx, trip: result } = await computeTrip({
       from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     });
+    state.tripCtx = ctx;
     state.settings.lastTrip = result;
     await save();
     state.computing = null;
@@ -512,7 +514,7 @@ function viewTrip() {
             <span class="name">${esc(st.name)} ${icon('chevron-right', 'sm chev')}</span>
             <span class="meta">${charge ? `${num(st.maxKw)} kW · ${st.points} Ladepunkte${st.operators.length ? ' · ' + esc(st.operators.slice(0, 2).join(', ')) : ''}` : `Akku bei Ankunft ca. ${st.arriveSoc} %`}${st.detour.km ? ` · ${num(st.detour.km, 1)} km Umweg` : ''}</span>
             ${charge ? socBar(st.arriveSoc, st.targetSoc) : ''}
-            ${charge ? `<span class="live" id="live-${i}">${liveLine(i)}</span>` : ''}
+            ${charge ? `<span class="live" id="live-${i}">${liveLine(st)}</span>` : ''}
             ${scores(st)}
           </button>
         </div>
@@ -609,11 +611,12 @@ function viewStop(i) {
       </dl>
       ${st.fallback ? `<div class="notice warn" style="margin-top:12px">${icon('triangle-alert')}<span>Langsamere Säule als gewünscht – auf diesem Abschnitt ist keine schnellere erreichbar.</span></div>` : ''}
       <div class="live-box" style="margin-top:12px">
-        <div class="live" id="live-${i}">${liveLine(i, true)}</div>
+        <div class="live" id="live-${i}">${liveLine(st, true)}</div>
         <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
       </div>`
       : `<p class="muted small" style="margin:0">Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
+    ${state.computing ? `<div class="progress" style="margin-top:12px">${icon('loader-circle', 'spin')} ${esc(state.computing)}</div>` : altCard(st)}
     <h3 class="section-title">Für Hund und Mensch</h3>
     ${st.dog != null ? `<div class="rating">
       <div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>
@@ -635,13 +638,13 @@ function viewStop(i) {
 }
 
 // ---------- Live-Belegung der Ladestopps ----------
-// Zustand je Stopp: { loading } | { data, at } | { error, at }. Gilt für die aktuelle Fahrt, max. 2 min alt.
+// Zustand je Standort: { loading } | { data, at } | { error, at }, max. 2 min alt.
+// Schlüssel über die Position, damit nach einer Neuplanung nichts verrutscht.
 const LIVE_MAX_AGE_MS = 2 * 60000;
-// Schlüssel über die Position: nach einer Neuplanung gehört Index i evtl. zu einem anderen Stopp
-const liveKey = i => { const st = trip()?.stops[i]; return st ? `${st.lat.toFixed(4)},${st.lon.toFixed(4)}` : ''; };
+const posKey = p => `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
 
-function liveLine(i, detail = false) {
-  const s = state.live[liveKey(i)];
+function liveLine(p, detail = false) {
+  const s = p && state.live[posKey(p)];
   if (!s || s.loading) return `<span class="muted">${icon('loader-circle', 'sm spin')} Belegung wird abgerufen …</span>`;
   if (s.error) return `<span class="muted">${icon('circle-alert', 'sm')} Belegung gerade nicht abrufbar</span>`;
   const r = s.data, at = clock(new Date(s.at));
@@ -652,20 +655,68 @@ function liveLine(i, detail = false) {
   return `<span class="dot ${cls}"></span><span><b>Jetzt ${text}</b>${extra}${detail ? ` <span class="muted">· Stand ${at} Uhr · Quelle MobiData BW</span>` : ''}</span>`;
 }
 
-async function refreshLive(indices, force = false) {
-  const t = trip();
-  if (!t) return;
-  await Promise.all(indices.map(async i => {
-    const st = t.stops[i], k = liveKey(i), cur = state.live[k];
-    if (!st || st.kind !== 'charge' || cur?.loading) return;
-    if (!force && cur && Date.now() - cur.at < LIVE_MAX_AGE_MS) return;
+// targets: [{ p: {lat, lon}, el: Element-ID, detail }]
+async function refreshLive(targets, force = false) {
+  await Promise.all(targets.map(async ({ p, el, detail }) => {
+    const k = posKey(p), cur = state.live[k];
+    const show = () => { const e = document.getElementById(el); if (e) e.innerHTML = liveLine(p, detail); };
+    if (cur?.loading) return;
+    if (!force && cur && Date.now() - cur.at < LIVE_MAX_AGE_MS) { show(); return; }
     state.live[k] = { loading: true };
-    const el = () => document.getElementById(`live-${i}`);
-    if (el()) el().innerHTML = liveLine(i, route().name === 'stop');
-    try { state.live[k] = { data: await getLiveStatus(st.lat, st.lon), at: Date.now() }; }
+    show();
+    try { state.live[k] = { data: await getLiveStatus(p.lat, p.lon), at: Date.now() }; }
     catch { state.live[k] = { error: true, at: Date.now() }; }
-    if (el()) el().innerHTML = liveLine(i, route().name === 'stop');
+    show();
   }));
+}
+
+// ---------- Alternative Ladestopps ----------
+
+function altCard(st) {
+  if (st.kind !== 'charge' || !st.alternatives?.length) return '';
+  const where = a => Math.abs(a.shiftKm) < 0.5 ? 'gleiche Stelle' : `${num(Math.abs(a.shiftKm), 1)} km ${a.shiftKm < 0 ? 'früher' : 'später'}`;
+  return `<h3 class="section-title">Andere Schnelllader in der Nähe</h3>
+    <div class="stack">${st.alternatives.map((a, j) => `
+      <div class="card alt">
+        <div class="alt-head"><b>${esc(a.name || a.operators[0] || 'Ladestation')}</b><span class="muted small">${num(a.maxKw)} kW · ${a.points} Ladepunkte</span></div>
+        <div class="muted small">${where(a)}${a.detour.km ? ` · ${num(a.detour.km, 1)} km Umweg` : ''}${a.name && !(a.operators.length === 1 && a.operators[0] === a.name) ? ` · ${esc(a.operators.slice(0, 2).join(', '))}` : ''}</div>
+        <div class="live" id="live-alt-${j}">${liveLine(a)}</div>
+        ${scores(a)}
+        <button class="btn btn-secondary block" type="button" data-action="alt" data-alt="${j}" style="margin-top:8px">${icon('zap')} Hier laden</button>
+      </div>`).join('')}
+    </div>
+    <p class="hint">DogPilot rechnet die Fahrt ab dem gewählten Lader neu – Ladezeit, weitere Stopps und Ankunft.</p>`;
+}
+
+async function chooseAlternative(i, j) {
+  const t = trip(), st = t?.stops[i], alt = st?.alternatives?.[j];
+  if (!alt) return;
+  // Frühere Wahl behalten, spätere verwerfen (die Stopps danach verschieben sich ohnehin)
+  const forced = Object.fromEntries(Object.entries(t.forced || {}).filter(([k]) => +k < st.chargeIndex));
+  forced[st.chargeIndex] = alt.key;
+  state.computing = 'Fahrt wird neu berechnet …';
+  render();
+  try {
+    if (!state.tripCtx || state.tripCtx.departure.toISOString() !== t.departure) {
+      // Nach einem Neuladen der App: Route & Co. einmal neu holen
+      await loadData();
+      state.tripCtx = await prepareTrip({
+        from: t.from, to: t.to, departure: new Date(t.departure), startSoc: t.startSoc, load: t.load, settings: state.settings,
+        chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [],
+      });
+    }
+    const result = planFromContext(state.tripCtx, forced);
+    state.settings.lastTrip = result;
+    await save();
+    state.computing = null;
+    const ni = result.stops.findIndex(x => x.kind === 'charge' && x.chargeIndex === st.chargeIndex);
+    toast('Fahrt neu berechnet');
+    go(ni >= 0 ? `#/stop/${ni}` : '#/trip');
+  } catch (err) {
+    state.computing = null;
+    toast(err.message);
+    render();
+  }
 }
 
 // ---------- Karte ----------
@@ -856,10 +907,13 @@ function render() {
   if (name === 'plan' || !views[name]) bindPlan(main);
   if (name === 'map') bindMap(main, arg != null ? +arg : null);
   if (name === 'settings' && arg) bindSettingsPage(main, arg);
-  if (name === 'trip' && trip()) refreshLive(trip().stops.map((_, i) => i));
-  if (name === 'stop' && trip()) {
-    refreshLive([+arg]);
-    $('[data-action="live-refresh"]', main)?.addEventListener('click', () => refreshLive([+arg], true));
+  if (name === 'trip' && trip()) refreshLive(trip().stops.map((st, i) => ({ st, i })).filter(x => x.st.kind === 'charge').map(({ st, i }) => ({ p: st, el: `live-${i}` })));
+  const st = name === 'stop' && trip()?.stops[+arg];
+  if (st?.kind === 'charge') {
+    const targets = force => refreshLive([{ p: st, el: `live-${arg}`, detail: true }, ...(st.alternatives || []).map((a, j) => ({ p: a, el: `live-alt-${j}` }))], force);
+    targets(false);
+    $('[data-action="live-refresh"]', main)?.addEventListener('click', () => targets(true));
+    $$('[data-action="alt"]', main).forEach(b => b.addEventListener('click', () => chooseAlternative(+arg, +b.dataset.alt)));
   }
 }
 

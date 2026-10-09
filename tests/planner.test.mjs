@@ -151,3 +151,31 @@ test('planTrip: Abfahrt unter der Reserve – Schnelllader kurz hinter dem Start
   assert.equal(plan.stops[0].maxKw, 300);
   assert.equal(plan.stops[0].operators[0], 'BP');
 });
+
+test('planTrip: Abfahrt unter der Reserve – der nächstgelegene Schnelllader gewinnt', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const fast = attachRestAreas(findHubs(route, [charger(0.6, 300, 'BP'), charger(3, 300, 'EnBW'), ...Array.from({ length: 6 }, (_, i) => charger(150 + i * 100, 300))], { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs: fast, settings: { capacityKWh: 77, startSoc: 5, reserveSoc: 10, arrivalSoc: 15, maxDriveKm: 250 } });
+  assert.equal(plan.stops[0].operators[0], 'BP', `erster Stopp ${plan.stops[0].operators[0]} bei km ${plan.stops[0].alongKm.toFixed(1)}`);
+});
+
+test('planTrip: Alternativen in der Nähe und vom Nutzer gewählter Lader', async () => {
+  const { hubKey } = await import('../js/planner.js');
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const mk = () => attachRestAreas(findHubs(route, [charger(180, 300, 'A'), charger(186, 150, 'B'), charger(192, 300, 'C'), charger(400, 300, 'D'), charger(560, 300, 'E')], { corridorKm: 2, minKw: 150 }), []);
+  const settings = { capacityKWh: 77, startSoc: 80, reserveSoc: 10, arrivalSoc: 15, maxDriveKm: 220 };
+  const plan = planTrip({ route, energy, hubs: mk(), settings });
+  const first = plan.stops[0];
+  assert.ok(first.alternatives.length >= 2, `Alternativen: ${first.alternatives.length}`);
+  assert.ok(first.alternatives.every(a => Math.abs(a.shiftKm) <= 15 && a.key !== first.key));
+  assert.equal(first.chargeIndex, 0);
+  // Nutzer wählt eine Alternative: Stopp 1 ist dann dieser Lader, die Fahrt bleibt machbar
+  const alt = first.alternatives[0];
+  const again = planTrip({ route, energy, hubs: mk(), settings, forced: { 0: alt.key } });
+  assert.equal(again.stops[0].key, alt.key);
+  assert.ok(again.feasible, again.warnings.join(' | '));
+  // Unerreichbare Wahl: Vorschlag bleibt, mit Hinweis
+  const far = planTrip({ route, energy, hubs: mk(), settings: { ...settings, startSoc: 30 }, forced: { 0: hubKey(mk()[4]) } });
+  assert.notEqual(far.stops[0].key, hubKey(mk()[4]));
+  assert.ok(far.warnings.some(w => w.includes('nicht erreichbar')));
+});
