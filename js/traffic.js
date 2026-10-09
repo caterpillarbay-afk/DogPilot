@@ -73,7 +73,12 @@ export const RAMP_LABEL = { cross: 'Überleitung im Autobahnkreuz', triangle: '�
 export const JUNCTION_LABEL = { on: 'an deiner Auffahrt', off: 'an deiner Abfahrt', change: 'an deinem Autobahnwechsel' };
 const junctionType = j => j.from === '' ? 'on' : j.to === '' ? 'off' : 'change';
 
-const arrow = x => String(x || '').trim().replace(/\s*->\s*/g, ' → ');
+// Texte der Autobahn GmbH lesbarer: Pfeile, und das Fachwort „Rampe“ in Alltagssprache
+export const plain = x => String(x || '').trim()
+  .replace(/\s*->\s*/g, ' → ')
+  .replace(/Rampenprogramm/gi, 'Erneuerung der Auf- und Abfahrten')
+  .replace(/\bRampen\b/gi, 'Auf- und Abfahrten')
+  .replace(/\bRampe\b/gi, 'Auf- oder Abfahrt');
 const KIND = { closure: 0, warning: 1, roadworks: 2 };
 const MARGIN_MS = 30 * 60000;
 
@@ -116,13 +121,13 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
       junction: (ramp && jKm.find(j => hit.alongKm >= j.km - 3 && hit.alongKm <= j.km + 1)?.type) || null,
       blocked,
       until,
-      title: arrow(it.title),
-      subtitle: arrow(it.subtitle),
+      title: plain(it.title),
+      subtitle: plain(it.subtitle),
       alongKm: hit.alongKm,
       at: at.toISOString(),
       delayMin: Number(it.delayTimeValue) || null,
       type: it.display_type || null,
-      details: (it.description || []).map(arrow).filter(Boolean),
+      details: (it.description || []).map(plain).filter(Boolean),
     };
     const prev = out.get(ev.id);
     if (!prev || KIND[ev.kind] < KIND[prev.kind]) out.set(ev.id, ev);
