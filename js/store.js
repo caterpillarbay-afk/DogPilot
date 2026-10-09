@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = {
   charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
   keys: { tomtom: '' },
   trip: { buffer: 'normal', customBufferMin: 45 },   // Puffer für „Ankunft bis …“
+  drive: { breaks: true, charge: true, closures: true, schedule: true },   // Ansagen im Fahrt-Modus
   lastTrip: null,
 };
 
