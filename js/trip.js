@@ -130,6 +130,7 @@ export function planFromContext(ctx, forced = {}) {
     arriveBy: arriveBy ? arriveBy.toISOString() : null, bufferMin,
     provider: route.provider,
     points: route.points,
+    roads: route.roads || [],
     lengthKm: route.lengthKm,
     driveMin: route.durationMin,
     trafficDelayMin: route.trafficDelayMin,

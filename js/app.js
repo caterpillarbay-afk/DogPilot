@@ -4,7 +4,9 @@ import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
-import { searchPlaces, getLiveStatus } from './services.js';
+import { searchPlaces, getLiveStatus, getAutobahnEvents } from './services.js';
+import { eventsAlongRoute } from './traffic.js';
+import { RouteLine } from './geo.js';
 import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
@@ -24,6 +26,7 @@ const state = {
   onboardingStep: 0,
   draftDogs: null,
   live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
+  traffic: {},         // Autobahn-Meldungen je Straßenliste (siehe refreshTraffic)
   tripCtx: null,       // Route & Ladesäulen der aktuellen Fahrt im Speicher (für Alternativen)
 };
 
@@ -501,18 +504,20 @@ async function plan() {
     render();
     return;
   }
-  const setProgress = text => { state.computing = text; if (location.hash.startsWith('#/plan')) render(); };
+  const setProgress = text => { state.computing = text; if (['plan', 'trip'].includes(route().name)) render(); };
   try {
     setProgress('Daten werden geladen …');
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
     const args = {
       from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
+      ...(f.replan && f.arriveBy ? { arriveBy: f.arriveBy } : {}),
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     };
     let { ctx, trip: result } = f.timeMode === 'arrive'
       ? await planBackwards(args, f.arriveBy, setProgress)
       : await computeTrip(args);
+    if (f.replan) result.replanned = true;
     state.tripCtx = ctx;
     state.settings.lastTrip = result;
     await save();
@@ -521,6 +526,7 @@ async function plan() {
   } catch (err) {
     state.computing = null;
     state.error = err.message;
+    if (route().name === 'trip') { state.replanOpen = true; state.replanError = err.message; }
     render();
   }
 }
@@ -549,12 +555,58 @@ function arrivalPlan(t) {
   if (!t.arriveBy) return '';
   const dep = new Date(t.departure), arr = new Date(t.arrivalAt), by = new Date(t.arriveBy);
   const slack = Math.round((by - arr) / 60000);
-  const past = dep < new Date();
+  const byLabel = `${dayLabel(by, arr) === 'heute' ? '' : dayLabel(by, arr) + ', '}${clock(by)} Uhr`;
+  const past = !t.replanned && dep < new Date();
   const cls = slack < 0 || past ? 'warn' : 'info';
   return `<div class="notice ${cls}" style="margin-top:12px">${icon(cls === 'warn' ? 'triangle-alert' : 'clock')}<span>
-    <b>Spätestens losfahren: ${dayLabel(dep) === 'heute' ? '' : dayLabel(dep) + ', '}${clock(dep)} Uhr</b><br>
-    Geplante Ankunft ${clock(arr)} Uhr · ${slack >= 0 ? `${duration(slack)} Puffer bis ${clock(by)} Uhr` : `${duration(-slack)} nach ${clock(by)} Uhr`}
+    <b>${t.replanned ? `Ankunft bis ${byLabel}` : `Spätestens losfahren: ${dayLabel(dep) === 'heute' ? '' : dayLabel(dep) + ', '}${clock(dep)} Uhr`}</b><br>
+    Geplante Ankunft ${clock(arr)} Uhr · ${slack >= 0 ? `${duration(slack)} Puffer bis ${byLabel}` : `${duration(-slack)} nach ${byLabel}`}
     ${past ? '<br>Diese Abfahrtszeit ist schon vorbei – der Puffer wird knapp.' : ''}</span></div>`;
+}
+
+// Unterwegs: Fahrt ab dem aktuellen Standort neu planen (z. B. nach einer Umleitung) – Ziel, Beladung
+// und „Ankunft bis …“ bleiben, nur der Akkustand wird abgefragt
+function replanCard(t) {
+  if (!state.replanOpen) return `<button class="btn btn-secondary block" type="button" data-action="replan-open" style="margin-top:12px">${icon('locate')} Ab hier neu planen</button>`;
+  return `<div class="card" style="margin-top:12px">
+    <div class="card-head">${icon('locate')} Ab hier neu planen</div>
+    <p class="muted small" style="margin:0 0 10px">Von deinem aktuellen Standort nach ${esc(t.to.label.split(',')[0])}${t.arriveBy ? `, Ankunft bis ${clock(new Date(t.arriveBy))} Uhr` : ''}.</p>
+    ${field('Akku jetzt', numberInput('replanSoc', state.replanSoc ?? '', { min: 1, max: 100, suffix: '%', placeholder: 'z. B. 45' }))}
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-secondary" type="button" data-action="replan-cancel">Abbrechen</button>
+      <button class="btn btn-primary" type="button" data-action="replan-go" ${state.computing ? 'disabled' : ''}>${state.computing ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : 'Neu planen'}</button>
+    </div>
+    ${state.replanError ? `<div class="notice error" style="margin-top:12px">${icon('circle-alert')}<span>${esc(state.replanError)}</span></div>` : ''}
+  </div>`;
+}
+
+async function replanFromHere() {
+  const t = trip(), soc = readNumber('replanSoc', 1, 100);
+  state.replanError = null;
+  if (soc == null) { state.replanError = 'Bitte den aktuellen Akkustand eintragen.'; render(); return; }
+  state.replanSoc = Math.round(soc);
+  state.computing = 'Standort wird ermittelt …';
+  render();
+  try {
+    const p = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('Ortung wird nicht unterstützt')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Standort nicht verfügbar – Ortung erlauben und erneut versuchen.')),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
+    state.form = {
+      ...emptyForm(), from: { label: 'Aktueller Standort', lat: p.coords.latitude, lon: p.coords.longitude }, to: t.to,
+      startSoc: state.replanSoc, load: t.load || 'normal', departure: new Date(), replan: true,
+      // unterwegs: Abfahrt ist jetzt; „Ankunft bis …“ bleibt nur zum Vergleich
+      ...(t.arriveBy ? { arriveBy: new Date(t.arriveBy) } : {}),
+    };
+    state.computing = null;
+    await plan();
+    if (!state.error) { state.replanOpen = false; state.replanError = null; render(); toast('Fahrt ab hier neu geplant'); }
+  } catch (err) {
+    state.computing = null;
+    state.replanError = err.message;
+    render();
+  }
 }
 
 function viewTrip() {
@@ -599,6 +651,7 @@ function viewTrip() {
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
     ${arrivalPlan(t)}
+    ${replanCard(t)}
     <div class="summary">
       <div class="metric"><div class="label">${icon('flag')} Ankunft</div><div class="value">${clock(arrival)} <small>${dayLabel(arrival, dep) === 'heute' ? '' : dayLabel(arrival, dep)}</small></div></div>
       <div class="metric"><div class="label">${icon('clock')} Dauer</div><div class="value">${shortDuration(t.totalMin)}</div></div>
@@ -610,6 +663,8 @@ function viewTrip() {
     ${extras.length ? `<div class="chips" style="margin-top:12px">${extras.map(e => `<span class="chip">${e}</span>`).join('')}</div>` : ''}
     ${t.warnings.length ? `<div style="margin-top:16px">${t.warnings.map(w => `<div class="notice warn">${icon('triangle-alert')}<span>${esc(w)}</span></div>`).join('')}</div>` : ''}
     ${!t.feasible ? `<div class="notice error" style="margin-top:8px">${icon('circle-alert')}<span>Diese Fahrt ist mit den Einstellungen nicht sicher machbar. Prüfe Akkustand, Verbrauch und Ladeleistung.</span></div>` : ''}
+
+    ${t.roads?.length ? `<div class="card traffic" id="traffic" style="margin-top:16px">${trafficCard(t)}</div>` : ''}
 
     <h3 class="section-title">Ablauf</h3>
     <div class="timeline">
@@ -741,6 +796,66 @@ async function refreshLive(targets, force = false) {
   }));
 }
 
+// ---------- Baustellen und Sperrungen (Autobahn GmbH) ----------
+// Nur Anzeige: DP plant nicht automatisch um. Rohdaten je Straßenliste max. 10 min alt;
+// welche Meldungen gelten, hängt von den Durchfahrtszeiten ab und wird bei jedem Rendern neu bestimmt.
+const TRAFFIC_MAX_AGE_MS = 10 * 60000;
+const TRAFFIC_LABEL = { closure: 'Sperrung', warning: 'Verkehrsmeldung', roadworks: 'Baustelle' };
+const trafficKey = t => t.roads.join(',');
+
+function tripEvents(t) {
+  const line = new RouteLine(t.points);
+  const scale = t.lengthKm / line.lengthKm, minPerKm = t.driveMin / t.lengthKm;
+  const passAt = lineKm => {
+    const km = lineKm * scale;
+    const prev = t.stops.filter(st => st.alongKm <= km).at(-1);
+    const base = prev ? new Date(prev.departAt).getTime() : new Date(t.departure).getTime();
+    return new Date(base + (km - (prev ? prev.alongKm : 0)) * minPerKm * 60000);
+  };
+  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, passAt)
+    .map(e => ({ ...e, alongKm: e.alongKm * scale }));
+}
+
+function trafficRow(e) {
+  const ic = e.kind === 'closure' || e.blocked ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : 'construction';
+  const cls = e.kind === 'closure' || e.blocked ? 'bad' : e.kind === 'warning' ? 'warn' : '';
+  return `<details class="ev ${cls}">
+    <summary>${icon(ic, 'sm')}<span><b>${esc(e.title)}</b><br>
+      <span class="muted small">km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind]}${e.delayMin ? ` · +${e.delayMin} min` : ''}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}</span></span></summary>
+    <div class="muted small">${e.details.map(esc).join('<br>')}</div>
+  </details>`;
+}
+
+function trafficCard(t) {
+  const head = `<div class="card-head">${icon('construction')} Baustellen &amp; Sperrungen</div>`;
+  const s = state.traffic[trafficKey(t)];
+  if (!s || s.loading) return `${head}<div class="live"><span class="muted">${icon('loader-circle', 'sm spin')} Meldungen der Autobahn GmbH werden abgerufen …</span></div>`;
+  if (!s.items) return `${head}<div class="live"><span class="muted">${icon('circle-alert', 'sm')} Meldungen gerade nicht abrufbar</span></div>`;
+  const ev = tripEvents(t);
+  const major = ev.filter(e => e.kind !== 'roadworks' || e.blocked), works = ev.filter(e => e.kind === 'roadworks' && !e.blocked);
+  const closures = ev.filter(e => e.kind === 'closure' || e.blocked).length;
+  const summary = !ev.length ? `Keine Meldungen zu deiner Durchfahrtszeit auf ${esc(t.roads.join(', '))}.`
+    : [closures ? `<b>${closures} ${closures === 1 ? 'Sperrung' : 'Sperrungen'}</b>` : '', major.length - closures ? `${major.length - closures} Verkehrsmeldung${major.length - closures === 1 ? '' : 'en'}` : '', works.length ? `${works.length} Baustelle${works.length === 1 ? '' : 'n'}` : '']
+      .filter(Boolean).join(' · ') + ' auf deiner Strecke zur Durchfahrtszeit.';
+  return `${head}
+    <p class="small" style="margin:0 0 8px">${summary}</p>
+    ${major.map(trafficRow).join('')}
+    ${works.length ? `<details class="ev-more"><summary class="small">${works.length} Baustelle${works.length === 1 ? '' : 'n'} anzeigen</summary>${works.map(trafficRow).join('')}</details>` : ''}
+    <p class="muted small" style="margin:8px 0 0">${closures ? 'DP plant nicht automatisch um. Folge der Umleitung und tippe danach auf „Ab hier neu planen“. ' : ''}Quelle: Autobahn GmbH des Bundes, Stand ${clock(new Date(s.at))} Uhr. Nur Autobahnen.</p>`;
+}
+
+async function refreshTraffic(t) {
+  if (!t?.roads?.length) return;
+  const k = trafficKey(t), cur = state.traffic[k];
+  const show = () => { const e = document.getElementById('traffic'), cur = trip(); if (e && cur?.roads && trafficKey(cur) === k) e.innerHTML = trafficCard(cur); };
+  if (cur?.loading) return;
+  if (cur && Date.now() - cur.at < TRAFFIC_MAX_AGE_MS) { show(); return; }
+  state.traffic[k] = { loading: true };
+  show();
+  state.traffic[k] = { items: await getAutobahnEvents(t.roads), at: Date.now() };
+  show();
+}
+
 // ---------- Alternative Ladestopps ----------
 
 function altCard(st) {
@@ -777,6 +892,7 @@ async function chooseAlternative(i, j) {
       });
     }
     const result = planFromContext(state.tripCtx, forced);
+    if (t.replanned) result.replanned = true;
     state.settings.lastTrip = result;
     await save();
     state.computing = null;
@@ -978,6 +1094,7 @@ function render() {
   if (name === 'plan' || !views[name]) bindPlan(main);
   if (name === 'map') bindMap(main, arg != null ? +arg : null);
   if (name === 'settings' && arg) bindSettingsPage(main, arg);
+  if (name === 'trip' && trip()) refreshTraffic(trip());
   if (name === 'trip' && trip()) refreshLive(trip().stops.map((st, i) => ({ st, i })).filter(x => x.st.kind === 'charge').map(({ st, i }) => ({ p: st, el: `live-${i}` })));
   const st = name === 'stop' && trip()?.stops[+arg];
   if (st?.kind === 'charge') {
@@ -996,6 +1113,9 @@ document.addEventListener('click', async e => {
   const a = el.dataset.action;
   if (a === 'close-menu') closeMenu();
   if (a === 'back') history.length > 1 ? history.back() : go('#/plan');
+  if (a === 'replan-open') { state.replanOpen = true; state.replanError = null; render(); return; }
+  if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }
+  if (a === 'replan-go') { replanFromHere(); return; }
   if (a === 'reload-data') {
     await loadData(true);
     render();
