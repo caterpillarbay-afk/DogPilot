@@ -812,15 +812,17 @@ function tripEvents(t) {
     const base = prev ? new Date(prev.departAt).getTime() : new Date(t.departure).getTime();
     return new Date(base + (km - (prev ? prev.alongKm : 0)) * minPerKm * 60000);
   };
-  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, passAt)
+  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, passAt, new Date(), 0.4, t.junctions || [])
     .map(e => ({ ...e, alongKm: e.alongKm * scale }));
 }
 
 function trafficRow(e) {
   const hard = !e.ramp && (e.kind === 'closure' || e.blocked);
   const ic = hard ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : e.ramp && e.kind === 'closure' ? 'circle-alert' : 'construction';
-  const cls = hard ? 'bad' : e.kind === 'warning' ? 'warn' : '';
-  const label = e.ramp ? (e.kind === 'closure' || e.blocked ? 'Auf-/Abfahrt gesperrt' : 'Auf-/Abfahrt') : e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind];
+  const rampClosed = e.ramp && (e.kind === 'closure' || e.blocked);
+  const cls = hard ? 'bad' : e.kind === 'warning' || (e.junction && rampClosed) ? 'warn' : '';
+  const label = (e.ramp ? (rampClosed ? 'Auf-/Abfahrt gesperrt' : 'Auf-/Abfahrt') : e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind])
+    + (e.junction ? ' · <b>an deinem Autobahnwechsel</b>' : '');
   const u = e.until && new Date(e.until), uDay = u && dayLabel(u, new Date(e.at));
   const until = u ? ` · bis ${uDay === 'heute' ? '' : uDay + ', '}${clock(u)} Uhr` : '';
   return `<details class="ev ${cls}">
@@ -838,13 +840,16 @@ function trafficCard(t) {
   if (!s || s.loading) return `${head}<div class="live"><span class="muted">${icon('loader-circle', 'sm spin')} Meldungen der Autobahn GmbH werden abgerufen …</span></div>`;
   if (!s.items) return `${head}<div class="live"><span class="muted">${icon('circle-alert', 'sm')} Meldungen gerade nicht abrufbar</span></div>`;
   const ev = tripEvents(t);
-  // Sperrungen der Fahrbahn und Verkehrsmeldungen offen, Auf-/Abfahrten und Baustellen eingeklappt
-  const major = ev.filter(e => !e.ramp && (e.kind !== 'roadworks' || e.blocked));
-  const ramps = ev.filter(e => e.ramp);
+  // Offen: Sperrungen der Fahrbahn, Verkehrsmeldungen und Rampen an Stellen, an denen die Route
+  // auf-, ab- oder auf eine andere Autobahn fährt. Übrige Rampen und Baustellen eingeklappt.
+  const major = ev.filter(e => e.junction || (!e.ramp && (e.kind !== 'roadworks' || e.blocked)));
+  const junction = ev.filter(e => e.junction).length;
+  const ramps = ev.filter(e => e.ramp && !e.junction);
   const works = ev.filter(e => !e.ramp && e.kind === 'roadworks' && !e.blocked);
-  const closures = major.filter(e => e.kind === 'closure' || e.blocked).length, warnings = major.length - closures;
+  const closures = major.filter(e => !e.ramp && (e.kind === 'closure' || e.blocked)).length, warnings = major.length - closures - junction;
   const summary = !ev.length ? `Keine Meldungen zu deiner Durchfahrtszeit auf ${esc(t.roads.join(', '))}.`
     : [closures ? `<b>${plural(closures, 'Sperrung', 'Sperrungen')}</b>` : '', warnings ? plural(warnings, 'Verkehrsmeldung', 'Verkehrsmeldungen') : '',
+      junction ? `<b>${plural(junction, 'Auf-/Abfahrt', 'Auf-/Abfahrten')} an deinen Autobahnwechseln</b>` : '',
       ramps.length ? plural(ramps.length, 'Auf-/Abfahrt', 'Auf-/Abfahrten') : '', works.length ? plural(works.length, 'Baustelle', 'Baustellen') : '']
       .filter(Boolean).join(' · ') + ' auf deiner Strecke zur Durchfahrtszeit.';
   const group = (list, text) => list.length ? `<details class="ev-more"><summary class="small">${text}</summary>${list.map(trafficRow).join('')}</details>` : '';
