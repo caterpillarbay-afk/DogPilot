@@ -4,7 +4,7 @@ import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
-import { searchPlaces, getLiveStatus, getAutobahnEvents } from './services.js';
+import { searchPlaces, placeLabel, getLiveStatus, getAutobahnEvents } from './services.js';
 import { eventsAlongRoute } from './traffic.js';
 import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue, arrivalText, OFF_ROUTE_TEXT } from './drive.js';
 import { RouteLine, haversineKm } from './geo.js';
@@ -425,7 +425,10 @@ function bindPlace(root, id) {
     inp.value = 'Standort wird ermittelt …';
     close();
     navigator.geolocation.getCurrentPosition(
-      p => choose({ main: 'Aktueller Standort', sub: '', lat: p.coords.latitude, lon: p.coords.longitude }),
+      async p => {
+        const { latitude: lat, longitude: lon } = p.coords;
+        choose({ main: await placeLabel(lat, lon) || 'Aktueller Standort', sub: '', lat, lon });
+      },
       () => { inp.value = ''; toast('Standort nicht verfügbar'); },
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
   };
@@ -655,7 +658,7 @@ async function replanFromHere() {
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
     });
     state.form = {
-      ...emptyForm(), from: { label: 'Aktueller Standort', lat: p.coords.latitude, lon: p.coords.longitude }, to: t.to,
+      ...emptyForm(), from: { label: await placeLabel(p.coords.latitude, p.coords.longitude) || 'Aktueller Standort', lat: p.coords.latitude, lon: p.coords.longitude }, to: t.to,
       startSoc: state.replanSoc, load: t.load || 'normal', departure: new Date(), replan: true,
       // unterwegs: Abfahrt ist jetzt; „Ankunft bis …“ bleibt nur zum Vergleich
       ...(t.arriveBy ? { arriveBy: new Date(t.arriveBy) } : {}),
