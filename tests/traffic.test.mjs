@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RouteLine } from '../js/geo.js';
-import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute, rampType, plain } from '../js/traffic.js';
+import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute, rampType, plain, groupEvents } from '../js/traffic.js';
 
 test('Autobahnkennungen aus Straßennamen der Routendienste', () => {
   assert.deepEqual(autobahnRoads(['A 61', 'A7; E 45', 'B 9', 'Alzeyer Straße', 'A1', 'L 401', 'A 7']).sort(), ['A1', 'A61', 'A7']);
@@ -75,4 +75,14 @@ test('Fachwort „Rampe“ wird in Alltagssprache übersetzt', () => {
   assert.equal(plain('A8 Vollsperrung AS Flughafen - Sanierung Rampen'), 'A8 Vollsperrung AS Flughafen - Sanierung Auf- und Abfahrten');
   assert.equal(plain('Rampe gesperrt'), 'Auf- oder Abfahrt gesperrt');
   assert.equal(plain(' Ulm -> München'), 'Ulm → München');
+});
+
+test('Gleiche Maßnahme an derselben Stelle wird zusammengefasst', () => {
+  const ev = (id, kind, subtitle, km, title = 'AK Walldorf Erneuerung') => ({ id, kind, subtitle, title, alongKm: km, junction: 'change' });
+  const g = groupEvents([ev('a', 'roadworks', 'aus Richtung Lußhardt', 77), ev('b', 'closure', 'aus Richtung Hockenheimring', 77.2),
+    ev('c', 'roadworks', 'aus Richtung Wiesloch', 77.3), ev('d', 'roadworks', 'anderswo', 140)]);
+  assert.equal(g.length, 2);
+  assert.equal(g[0].kind, 'closure');           // schwerste Meldung vorne
+  assert.equal(g[0].parts.length, 3);
+  assert.equal(g[1].parts.length, 1);
 });

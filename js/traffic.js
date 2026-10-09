@@ -134,3 +134,18 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
   }
   return [...out.values()].sort((a, b) => a.alongKm - b.alongKm);
 }
+
+// Gleiche Maßnahme an derselben Stelle (z. B. drei Überleitungen im selben Kreuz) zu einem Eintrag
+// zusammenfassen: { ...schwerste Meldung, parts: [alle Meldungen] }. Reihenfolge bleibt erhalten.
+const severity = e => (e.kind === 'closure' || e.blocked ? 0 : e.kind === 'warning' ? 1 : 2);
+export function groupEvents(events, maxKm = 1.5) {
+  const groups = [];
+  for (const e of events) {
+    const g = groups.find(g => g.title === e.title && Math.abs(g.alongKm - e.alongKm) <= maxKm);
+    if (!g) { groups.push({ ...e, parts: [e] }); continue; }
+    g.parts.push(e);
+    const lead = g.parts.reduce((a, b) => severity(b) < severity(a) ? b : a);
+    Object.assign(g, { ...lead, parts: g.parts, junction: g.parts.find(p => p.junction)?.junction || null });
+  }
+  return groups;
+}
