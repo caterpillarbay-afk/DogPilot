@@ -32,6 +32,16 @@ export function parsePeriods(description) {
   return periods;
 }
 
+// Richtung der Meldung (Anfang → Ende der Ausdehnung) gegen die Fahrtrichtung der Route an dieser Stelle.
+// Ausdehnungen beginnen oft auf Abschnitten, die die Route nicht befährt – daher Vektor statt Projektion.
+function sameDirection(line, hit, [aLat, aLon, bLat, bLon]) {
+  const kx = Math.cos(aLat * Math.PI / 180);
+  const ex = (bLon - aLon) * kx, ey = bLat - aLat;
+  if (Math.hypot(ex, ey) < 0.0003) return true;      // unter ~30 m: Richtung unbekannt
+  const p = line.pointAt(hit.alongKm - 0.3), q = line.pointAt(hit.alongKm + 0.3);
+  return ex * (q[1] - p[1]) * kx + ey * (q[0] - p[0]) >= 0;
+}
+
 const arrow = x => String(x || '').trim().replace(/\s*->\s*/g, ' → ');
 const KIND = { closure: 0, warning: 1, roadworks: 2 };
 const MARGIN_MS = 30 * 60000;
@@ -46,16 +56,17 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     const hit = line.project(lat, lon, maxKm);
     if (!hit) continue;
-    // Fahrtrichtung: Anfang und Ende der Meldung müssen in Routenrichtung liegen
+    // Auf-/Abfahrten tragen statt „A → B“ nur die Anschlussstelle („AS …“, „AK … (aus Richtung …)“)
+    const ramp = !/->|→/.test(String(it.subtitle || ''));
     const ext = String(it.extent || '').split(',').map(Number);
-    if (ext.length === 4 && ext.every(Number.isFinite)) {
-      const a = line.project(ext[0], ext[1], maxKm), b = line.project(ext[2], ext[3], maxKm);
-      if (a && b && b.alongKm < a.alongKm - 0.05) continue;
-    }
+    if (!ramp && ext.length === 4 && ext.every(Number.isFinite) && !sameDirection(line, hit, ext)) continue;
     const at = passAt(hit.alongKm);
     const periods = parsePeriods(it.description);
+    let until = null;
     if (periods.length) {
-      if (!periods.some(p => p.from.getTime() - MARGIN_MS <= at.getTime() && at.getTime() <= p.to.getTime() + MARGIN_MS)) continue;
+      const p = periods.find(p => p.from.getTime() - MARGIN_MS <= at.getTime() && at.getTime() <= p.to.getTime() + MARGIN_MS);
+      if (!p) continue;
+      until = p.to.toISOString();
     } else if (it.kind === 'warning') {
       // Live-Verkehrsmeldungen nur, wenn die Fahrt bald beginnt
       if (at.getTime() - now.getTime() > 3 * 3600000) continue;
@@ -64,7 +75,9 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
     const ev = {
       id: it.identifier,
       kind: it.kind,
+      ramp,
       blocked,
+      until,
       title: arrow(it.title),
       subtitle: arrow(it.subtitle),
       alongKm: hit.alongKm,
