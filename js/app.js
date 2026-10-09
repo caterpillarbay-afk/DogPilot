@@ -8,6 +8,7 @@ import { searchPlaces, getLiveStatus } from './services.js';
 import { computeTrip, prepareTrip, planFromContext, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
+import { watchForUpdates } from './update.js';
 
 const APP_VERSION = '2.0.0';
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -967,6 +968,12 @@ async function start() {
     if (!state.settings.onboarded || name === 'settings') render();
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Neue Version auf dem Server: wie ein frischer Start neu laden (Startseite, leeres Formular)
+  watchForUpdates(() => {
+    if (state.computing) return;
+    toast('Neue Version von DogPilot – wird geladen …');
+    setTimeout(() => location.replace(location.pathname), 1200);
+  });
 }
 
 start();
