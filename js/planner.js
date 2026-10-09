@@ -120,8 +120,10 @@ export function detourOf(hub) {
   return { km, min: km / 50 * 60 + 3 };
 }
 
-function hubScore(hub, fromKm, reachKm, s) {
-  const progress = reachKm > fromKm ? (hub.alongKm - fromKm) / (reachKm - fromKm) : 0;
+// nearFirst: bei fast leerem Akku zählt Nähe statt Fortschritt – lieber der Schnelllader um die Ecke
+function hubScore(hub, fromKm, reachKm, s, nearFirst = false) {
+  const along = reachKm > fromKm ? (hub.alongKm - fromKm) / (reachKm - fromKm) : 0;
+  const progress = nearFirst ? 1 - Math.min(1, along + detourOf(hub).km / Math.max(1, reachKm - fromKm)) : along;
   const power = Math.min(hub.maxKw, s.carMaxKw) / s.carMaxKw;
   const amen = hub.restArea ? ((hub.dog ?? 2) * 0.6 + (hub.human ?? 2) * 0.4) / 5 : 0.25;
   return 0.5 * progress + 0.25 * power + 0.25 * amen - detourOf(hub).km * 0.02;
@@ -177,7 +179,7 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
       warnings.push(`Der Akku reicht voraussichtlich nicht sicher bis zur nächsten Ladesäule (km ${Math.round(next.alongKm)}).`);
     }
 
-    const hub = candidates.reduce((best, h) => hubScore(h, pos, reach, s) > hubScore(best, pos, reach, s) ? h : best);
+    const hub = candidates.reduce((best, h) => hubScore(h, pos, reach, s, lowStart) > hubScore(best, pos, reach, s, lowStart) ? h : best);
     const detour = detourOf(hub);
     const arriveSoc = socAfter(soc, energy.between(pos, hub.alongKm) + detour.km / 2 * s.baseKWh100 / 100);
     const toDest = energy.between(hub.alongKm, L) / s.capacityKWh * 100;

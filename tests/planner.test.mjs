@@ -151,3 +151,10 @@ test('planTrip: Abfahrt unter der Reserve – Schnelllader kurz hinter dem Start
   assert.equal(plan.stops[0].maxKw, 300);
   assert.equal(plan.stops[0].operators[0], 'BP');
 });
+
+test('planTrip: Abfahrt unter der Reserve – der nächstgelegene Schnelllader gewinnt', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const fast = attachRestAreas(findHubs(route, [charger(0.6, 300, 'BP'), charger(3, 300, 'EnBW'), ...Array.from({ length: 6 }, (_, i) => charger(150 + i * 100, 300))], { corridorKm: 2, minKw: 150 }), []);
+  const plan = planTrip({ route, energy, hubs: fast, settings: { capacityKWh: 77, startSoc: 5, reserveSoc: 10, arrivalSoc: 15, maxDriveKm: 250 } });
+  assert.equal(plan.stops[0].operators[0], 'BP', `erster Stopp ${plan.stops[0].operators[0]} bei km ${plan.stops[0].alongKm.toFixed(1)}`);
+});
