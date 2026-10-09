@@ -23,6 +23,7 @@ export const DEFAULT_PLAN_SETTINGS = {
 const REST_AREA_RADIUS_KM = 0.7;
 const HUB_MERGE_KM = 0.3;
 const MIN_LEG_KM = 5;
+const LOW_START_MARGIN = 4;  // % Akku, die bei Abfahrt unter der Reserve bis zum ersten Ladestopp verbraucht werden dürfen
 const OPPOSITE_CHECK_KM = 0.6;
 
 // Ladepunkte entlang der Route zu Standorten ("Hubs") zusammenfassen
@@ -147,9 +148,13 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
     if (energyOk && L - pos <= s.maxDriveKm) break;
 
     // Bis wohin reicht der Akku – und bis wohin darf ohne Pause gefahren werden?
-    const energyReach = energy.reachKm(pos, soc, s.capacityKWh, s.reserveSoc);
+    // Abfahrt schon unter der Reserve: bis knapp über leer fahren dürfen, damit der nächste
+    // Schnelllader in der Nähe erreichbar ist statt der allernächsten langsamen Säule
+    const lowStart = !stops.length && soc < s.reserveSoc;
+    const energyReach = energy.reachKm(pos, soc, s.capacityKWh, lowStart ? Math.max(1, soc - LOW_START_MARGIN) : s.reserveSoc);
     const reach = Math.min(energyReach, pos + s.maxDriveKm);
-    const inWindow = (list, to) => list.filter(h => !h.oppositeSide && h.alongKm > pos + (stops.length ? MIN_LEG_KM : 0) && h.alongKm <= to);
+    // Bei leerem Akku zählen auch Säulen direkt am Start bzw. kurz hinter dem Start (alongKm = 0)
+    const inWindow = (list, to) => list.filter(h => !h.oppositeSide && (lowStart ? h.alongKm >= pos : h.alongKm > pos + (stops.length ? MIN_LEG_KM : 0)) && h.alongKm <= to);
     let candidates = inWindow(hubs, reach), fallback = false;
     if (!candidates.length) { candidates = inWindow(fallbackHubs, reach); fallback = candidates.length > 0; }
     if (!candidates.length && reach < energyReach) {
@@ -198,6 +203,7 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings }) {
       stopMin: Math.round(Math.max(chargeMin, s.minBreakMin)),
       detour,
     });
+    if (lowStart && arriveSoc >= 0) warnings.push(`Akku bei Abfahrt unter der Reserve von ${s.reserveSoc} % – zuerst laden in ${Math.max(1, Math.round(hub.alongKm + detour.km / 2))} km.`);
     if (fallback) warnings.push(`Stopp ${stops.length}: keine Säule mit ${s.minChargerKw} kW erreichbar – Ausweichen auf ${Math.round(hub.maxKw)} kW.`);
     pos = hub.alongKm;
     soc = targetSoc;
