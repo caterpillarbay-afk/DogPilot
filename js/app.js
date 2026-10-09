@@ -6,6 +6,7 @@ import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } f
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, getLiveStatus, getAutobahnEvents } from './services.js';
 import { eventsAlongRoute } from './traffic.js';
+import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, OFF_ROUTE_TEXT } from './drive.js';
 import { RouteLine } from './geo.js';
 import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
@@ -27,6 +28,7 @@ const state = {
   draftDogs: null,
   live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
   traffic: {},         // Autobahn-Meldungen je Straßenliste (siehe refreshTraffic)
+  drive: { on: false }, // Fahrt-Modus mit Sprachansagen (siehe startDrive)
   tripCtx: null,       // Route & Ladesäulen der aktuellen Fahrt im Speicher (für Alternativen)
 };
 
@@ -651,6 +653,7 @@ function viewTrip() {
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
     ${arrivalPlan(t)}
+    ${driveCard(t)}
     ${replanCard(t)}
     <div class="summary">
       <div class="metric"><div class="label">${icon('flag')} Ankunft</div><div class="value">${clock(arrival)} <small>${dayLabel(arrival, dep) === 'heute' ? '' : dayLabel(arrival, dep)}</small></div></div>
@@ -803,16 +806,26 @@ const TRAFFIC_MAX_AGE_MS = 10 * 60000;
 const TRAFFIC_LABEL = { closure: 'Sperrung', warning: 'Verkehrsmeldung', roadworks: 'Baustelle' };
 const trafficKey = t => t.roads.join(',');
 
-function tripEvents(t) {
+// Routenlinie der Fahrt und geplante Uhrzeit je Routen-km (Fahrzeit plus Stopps davor);
+// die Linie misst etwas anders als der Routendienst, daher scale auf Fahrt-km
+const timingCache = new WeakMap();
+function tripTiming(t) {
+  if (timingCache.has(t)) return timingCache.get(t);
   const line = new RouteLine(t.points);
   const scale = t.lengthKm / line.lengthKm, minPerKm = t.driveMin / t.lengthKm;
-  const passAt = lineKm => {
-    const km = lineKm * scale;
+  const plannedAt = km => {
     const prev = t.stops.filter(st => st.alongKm <= km).at(-1);
     const base = prev ? new Date(prev.departAt).getTime() : new Date(t.departure).getTime();
     return new Date(base + (km - (prev ? prev.alongKm : 0)) * minPerKm * 60000);
   };
-  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, passAt, new Date(), 0.4, t.junctions || [])
+  const timing = { line, scale, minPerKm, plannedAt };
+  timingCache.set(t, timing);
+  return timing;
+}
+
+function tripEvents(t) {
+  const { line, scale, plannedAt } = tripTiming(t);
+  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, lineKm => plannedAt(lineKm * scale), new Date(), 0.4, t.junctions || [])
     .map(e => ({ ...e, alongKm: e.alongKm * scale }));
 }
 
@@ -872,6 +885,150 @@ async function refreshTraffic(t) {
   state.traffic[k] = { items: await getAutobahnEvents(t.roads), at: Date.now() };
   show();
 }
+
+// ---------- Fahrt-Modus: Sprachansagen unterwegs ----------
+// DogPilot bleibt im Vordergrund (Handy im Halter am Kabel, Google Maps läuft über Android Auto):
+// Bildschirm wach halten, GPS verfolgen, Ansagen per Sprachausgabe des Browsers.
+const DRIVE_PREFS = [['breaks', 'paw-print', 'Gassi-Pausen'], ['charge', 'zap', 'Ladestopps'], ['closures', 'octagon-x', 'Sperrungen'], ['schedule', 'clock', 'Zeitplan']];
+const OFF_ROUTE_KM = 1.5, OFF_ROUTE_MS = 90000;
+
+function speak(text) {
+  state.drive.last = text;
+  state.drive.lastAt = Date.now();
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'de-DE';
+  const voice = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith('de'));
+  if (voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+
+async function keepAwake() {
+  try { if (state.drive.on && 'wakeLock' in navigator && !state.drive.lock) {
+    state.drive.lock = await navigator.wakeLock.request('screen');
+    state.drive.lock.addEventListener('release', () => { state.drive.lock = null; });
+  } } catch { /* z. B. Energiesparmodus: dann eben ohne */ }
+}
+
+function startDrive() {
+  const t = trip();
+  if (!t) return;
+  if (!navigator.geolocation) { toast('Ortung wird nicht unterstützt'); return; }
+  state.drive = { on: true, done: new Set(), level: 0, km: null, offSince: null, offSaid: false, last: '', lastAt: 0, pendingUpdate: false };
+  // Erste Ansage direkt beim Tippen – danach darf die Seite weiter sprechen
+  speak('Fahrt-Modus an. Ich melde mich vor Gassi-Pausen, Ladestopps, Sperrungen und wenn du hinter dem Zeitplan liegst.');
+  keepAwake();
+  state.drive.watch = navigator.geolocation.watchPosition(onDrivePosition,
+    () => { state.drive.gpsError = true; updateDriveCard(); },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  // Meldungen der Autobahn GmbH regelmäßig auffrischen (refreshTraffic hält sie max. 10 min)
+  state.drive.timer = setInterval(() => refreshTraffic(trip()), 5 * 60000);
+  render();
+}
+
+function stopDrive(silent = false) {
+  const d = state.drive;
+  if (d.watch != null) navigator.geolocation.clearWatch(d.watch);
+  clearInterval(d.timer);
+  d.lock?.release().catch(() => {});
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  const pending = d.pendingUpdate;
+  state.drive = { on: false };
+  if (!silent) render();
+  if (pending) { toast('Neue Version von DogPilot – wird geladen …'); setTimeout(() => location.replace(location.pathname), 1200); }
+}
+
+async function onDrivePosition(pos) {
+  const t = trip(), d = state.drive;
+  if (!d.on || !t) return;
+  d.gpsError = false;
+  const { line, scale, minPerKm, plannedAt } = tripTiming(t);
+  const hit = line.project(pos.coords.latitude, pos.coords.longitude, OFF_ROUTE_KM);
+  const now = Date.now(), prefs = state.settings.drive;
+  if (!hit) {
+    d.offSince ??= now;
+    if (!d.offSaid && now - d.offSince > OFF_ROUTE_MS && prefs.closures) { d.offSaid = true; speak(OFF_ROUTE_TEXT); }
+    d.off = true;
+    updateDriveCard();
+    return;
+  }
+  d.off = false; d.offSince = null;
+  // nach 10 min zurück auf der Route darf die Abweichung wieder angesagt werden
+  if (d.offSaid && now - d.lastAt > 10 * 60000) d.offSaid = false;
+  const km = hit.alongKm * scale;
+  d.km = km;
+  const s = state.traffic[t.roads?.length ? trafficKey(t) : ''];
+  const events = s?.items ? tripEvents(t) : [];
+  for (const a of dueAnnouncements({ stops: t.stops, events, km, minPerKm, prefs, done: d.done })) {
+    d.done.add(a.key);
+    if (a.kind === 'break') speak(breakText(a.stop, a.min));
+    else if (a.kind === 'closure') speak(closureText(a.event, a.km));
+    else {
+      let live = null;
+      try { live = await getLiveStatus(a.stop.lat, a.stop.lon); state.live[posKey(a.stop)] = { data: live, at: Date.now() }; } catch { /* ohne Belegung */ }
+      speak(chargeText(a.stop, a.min, live));
+    }
+  }
+  // Zeitplan: nur während der Fahrt vergleichen (beim Laden oder an der Pause steht man ohnehin)
+  const speedKmh = pos.coords.speed != null ? pos.coords.speed * 3.6 : null;
+  if (prefs.schedule && (speedKmh == null || speedKmh > 30)) {
+    const delay = (now - plannedAt(km)) / 60000;
+    const step = delayStep(delay, d.level);
+    d.level = step.level;
+    if (step.announce) speak(delayText(delay, new Date(new Date(t.arrivalAt).getTime() + delay * 60000), t.arriveBy ? new Date(t.arriveBy) : null));
+  }
+  updateDriveCard();
+}
+
+function driveStatus(t) {
+  const d = state.drive;
+  if (d.gpsError && d.km == null) return `${icon('circle-alert', 'sm')} Kein GPS – Ortung erlauben`;
+  if (d.km == null) return `${icon('loader-circle', 'sm spin')} Warte auf GPS …`;
+  if (d.off) return `${icon('triangle-alert', 'sm')} Nicht auf der geplanten Route`;
+  const { minPerKm } = tripTiming(t);
+  const s = state.traffic[t.roads?.length ? trafficKey(t) : ''];
+  const next = nextUp({ stops: t.stops, events: s?.items ? tripEvents(t) : [], km: d.km, minPerKm, prefs: state.settings.drive });
+  const label = { break: 'Gassi-Pause', charge: 'Ladestopp', closure: 'Sperrung' };
+  return `${icon('route', 'sm')} km ${num(d.km)} von ${num(t.lengthKm)}${next ? ` · als Nächstes ${label[next.kind]} in ca. ${duration(next.min)}` : ''}`;
+}
+
+function driveCard(t) {
+  const d = state.drive;
+  const chips = `<div class="chips" style="margin-top:10px">${DRIVE_PREFS.map(([k, ic, label]) =>
+    `<button type="button" class="chip ${state.settings.drive[k] ? 'on' : ''}" aria-pressed="${state.settings.drive[k]}" data-dpref="${k}">${icon(ic)} ${label}</button>`).join('')}</div>`;
+  if (!d.on) return `<div class="card drive" id="drive" style="margin-top:12px">
+    <button class="btn btn-primary block" type="button" data-action="drive-start">${icon('volume-2')} Fahrt-Modus mit Ansagen</button>
+    <p class="muted small" style="margin:8px 0 0">Sagt an, was Google Maps nicht weiß. DogPilot dafür geöffnet lassen, Handy im Halter am Ladekabel.</p>
+    ${chips}</div>`;
+  return `<div class="card drive on" id="drive" style="margin-top:12px">
+    <div class="card-head">${icon('volume-2')} Fahrt-Modus aktiv</div>
+    <div class="live" id="drive-status">${driveStatus(t)}</div>
+    <p class="small" id="drive-last" style="margin:6px 0 0">${d.last ? `„${esc(d.last)}“` : ''}</p>
+    ${chips}
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-secondary" type="button" data-action="drive-repeat">${icon('refresh-cw')} Wiederholen</button>
+      <button class="btn btn-secondary" type="button" data-action="drive-stop">${icon('x')} Beenden</button>
+    </div></div>`;
+}
+
+function updateDriveCard() {
+  const t = trip(), st = document.getElementById('drive-status'), last = document.getElementById('drive-last');
+  if (!t || !st) return;
+  st.innerHTML = driveStatus(t);
+  if (last) last.innerHTML = state.drive.last ? `„${esc(state.drive.last)}“` : '';
+}
+
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-dpref]');
+  if (!b) return;
+  state.settings.drive[b.dataset.dpref] = !state.settings.drive[b.dataset.dpref];
+  save();
+  const on = state.settings.drive[b.dataset.dpref];
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', on);
+  updateDriveCard();
+});
 
 // ---------- Alternative Ladestopps ----------
 
@@ -1133,6 +1290,9 @@ document.addEventListener('click', async e => {
   if (a === 'replan-open') { state.replanOpen = true; state.replanError = null; render(); return; }
   if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }
   if (a === 'replan-go') { replanFromHere(); return; }
+  if (a === 'drive-start') { startDrive(); return; }
+  if (a === 'drive-stop') { stopDrive(); return; }
+  if (a === 'drive-repeat') { if (state.drive.last) speak(state.drive.last); return; }
   if (a === 'reload-data') {
     await loadData(true);
     render();
@@ -1178,6 +1338,8 @@ async function start() {
   // Neue Version auf dem Server: wie ein frischer Start neu laden (Startseite, leeres Formular)
   watchForUpdates(() => {
     if (state.computing) return;
+    // Während des Fahrt-Modus nicht neu laden – erst nach dem Beenden
+    if (state.drive.on) { state.drive.pendingUpdate = true; return; }
     toast('Neue Version von DogPilot – wird geladen …');
     setTimeout(() => location.replace(location.pathname), 1200);
   });
