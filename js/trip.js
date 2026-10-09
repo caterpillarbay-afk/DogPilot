@@ -2,7 +2,7 @@
 
 import { RouteLine } from './geo.js';
 import { EnergyProfile, temperatureFactor, trafficFactor } from './energy.js';
-import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide } from './planner.js';
+import { findHubs, attachRestAreas, planTrip, schedule, detourOf, isOppositeSide, FINAL_LEG_TOLERANCE } from './planner.js';
 import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
@@ -11,6 +11,15 @@ const DEFAULT_MAX_DRIVE_MIN = 120;  // spätestens nach 2 h Fahrt eine Pause fü
 // Dachbox ≈ +12 % Luftwiderstand; voll beladen (Dachbox, Kofferraum, Rückbank, 2 Personen, Hunde) ≈ +20 %
 export const LOAD_FACTORS = { normal: 1, roof: 1.12, full: 1.2 };
 const BREAK_CORRIDOR_KM = 1;
+
+// Zeitpuffer für „Ankunft bis …“: Anteil der Fahrzeit (Stau, Baustellen) plus Minuten je Ladestopp
+// (besetzte oder gestörte Säule, längere Gassi-Runde). „custom“: feste Minuten vom Nutzer.
+export const BUFFER_PRESETS = { tight: { share: 0.05, perStop: 5 }, normal: { share: 0.10, perStop: 10 }, generous: { share: 0.20, perStop: 15 } };
+export function bufferMinutes(kind, driveMin, chargeStops, customMin = 45) {
+  if (kind === 'custom') return Math.max(0, Math.round(customMin));
+  const p = BUFFER_PRESETS[kind] || BUFFER_PRESETS.normal;
+  return Math.round((driveMin * p.share + chargeStops * p.perStop) / 5) * 5;
+}
 
 export function settingsForPlanner(settings, startSoc) {
   const v = settings.vehicle, c = settings.charging;
@@ -43,7 +52,8 @@ function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
   let i = 0;
   for (let guard = 0; guard < 80 && i < marks.length; guard++) {
     const next = marks[i];
-    if (next - pos <= maxKm) {
+    // Letzter Abschnitt bis zum Ziel: kleine Überschreitung erlaubt (wie im Planer)
+    if (next - pos <= maxKm * (i === stops.length ? FINAL_LEG_TOLERANCE : 1)) {
       if (i < stops.length) result.push(stops[i]);
       pos = next; i++;
       continue;
@@ -75,7 +85,7 @@ function socAt(stops, energy, s, km) {
 
 // Teil 1: alles, was Netz braucht (Route, Höhen, Wetter) und die Ladesäulen entlang der Route.
 // Das Ergebnis bleibt im Speicher, damit ein Wechsel auf eine Alternative ohne neue Abfragen geht.
-export async function prepareTrip({ from, to, departure, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
+export async function prepareTrip({ from, to, departure, arriveBy = null, bufferMin = null, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -102,12 +112,12 @@ export async function prepareTrip({ from, to, departure, startSoc, load = 'norma
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
     findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line, sites);
-  return { from, to, departure, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
+  return { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
 }
 
 // Teil 2: Stopps planen. forced: { [Nummer des Ladestopps]: hubKey } – vom Nutzer gewählte Alternativen
 export function planFromContext(ctx, forced = {}) {
-  const { from, to, departure, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas } = ctx;
+  const { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas } = ctx;
   const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s, forced });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
@@ -117,8 +127,10 @@ export function planFromContext(ctx, forced = {}) {
 
   return {
     from, to, departure: departure.toISOString(), startSoc, load,
+    arriveBy: arriveBy ? arriveBy.toISOString() : null, bufferMin,
     provider: route.provider,
     points: route.points,
+    roads: route.roads || [],
     lengthKm: route.lengthKm,
     driveMin: route.durationMin,
     trafficDelayMin: route.trafficDelayMin,

@@ -28,6 +28,7 @@ export const LEGAL = {
   <li><b>OpenStreetMap Foundation (Großbritannien)</b> – Kartenkacheln für den sichtbaren Kartenausschnitt</li>
   <li><b>TomTom International B.V. (Niederlande)</b> – Koordinaten von Start und Ziel sowie dein Schlüssel, nur wenn du einen TomTom-Schlüssel einträgst</li>
   <li><b>Nahverkehrsgesellschaft Baden-Württemberg mbH (Deutschland), MobiData BW</b> – Koordinaten deiner Ladestopps, um die aktuelle Belegung abzurufen</li>
+  <li><b>Die Autobahn GmbH des Bundes (Deutschland)</b> – nur die Namen der Autobahnen auf deiner Route (z. B. „A61“), um Baustellen, Sperrungen und Verkehrsmeldungen abzurufen</li>
 </ul>
 <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
 <p class="hint">Stand: 9. Oktober 2026. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>`,
@@ -45,6 +46,7 @@ export const LEGAL = {
   <li><b>Routing und Höhenprofil:</b> ${link('https://valhalla1.openstreetmap.de', 'Valhalla')} und ${link('https://routing.openstreetmap.de', 'OSRM')}, betrieben von FOSSGIS e.V.; mit eigenem Schlüssel © TomTom.</li>
   <li><b>Wetter:</b> ${link('https://open-meteo.com', 'Open-Meteo.com')}, CC BY 4.0.</li>
   <li><b>Ladesäulen-Belegung (live):</b> Meldungen der Betreiber nach der EU-Verordnung AFIR, gebündelt von ${link('https://api.mobidata-bw.de', 'MobiData BW')} (NVBW, Open ChargePoint DataBase); Betreiberdaten CC0, Daten der Bundesnetzagentur CC BY 4.0.</li>
+  <li><b>Baustellen, Sperrungen, Verkehrsmeldungen:</b> ${link('https://verkehr.autobahn.de', 'Die Autobahn GmbH des Bundes')} (offene Schnittstelle von verkehr.autobahn.de); nur Autobahnen, ohne Gewähr.</li>
   <li><b>Kartenbibliothek:</b> Leaflet 1.9.4, BSD-2-Clause.</li>
   <li><b>Symbole:</b> Lucide, ISC-Lizenz.</li>
 </ul>`,

@@ -55,3 +55,12 @@ test('Übliches Auf und Ab steckt im Verbrauch, nur Mehr-Höhenmeter kosten extr
   // Abschnitte bergauf bleiben teurer als bergab
   assert.ok(hilly.between(0, 1) > hilly.between(1, 2));
 });
+
+test('Puffer für „Ankunft bis …“: Anteil der Fahrzeit plus Minuten je Ladestopp', async () => {
+  const { bufferMinutes } = await import('../js/trip.js');
+  assert.equal(bufferMinutes('normal', 420, 3), 70);      // 42 + 30 → 72 → auf 5 min gerundet 70
+  assert.equal(bufferMinutes('tight', 420, 3), 35);       // 21 + 15 = 36 → 35
+  assert.equal(bufferMinutes('generous', 420, 3), 130);   // 84 + 45 = 129 → 130
+  assert.equal(bufferMinutes('custom', 420, 3, 45), 45);
+  assert.equal(bufferMinutes('unbekannt', 120, 0), 10);   // Vorgabe „Normal“
+});

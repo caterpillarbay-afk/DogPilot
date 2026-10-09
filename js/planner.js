@@ -27,6 +27,9 @@ export const hubKey = h => `${h.lat.toFixed(5)},${h.lon.toFixed(5)}`;
 const ALT_MAX = 3;          // Alternativen je Ladestopp
 const ALT_RANGE_KM = 15;    // nur Alternativen in der Nähe des gewählten Stopps (entlang der Route)
 const LOW_START_MARGIN = 4;  // % Akku, die bei Abfahrt unter der Reserve bis zum ersten Ladestopp verbraucht werden dürfen
+// Letzter Abschnitt darf die Pausenvorgabe leicht überschreiten (2 h → 2:18 h), statt kurz vor dem
+// Ziel noch einmal anzuhalten
+export const FINAL_LEG_TOLERANCE = 1.15;
 const OPPOSITE_CHECK_KM = 0.6;
 
 // Ladepunkte entlang der Route zu Standorten ("Hubs") zusammenfassen
@@ -149,9 +152,25 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings, for
   const warnings = [];
   let pos = 0, soc = s.startSoc, feasible = true;
 
+  // Wie viele Ladestopps braucht es von jedem Hub aus mindestens noch bis zum Ziel? (rückwärts berechnet;
+  // ein Abschnitt reicht höchstens bis zur Pausenvorgabe und so weit, wie der Akku von maxChargeSoc bis
+  // zur Reserve kommt). Damit wählt der Planer nie einen Stopp, der insgesamt eine Pause mehr kostet.
+  const finalKm = s.maxDriveKm * FINAL_LEG_TOLERANCE;
+  const minStops = new Map();
+  const ordered = hubs.filter(h => !h.oppositeSide).sort((a, b) => b.alongKm - a.alongKm);
+  for (const h of ordered) {
+    // letzter Abschnitt: darf bis 10 % über das Ladelimit laden (siehe targetSoc unten)
+    if (L - h.alongKm <= finalKm && energy.between(h.alongKm, L) <= (Math.min(100, s.maxChargeSoc + 10) - s.arrivalSoc - 5) / 100 * s.capacityKWh) { minStops.set(h, 0); continue; }
+    const legKm = Math.min(s.maxDriveKm, energy.reachKm(h.alongKm, s.maxChargeSoc, s.capacityKWh, s.reserveSoc) - h.alongKm);
+    let best = Infinity;
+    for (const [h2, n] of minStops) if (h2.alongKm > h.alongKm + MIN_LEG_KM && h2.alongKm <= h.alongKm + legKm && n + 1 < best) best = n + 1;
+    minStops.set(h, best);
+  }
+  const stopsAfter = h => minStops.get(h) ?? Infinity;
+
   for (let guard = 0; guard < 40; guard++) {
     const energyOk = socAfter(soc, energy.between(pos, L)) >= s.arrivalSoc;
-    if (energyOk && L - pos <= s.maxDriveKm) break;
+    if (energyOk && L - pos <= finalKm) break;
 
     // Bis wohin reicht der Akku – und bis wohin darf ohne Pause gefahren werden?
     // Abfahrt schon unter der Reserve: bis knapp über leer fahren dürfen, damit der nächste
@@ -184,15 +203,22 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings, for
     }
 
     const score = h => hubScore(h, pos, reach, s, lowStart);
+    // Keinen Stopp wählen, nach dem mehr Ladestopps nötig sind als nach einem anderen Kandidaten
+    // (z. B. eine schöne Anlage nach 1,5 h, die auf langen Strecken eine zusätzliche Pause kostet)
+    const pool = candidates;   // alle erreichbaren – für Alternativen, auch wenn sie eine Pause mehr kosten
+    if (!lowStart && candidates.length > 1) {
+      const fewest = Math.min(...candidates.map(stopsAfter));
+      if (Number.isFinite(fewest)) candidates = candidates.filter(h => stopsAfter(h) === fewest);
+    }
     let hub = candidates.reduce((best, h) => score(h) > score(best) ? h : best);
     const want = forced[stops.length];
     if (want && hubKey(hub) !== want) {
       // Gewählte Alternative: erlaubt, solange sie mit dem Akku erreichbar ist
       const pick = [...hubs, ...fallbackHubs].find(h => hubKey(h) === want && !h.oppositeSide && h.alongKm >= pos && h.alongKm <= Math.max(energyReach, hub.alongKm));
-      if (pick) { hub = pick; fallback = !hubs.includes(pick); candidates = candidates.includes(pick) ? candidates : [...candidates, pick]; }
+      if (pick) { hub = pick; fallback = !hubs.includes(pick); }
       else warnings.push(`Stopp ${stops.length + 1}: die gewählte Alternative ist mit diesem Akkustand nicht erreichbar – Vorschlag beibehalten.`);
     }
-    const alternatives = candidates
+    const alternatives = pool
       .filter(h => h !== hub && Math.abs(h.alongKm - hub.alongKm) <= ALT_RANGE_KM)
       .sort((a, b) => score(b) - score(a)).slice(0, ALT_MAX)
       .map(h => ({ key: hubKey(h), name: h.name, lat: h.lat, lon: h.lon, maxKw: h.maxKw, points: h.points, operators: [...h.operators].filter(Boolean),
@@ -209,7 +235,7 @@ export function planTrip({ route, energy, hubs, fallbackHubs = [], settings, for
     let targetSoc = Math.max(arriveSoc, Math.min(s.maxChargeSoc, needed, Math.max(neededNext, breakSoc, arriveSoc + 10)));
     // Letzter Abschnitt: bis zum Ziel laden – notfalls bis 10 % über das Limit, statt kurz vor dem Ziel
     // noch einmal anzuhalten
-    if (L - hub.alongKm <= s.maxDriveKm && needed > targetSoc && needed <= Math.min(100, s.maxChargeSoc + 10)) targetSoc = needed;
+    if (L - hub.alongKm <= finalKm && needed > targetSoc && needed <= Math.min(100, s.maxChargeSoc + 10)) targetSoc = needed;
     const chargeMin = chargeMinutes({ capacityKWh: s.capacityKWh, socFrom: Math.max(0, arriveSoc), socTo: targetSoc, chargerKw: hub.maxKw, carMaxKw: s.carMaxKw });
 
     stops.push({

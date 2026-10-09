@@ -5,9 +5,11 @@
 // - Höhenprofil: Valhalla /height (FOSSGIS)
 // - Wetter: Open-Meteo, kein Schlüssel
 // - Ladesäulen-Belegung: MobiData BW (NVBW), Open ChargePoint DataBase, kein Schlüssel
+// - Baustellen und Sperrungen: Autobahn GmbH des Bundes (verkehr.autobahn.de), kein Schlüssel
 
 import { decodePolyline, encodePolyline, simplifyByDistance, parseCoordinates } from './geo.js';
 import { summarizeLive } from './data.js';
+import { autobahnRoads } from './traffic.js';
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de';
 const OSRM = 'https://routing.openstreetmap.de/routed-car';
@@ -70,7 +72,7 @@ export async function searchPlaces(query, near) {
 
 async function routeTomTom(from, to, key) {
   const url = `https://api.tomtom.com/routing/1/calculateRoute/${from.lat},${from.lon}:${to.lat},${to.lon}/json`
-    + `?key=${encodeURIComponent(key)}&traffic=true&travelMode=car&routeType=fastest&computeTravelTimeFor=all`;
+    + `?key=${encodeURIComponent(key)}&traffic=true&travelMode=car&routeType=fastest&computeTravelTimeFor=all&instructionsType=coded`;
   const d = await getJson(url);
   const r = d.routes?.[0];
   if (!r) throw new Error('Keine Route gefunden');
@@ -80,13 +82,14 @@ async function routeTomTom(from, to, key) {
     lengthKm: r.summary.lengthInMeters / 1000,
     durationMin: r.summary.travelTimeInSeconds / 60,
     trafficDelayMin: (r.summary.trafficDelayInSeconds || 0) / 60,
+    roads: autobahnRoads((r.guidance?.instructions || []).flatMap(i => i.roadNumbers || [])),
   };
 }
 
 async function routeValhalla(from, to) {
   const d = await postJson(`${VALHALLA}/route`, {
     locations: [{ lat: from.lat, lon: from.lon }, { lat: to.lat, lon: to.lon }],
-    costing: 'auto', units: 'kilometers', directions_type: 'none',
+    costing: 'auto', units: 'kilometers', directions_type: 'maneuvers', language: 'de-DE',
   });
   const leg = d.trip?.legs?.[0];
   if (!leg) throw new Error('Keine Route gefunden');
@@ -96,11 +99,12 @@ async function routeValhalla(from, to) {
     lengthKm: d.trip.summary.length,
     durationMin: d.trip.summary.time / 60,
     trafficDelayMin: null,
+    roads: autobahnRoads((leg.maneuvers || []).flatMap(m => [...(m.street_names || []), ...(m.begin_street_names || [])])),
   };
 }
 
 async function routeOsrm(from, to) {
-  const d = await getJson(`${OSRM}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=polyline6`);
+  const d = await getJson(`${OSRM}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=polyline6&steps=true`);
   const r = d.routes?.[0];
   if (!r) throw new Error('Keine Route gefunden');
   return {
@@ -109,6 +113,7 @@ async function routeOsrm(from, to) {
     lengthKm: r.distance / 1000,
     durationMin: r.duration / 60,
     trafficDelayMin: null,
+    roads: autobahnRoads(r.legs.flatMap(l => l.steps.flatMap(st => [st.ref, st.name]))),
   };
 }
 
@@ -171,4 +176,25 @@ export async function getLiveStatus(lat, lon, radiusM = 250) {
   const params = new URLSearchParams({ lat: lat.toFixed(5), lon: lon.toFixed(5), radius: String(radiusM), limit: '25' });
   const d = await getJson(`https://api.mobidata-bw.de/ocpdb/api/public/v1/locations?${params}`, { timeout: 8000 });
   return summarizeLive(d.items);
+}
+
+// ---------- Baustellen, Sperrungen, Warnungen (Autobahn GmbH) ----------
+
+const AUTOBAHN = 'https://verkehr.autobahn.de/o/autobahn';
+const AUTOBAHN_KINDS = ['closure', 'warning', 'roadworks'];
+
+// Alle Meldungen der genannten Autobahnen; einzelne Ausfälle werden übersprungen.
+// Liefert null, wenn gar nichts abrufbar war.
+export async function getAutobahnEvents(roads) {
+  let ok = 0;
+  const lists = await Promise.all(roads.flatMap(road => AUTOBAHN_KINDS.map(async kind => {
+    try {
+      const d = await getJson(`${AUTOBAHN}/${encodeURIComponent(road)}/services/${kind}`, { timeout: 15000 });
+      ok++;
+      return (d[kind] || []).map(it => ({ ...it, kind }));
+    } catch {
+      return [];
+    }
+  })));
+  return ok ? lists.flat() : null;
 }

@@ -352,3 +352,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 /* Auswahl-Chips als Knöpfe (Beladung, Ladeleistung) */
 button.chip { border: 1px solid var(--line-strong); padding: 8px 14px; font-size: var(--fs-sm); cursor: pointer; min-height: 38px; }
 button.chip.on { border-color: var(--accent); }
+
+/* Baustellen und Sperrungen */
+.traffic .ev { border-top: 1px solid var(--line); padding: 8px 0; }
+.traffic .ev summary { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; list-style: none; }
+.traffic .ev summary::-webkit-details-marker { display: none; }
+.traffic .ev summary .icon { flex: none; margin-top: 3px; color: var(--text-2); }
+.traffic .ev.bad summary .icon { color: var(--danger); }
+.traffic .ev.warn summary .icon { color: var(--warn); }
+.traffic .ev > div { margin: 6px 0 0 24px; overflow-wrap: anywhere; }
+.traffic .ev-more { border-top: 1px solid var(--line); padding-top: 8px; }
+.traffic .ev-more > summary { cursor: pointer; color: var(--accent); font-weight: 600; padding-bottom: 4px; }

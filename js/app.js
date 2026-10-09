@@ -4,8 +4,10 @@ import { icon } from './icons.js';
 import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalInput, prettyMake, prettyModel, vehicleName } from './format.js';
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
-import { searchPlaces, getLiveStatus } from './services.js';
-import { computeTrip, prepareTrip, planFromContext, LOAD_FACTORS } from './trip.js';
+import { searchPlaces, getLiveStatus, getAutobahnEvents } from './services.js';
+import { eventsAlongRoute } from './traffic.js';
+import { RouteLine } from './geo.js';
+import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 import { watchForUpdates } from './update.js';
@@ -24,6 +26,7 @@ const state = {
   onboardingStep: 0,
   draftDogs: null,
   live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
+  traffic: {},         // Autobahn-Meldungen je Straßenliste (siehe refreshTraffic)
   tripCtx: null,       // Route & Ladesäulen der aktuellen Fahrt im Speicher (für Alternativen)
 };
 
@@ -282,6 +285,22 @@ function bindOnboarding(root) {
 // ---------- Planen ----------
 
 // Zeigt, mit welchem Verbrauch geplant wird – so fällt ein falsch eingetragener Grundverbrauch sofort auf
+// Puffer für „Ankunft bis …“ (Stau, besetzte Säulen); Auswahl gilt auch für spätere Fahrten
+const BUFFER = {
+  tight: { label: 'Knapp', text: '5 % der Fahrzeit + 5 min je Ladestopp' },
+  normal: { label: 'Normal', text: '10 % der Fahrzeit + 10 min je Ladestopp' },
+  generous: { label: 'Großzügig', text: '20 % der Fahrzeit + 15 min je Ladestopp – z. B. zum Ferienbeginn' },
+  custom: { label: 'Eigener', text: 'feste Minuten, unabhängig von der Strecke' },
+};
+
+function bufferField() {
+  const t = state.settings.trip, k = BUFFER[t.buffer] ? t.buffer : 'normal';
+  return `<div style="margin-top:12px">${field('Puffer', `<div class="chips" role="radiogroup">${Object.entries(BUFFER).map(([b, { label }]) =>
+    `<button type="button" class="chip ${k === b ? 'on' : ''}" role="radio" aria-checked="${k === b}" data-buffer="${b}">${label}${b === 'custom' && k === 'custom' ? ` · ${t.customBufferMin} min` : ''}</button>`).join('')}</div>
+    ${k === 'custom' ? `<div style="margin-top:8px;max-width:10rem">${numberInput('bufferMin', t.customBufferMin, { min: 5, max: 300, step: 5, suffix: 'min' })}</div>` : ''}`,
+    `${BUFFER[k].text} – für Stau, Baustellen und besetzte Säulen. DogPilot rechnet die Abfahrtszeit rückwärts aus.`)}</div>`;
+}
+
 // Beladung: Auswahl-Chip, Kurzform in der Fahrtübersicht, Erklärung (Aufschlag aus LOAD_FACTORS)
 const LOAD = {
   normal: { label: 'Normal', short: '', text: 'Alltagsbeladung' },
@@ -336,13 +355,19 @@ function viewPlan() {
         ${placeField('to', 'Ziel', f.to, 'Ziel – Ort oder Adresse')}
         <button class="icon-btn swap" type="button" id="swap" aria-label="Start und Ziel tauschen">${icon('arrow-up-down')}</button>
       </div>
-      <div class="grid-2 depart-row" style="margin-top:16px">
-        ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
+      <div class="chips" role="radiogroup" aria-label="Zeit angeben als" style="margin-top:16px">
+        ${[['depart', 'Abfahrt'], ['arrive', 'Ankunft']].map(([k, label]) => `<button type="button" class="chip ${f.timeMode === k ? 'on' : ''}" role="radio" aria-checked="${f.timeMode === k}" data-tmode="${k}">${label}</button>`).join('')}
+      </div>
+      <div class="grid-2 depart-row" style="margin-top:12px">
+        ${f.timeMode === 'arrive'
+          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`)
+          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
+      ${f.timeMode === 'arrive' ? bufferField() : ''}
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
       </button>
@@ -422,9 +447,19 @@ function bindPlan(root) {
     $('#from', root).value = state.form.from?.label || '';
     $('#to', root).value = state.form.to?.label || '';
   });
-  $('#departure', root).addEventListener('change', e => {
+  $('#departure', root)?.addEventListener('change', e => {
     const d = new Date(e.target.value);
     if (!Number.isNaN(d.getTime())) state.form.departure = d;
+  });
+  $('#arriveBy', root)?.addEventListener('change', e => {
+    const d = new Date(e.target.value);
+    if (!Number.isNaN(d.getTime())) state.form.arriveBy = d;
+  });
+  $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
+  $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
+  $('#bufferMin', root)?.addEventListener('change', () => {
+    const v = readNumber('bufferMin', 5, 300);
+    if (v != null) { state.settings.trip.customBufferMin = Math.round(v); save(); render(); }
   });
   $$('[data-load]', root).forEach(b => b.addEventListener('click', () => {
     state.form.load = b.dataset.load;
@@ -438,6 +473,27 @@ function bindPlan(root) {
   $('#planBtn', root).addEventListener('click', plan);
 }
 
+// „Ankunft bis …“: Abfahrt = Ankunft − (Fahrzeit + Stopps + Puffer). Wetter und Zeitplan hängen von der
+// Abfahrt ab, daher zweimal nachrechnen; Route und Wetter werden nur bei größerer Verschiebung neu geholt.
+async function planBackwards(args, arriveBy, setProgress) {
+  const t = state.settings.trip;
+  let departure = new Date(arriveBy.getTime() - 5 * 3600000), ctx = null, trip = null, bufferMin = 0;
+  for (let i = 0; i < 3; i++) {
+    if (!ctx || Math.abs(departure - ctx.departure) > 45 * 60000) ctx = await prepareTrip({ ...args, departure, arriveBy });
+    else ctx = { ...ctx, departure };
+    setProgress('Abfahrtszeit wird berechnet …');
+    trip = planFromContext(ctx);
+    bufferMin = bufferMinutes(t.buffer, trip.driveMin, trip.stops.filter(s => s.kind === 'charge').length, t.customBufferMin);
+    const next = new Date(arriveBy.getTime() - (trip.totalMin + bufferMin) * 60000);
+    next.setSeconds(0, 0);
+    next.setMinutes(Math.floor(next.getMinutes() / 5) * 5);   // auf 5 Minuten früher runden
+    if (Math.abs(next - departure) < 60000) break;
+    departure = next;
+  }
+  ctx = { ...ctx, departure, bufferMin };
+  return { ctx, trip: planFromContext(ctx) };
+}
+
 async function plan() {
   const f = state.form;
   state.error = null;
@@ -448,15 +504,20 @@ async function plan() {
     render();
     return;
   }
-  const setProgress = text => { state.computing = text; if (location.hash.startsWith('#/plan')) render(); };
+  const setProgress = text => { state.computing = text; if (['plan', 'trip'].includes(route().name)) render(); };
   try {
     setProgress('Daten werden geladen …');
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
-    const { ctx, trip: result } = await computeTrip({
+    const args = {
       from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
+      ...(f.replan && f.arriveBy ? { arriveBy: f.arriveBy } : {}),
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
-    });
+    };
+    let { ctx, trip: result } = f.timeMode === 'arrive'
+      ? await planBackwards(args, f.arriveBy, setProgress)
+      : await computeTrip(args);
+    if (f.replan) result.replanned = true;
     state.tripCtx = ctx;
     state.settings.lastTrip = result;
     await save();
@@ -465,6 +526,7 @@ async function plan() {
   } catch (err) {
     state.computing = null;
     state.error = err.message;
+    if (route().name === 'trip') { state.replanOpen = true; state.replanError = err.message; }
     render();
   }
 }
@@ -486,6 +548,65 @@ function googleMapsUrl(t) {
   const params = new URLSearchParams({ api: '1', origin: p(t.from), destination: p(t.to), travelmode: 'driving' });
   if (t.stops.length) params.set('waypoints', t.stops.slice(0, 9).map(p).join('|'));
   return `https://www.google.com/maps/dir/?${params}`;
+}
+
+// „Ankunft bis …“: späteste Abfahrt und verbleibender Puffer (passt sich an, wenn Stopps gewechselt werden)
+function arrivalPlan(t) {
+  if (!t.arriveBy) return '';
+  const dep = new Date(t.departure), arr = new Date(t.arrivalAt), by = new Date(t.arriveBy);
+  const slack = Math.round((by - arr) / 60000);
+  const byLabel = `${dayLabel(by, arr) === 'heute' ? '' : dayLabel(by, arr) + ', '}${clock(by)} Uhr`;
+  const past = !t.replanned && dep < new Date();
+  const cls = slack < 0 || past ? 'warn' : 'info';
+  return `<div class="notice ${cls}" style="margin-top:12px">${icon(cls === 'warn' ? 'triangle-alert' : 'clock')}<span>
+    <b>${t.replanned ? `Ankunft bis ${byLabel}` : `Spätestens losfahren: ${dayLabel(dep) === 'heute' ? '' : dayLabel(dep) + ', '}${clock(dep)} Uhr`}</b><br>
+    Geplante Ankunft ${clock(arr)} Uhr · ${slack >= 0 ? `${duration(slack)} Puffer bis ${byLabel}` : `${duration(-slack)} nach ${byLabel}`}
+    ${past ? '<br>Diese Abfahrtszeit ist schon vorbei – der Puffer wird knapp.' : ''}</span></div>`;
+}
+
+// Unterwegs: Fahrt ab dem aktuellen Standort neu planen (z. B. nach einer Umleitung) – Ziel, Beladung
+// und „Ankunft bis …“ bleiben, nur der Akkustand wird abgefragt
+function replanCard(t) {
+  if (!state.replanOpen) return `<button class="btn btn-secondary block" type="button" data-action="replan-open" style="margin-top:12px">${icon('locate')} Ab hier neu planen</button>`;
+  return `<div class="card" style="margin-top:12px">
+    <div class="card-head">${icon('locate')} Ab hier neu planen</div>
+    <p class="muted small" style="margin:0 0 10px">Von deinem aktuellen Standort nach ${esc(t.to.label.split(',')[0])}${t.arriveBy ? `, Ankunft bis ${clock(new Date(t.arriveBy))} Uhr` : ''}.</p>
+    ${field('Akku jetzt', numberInput('replanSoc', state.replanSoc ?? '', { min: 1, max: 100, suffix: '%', placeholder: 'z. B. 45' }))}
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-secondary" type="button" data-action="replan-cancel">Abbrechen</button>
+      <button class="btn btn-primary" type="button" data-action="replan-go" ${state.computing ? 'disabled' : ''}>${state.computing ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : 'Neu planen'}</button>
+    </div>
+    ${state.replanError ? `<div class="notice error" style="margin-top:12px">${icon('circle-alert')}<span>${esc(state.replanError)}</span></div>` : ''}
+  </div>`;
+}
+
+async function replanFromHere() {
+  const t = trip(), soc = readNumber('replanSoc', 1, 100);
+  state.replanError = null;
+  if (soc == null) { state.replanError = 'Bitte den aktuellen Akkustand eintragen.'; render(); return; }
+  state.replanSoc = Math.round(soc);
+  state.computing = 'Standort wird ermittelt …';
+  render();
+  try {
+    const p = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('Ortung wird nicht unterstützt')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Standort nicht verfügbar – Ortung erlauben und erneut versuchen.')),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
+    state.form = {
+      ...emptyForm(), from: { label: 'Aktueller Standort', lat: p.coords.latitude, lon: p.coords.longitude }, to: t.to,
+      startSoc: state.replanSoc, load: t.load || 'normal', departure: new Date(), replan: true,
+      // unterwegs: Abfahrt ist jetzt; „Ankunft bis …“ bleibt nur zum Vergleich
+      ...(t.arriveBy ? { arriveBy: new Date(t.arriveBy) } : {}),
+    };
+    state.computing = null;
+    await plan();
+    if (!state.error) { state.replanOpen = false; state.replanError = null; render(); toast('Fahrt ab hier neu geplant'); }
+  } catch (err) {
+    state.computing = null;
+    state.replanError = err.message;
+    render();
+  }
 }
 
 function viewTrip() {
@@ -529,6 +650,8 @@ function viewTrip() {
       <div class="grow"><div class="title">${esc(t.from.label.split(',')[0])} → ${esc(t.to.label.split(',')[0])}</div>
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
+    ${arrivalPlan(t)}
+    ${replanCard(t)}
     <div class="summary">
       <div class="metric"><div class="label">${icon('flag')} Ankunft</div><div class="value">${clock(arrival)} <small>${dayLabel(arrival, dep) === 'heute' ? '' : dayLabel(arrival, dep)}</small></div></div>
       <div class="metric"><div class="label">${icon('clock')} Dauer</div><div class="value">${shortDuration(t.totalMin)}</div></div>
@@ -540,6 +663,8 @@ function viewTrip() {
     ${extras.length ? `<div class="chips" style="margin-top:12px">${extras.map(e => `<span class="chip">${e}</span>`).join('')}</div>` : ''}
     ${t.warnings.length ? `<div style="margin-top:16px">${t.warnings.map(w => `<div class="notice warn">${icon('triangle-alert')}<span>${esc(w)}</span></div>`).join('')}</div>` : ''}
     ${!t.feasible ? `<div class="notice error" style="margin-top:8px">${icon('circle-alert')}<span>Diese Fahrt ist mit den Einstellungen nicht sicher machbar. Prüfe Akkustand, Verbrauch und Ladeleistung.</span></div>` : ''}
+
+    ${t.roads?.length ? `<div class="card traffic" id="traffic" style="margin-top:16px">${trafficCard(t)}</div>` : ''}
 
     <h3 class="section-title">Ablauf</h3>
     <div class="timeline">
@@ -671,6 +796,66 @@ async function refreshLive(targets, force = false) {
   }));
 }
 
+// ---------- Baustellen und Sperrungen (Autobahn GmbH) ----------
+// Nur Anzeige: DP plant nicht automatisch um. Rohdaten je Straßenliste max. 10 min alt;
+// welche Meldungen gelten, hängt von den Durchfahrtszeiten ab und wird bei jedem Rendern neu bestimmt.
+const TRAFFIC_MAX_AGE_MS = 10 * 60000;
+const TRAFFIC_LABEL = { closure: 'Sperrung', warning: 'Verkehrsmeldung', roadworks: 'Baustelle' };
+const trafficKey = t => t.roads.join(',');
+
+function tripEvents(t) {
+  const line = new RouteLine(t.points);
+  const scale = t.lengthKm / line.lengthKm, minPerKm = t.driveMin / t.lengthKm;
+  const passAt = lineKm => {
+    const km = lineKm * scale;
+    const prev = t.stops.filter(st => st.alongKm <= km).at(-1);
+    const base = prev ? new Date(prev.departAt).getTime() : new Date(t.departure).getTime();
+    return new Date(base + (km - (prev ? prev.alongKm : 0)) * minPerKm * 60000);
+  };
+  return eventsAlongRoute(state.traffic[trafficKey(t)].items, line, passAt)
+    .map(e => ({ ...e, alongKm: e.alongKm * scale }));
+}
+
+function trafficRow(e) {
+  const ic = e.kind === 'closure' || e.blocked ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : 'construction';
+  const cls = e.kind === 'closure' || e.blocked ? 'bad' : e.kind === 'warning' ? 'warn' : '';
+  return `<details class="ev ${cls}">
+    <summary>${icon(ic, 'sm')}<span><b>${esc(e.title)}</b><br>
+      <span class="muted small">km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind]}${e.delayMin ? ` · +${e.delayMin} min` : ''}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}</span></span></summary>
+    <div class="muted small">${e.details.map(esc).join('<br>')}</div>
+  </details>`;
+}
+
+function trafficCard(t) {
+  const head = `<div class="card-head">${icon('construction')} Baustellen &amp; Sperrungen</div>`;
+  const s = state.traffic[trafficKey(t)];
+  if (!s || s.loading) return `${head}<div class="live"><span class="muted">${icon('loader-circle', 'sm spin')} Meldungen der Autobahn GmbH werden abgerufen …</span></div>`;
+  if (!s.items) return `${head}<div class="live"><span class="muted">${icon('circle-alert', 'sm')} Meldungen gerade nicht abrufbar</span></div>`;
+  const ev = tripEvents(t);
+  const major = ev.filter(e => e.kind !== 'roadworks' || e.blocked), works = ev.filter(e => e.kind === 'roadworks' && !e.blocked);
+  const closures = ev.filter(e => e.kind === 'closure' || e.blocked).length;
+  const summary = !ev.length ? `Keine Meldungen zu deiner Durchfahrtszeit auf ${esc(t.roads.join(', '))}.`
+    : [closures ? `<b>${closures} ${closures === 1 ? 'Sperrung' : 'Sperrungen'}</b>` : '', major.length - closures ? `${major.length - closures} Verkehrsmeldung${major.length - closures === 1 ? '' : 'en'}` : '', works.length ? `${works.length} Baustelle${works.length === 1 ? '' : 'n'}` : '']
+      .filter(Boolean).join(' · ') + ' auf deiner Strecke zur Durchfahrtszeit.';
+  return `${head}
+    <p class="small" style="margin:0 0 8px">${summary}</p>
+    ${major.map(trafficRow).join('')}
+    ${works.length ? `<details class="ev-more"><summary class="small">${works.length} Baustelle${works.length === 1 ? '' : 'n'} anzeigen</summary>${works.map(trafficRow).join('')}</details>` : ''}
+    <p class="muted small" style="margin:8px 0 0">${closures ? 'DP plant nicht automatisch um. Folge der Umleitung und tippe danach auf „Ab hier neu planen“. ' : ''}Quelle: Autobahn GmbH des Bundes, Stand ${clock(new Date(s.at))} Uhr. Nur Autobahnen.</p>`;
+}
+
+async function refreshTraffic(t) {
+  if (!t?.roads?.length) return;
+  const k = trafficKey(t), cur = state.traffic[k];
+  const show = () => { const e = document.getElementById('traffic'), cur = trip(); if (e && cur?.roads && trafficKey(cur) === k) e.innerHTML = trafficCard(cur); };
+  if (cur?.loading) return;
+  if (cur && Date.now() - cur.at < TRAFFIC_MAX_AGE_MS) { show(); return; }
+  state.traffic[k] = { loading: true };
+  show();
+  state.traffic[k] = { items: await getAutobahnEvents(t.roads), at: Date.now() };
+  show();
+}
+
 // ---------- Alternative Ladestopps ----------
 
 function altCard(st) {
@@ -702,11 +887,12 @@ async function chooseAlternative(i, j) {
       // Nach einem Neuladen der App: Route & Co. einmal neu holen
       await loadData();
       state.tripCtx = await prepareTrip({
-        from: t.from, to: t.to, departure: new Date(t.departure), startSoc: t.startSoc, load: t.load, settings: state.settings,
+        from: t.from, to: t.to, departure: new Date(t.departure), arriveBy: t.arriveBy ? new Date(t.arriveBy) : null, bufferMin: t.bufferMin, startSoc: t.startSoc, load: t.load, settings: state.settings,
         chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [],
       });
     }
     const result = planFromContext(state.tripCtx, forced);
+    if (t.replanned) result.replanned = true;
     state.settings.lastTrip = result;
     await save();
     state.computing = null;
@@ -908,6 +1094,7 @@ function render() {
   if (name === 'plan' || !views[name]) bindPlan(main);
   if (name === 'map') bindMap(main, arg != null ? +arg : null);
   if (name === 'settings' && arg) bindSettingsPage(main, arg);
+  if (name === 'trip' && trip()) refreshTraffic(trip());
   if (name === 'trip' && trip()) refreshLive(trip().stops.map((st, i) => ({ st, i })).filter(x => x.st.kind === 'charge').map(({ st, i }) => ({ p: st, el: `live-${i}` })));
   const st = name === 'stop' && trip()?.stops[+arg];
   if (st?.kind === 'charge') {
@@ -926,6 +1113,9 @@ document.addEventListener('click', async e => {
   const a = el.dataset.action;
   if (a === 'close-menu') closeMenu();
   if (a === 'back') history.length > 1 ? history.back() : go('#/plan');
+  if (a === 'replan-open') { state.replanOpen = true; state.replanError = null; render(); return; }
+  if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }
+  if (a === 'replan-go') { replanFromHere(); return; }
   if (a === 'reload-data') {
     await loadData(true);
     render();
@@ -943,7 +1133,7 @@ document.addEventListener('click', async e => {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#drawerRoot').innerHTML) closeMenu(); });
 
-const emptyForm = () => ({ from: null, to: null, departure: defaultDeparture(), startSoc: 80, load: 'normal' });
+const emptyForm = () => ({ from: null, to: null, timeMode: 'depart', departure: defaultDeparture(), arriveBy: new Date(defaultDeparture().getTime() + 6 * 3600000), startSoc: 80, load: 'normal' });
 
 async function start() {
   state.settings = await loadSettings();
