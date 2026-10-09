@@ -1,6 +1,5 @@
-// Impressum, Datenschutz, Quellen. Rot markierte Platzhalter vor Veröffentlichung ausfüllen.
+// Impressum, Datenschutz, Quellen.
 
-const todo = t => `<span class="todo">[${t}]</span>`;
 const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
 
 export const LEGAL = {
@@ -8,9 +7,9 @@ export const LEGAL = {
     title: 'Impressum',
     html: `
 <p>Angaben gemäß § 5 DDG</p>
-<p>${todo('Vorname Nachname')}<br>${todo('Straße Hausnummer')}<br>${todo('PLZ Ort')}<br>Deutschland</p>
-<p>E-Mail: ${todo('E-Mail-Adresse')}</p>
-<p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${todo('Vorname Nachname, Anschrift wie oben')}</p>
+<p>Klaus Stumm<br>Carl-Theodor-Straße 12<br>55232 Alzey<br>Deutschland</p>
+<p>E-Mail: <a href="mailto:caterpillar.bay@gmx.de">caterpillar.bay@gmx.de</a></p>
+<p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Klaus Stumm, Anschrift wie oben</p>
 <p><b>Haftungshinweis:</b> Reichweiten, Ladezeiten und Ankunftszeiten sind Schätzungen auf Basis öffentlicher Daten. Verfügbarkeit und Zustand von Ladesäulen und Rastanlagen können abweichen. Bitte plane eine Reserve ein und beachte die Anzeige deines Fahrzeugs.</p>`,
   },
   datenschutz: {
@@ -31,7 +30,7 @@ export const LEGAL = {
   <li><b>Nahverkehrsgesellschaft Baden-Württemberg mbH (Deutschland), MobiData BW</b> – Koordinaten deiner Ladestopps, um die aktuelle Belegung abzurufen</li>
 </ul>
 <p><b>Deine Rechte:</b> Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Kontakt: siehe Impressum.</p>
-<p class="hint">Stand: ${todo('Datum')}. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>`,
+<p class="hint">Stand: 9. Oktober 2026. Entwurf – vor der Veröffentlichung rechtlich prüfen lassen.</p>`,
   },
   quellen: {
     title: 'Quellen und Lizenzen',
