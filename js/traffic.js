@@ -10,6 +10,22 @@ export function autobahnRoads(names) {
   return [...roads];
 }
 
+// Stellen, an denen die Route auf eine Autobahn auffährt, sie wechselt oder sie verlässt.
+// steps: Manöver der Routendienste in Fahrtreihenfolge [{ lat, lon, names }]; Manöver ohne
+// Straßennamen (meist die Rampe selbst) zählen nicht – der Wechsel liegt beim nächsten benannten.
+export function motorwayChanges(steps) {
+  const out = [];
+  let prev = null;
+  for (const st of steps) {
+    const names = (st.names || []).filter(Boolean);
+    if (!names.length || !Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+    const key = autobahnRoads(names).sort().join('/');
+    if (prev !== null && key !== prev) out.push({ lat: st.lat, lon: st.lon, from: prev, to: key });
+    prev = key;
+  }
+  return out;
+}
+
 const dt = (d, t) => {
   const [dd, mm, yy] = d.split('.').map(Number);
   const [h, min] = t.split(':').map(Number);
@@ -47,10 +63,13 @@ const KIND = { closure: 0, warning: 1, roadworks: 2 };
 const MARGIN_MS = 30 * 60000;
 
 // items: [{ kind: 'closure'|'warning'|'roadworks', ...Rohdaten der API }]
-// line: RouteLine; passAt(km) → voraussichtliche Uhrzeit an Routen-km; now: aktuelle Zeit
+// line: RouteLine; passAt(km) → voraussichtliche Uhrzeit an Routen-km; now: aktuelle Zeit;
+// junctions: Autobahnwechsel der Route (motorwayChanges)
 // Ergebnis: relevante Meldungen in Fahrtrichtung, nach Routen-km sortiert
-export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 0.4) {
+export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 0.4, junctions = []) {
   const out = new Map();
+  // Routen-km der Autobahnwechsel; Rampen bis 3 km davor (Ausfädeln) und 1 km danach gelten als „an deinem Wechsel“
+  const jKm = junctions.map(j => line.project(j.lat, j.lon, 1)?.alongKm).filter(k => k != null);
   for (const it of items) {
     const lat = Number(it.coordinate?.lat), lon = Number(it.coordinate?.long);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
@@ -76,6 +95,7 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
       id: it.identifier,
       kind: it.kind,
       ramp,
+      junction: ramp && jKm.some(k => hit.alongKm >= k - 3 && hit.alongKm <= k + 1),
       blocked,
       until,
       title: arrow(it.title),

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RouteLine } from '../js/geo.js';
-import { autobahnRoads, parsePeriods, eventsAlongRoute } from '../js/traffic.js';
+import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute } from '../js/traffic.js';
 
 test('Autobahnkennungen aus Straßennamen der Routendienste', () => {
   assert.deepEqual(autobahnRoads(['A 61', 'A7; E 45', 'B 9', 'Alzeyer Straße', 'A1', 'L 401', 'A 7']).sort(), ['A1', 'A61', 'A7']);
@@ -38,4 +38,26 @@ test('Meldungen: nur in Fahrtrichtung, zur Durchfahrtszeit gültig, sortiert', (
   assert.equal(ev[0].until, new Date(2026, 9, 10, 12, 0).toISOString());
   assert.deepEqual(ev.map(e => e.ramp), [false, false, true]);
   assert.equal(ev[1].subtitle, 'Süd → Nord');
+});
+
+test('Autobahnwechsel aus den Manövern der Routendienste', () => {
+  const steps = [
+    { lat: 49.7, lon: 8.1, names: ['Bahnhofstraße'] },
+    { lat: 49.71, lon: 8.12, names: [] },                       // Rampe ohne Namen
+    { lat: 49.72, lon: 8.15, names: ['A 61', 'E 31'] },         // Auffahrt
+    { lat: 49.3, lon: 8.6, names: ['A 61'] },                   // gleiche Autobahn
+    { lat: 49.3, lon: 8.62, names: ['A 6'] },                   // Wechsel A61 → A6
+    { lat: 48.4, lon: 10.0, names: ['B 10'] },                  // Abfahrt
+  ];
+  const j = motorwayChanges(steps);
+  assert.deepEqual(j.map(x => `${x.from}>${x.to}`), ['>A61', 'A61>A6', 'A6>']);
+  assert.equal(j[0].lat, 49.72);
+});
+
+test('Rampen an Autobahnwechseln werden markiert', () => {
+  const line = new RouteLine([[48, 10], [49, 10], [50, 10]]);
+  const passAt = () => new Date();
+  const ramp = (id, lat) => ({ kind: 'closure', identifier: id, coordinate: { lat, long: 10.001 }, subtitle: ' AK Test (aus Richtung Süd)', description: [], future: false });
+  const ev = eventsAlongRoute([ramp('am-wechsel', 48.98), ramp('woanders', 49.5)], line, passAt, new Date(), 0.4, [{ lat: 49, lon: 10 }]);
+  assert.deepEqual(ev.map(e => [e.id, e.junction]), [['am-wechsel', true], ['woanders', false]]);
 });

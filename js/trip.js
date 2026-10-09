@@ -131,6 +131,7 @@ export function planFromContext(ctx, forced = {}) {
     provider: route.provider,
     points: route.points,
     roads: route.roads || [],
+    junctions: route.junctions || [],
     lengthKm: route.lengthKm,
     driveMin: route.durationMin,
     trafficDelayMin: route.trafficDelayMin,

@@ -9,7 +9,7 @@
 
 import { decodePolyline, encodePolyline, simplifyByDistance, parseCoordinates } from './geo.js';
 import { summarizeLive } from './data.js';
-import { autobahnRoads } from './traffic.js';
+import { autobahnRoads, motorwayChanges } from './traffic.js';
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de';
 const OSRM = 'https://routing.openstreetmap.de/routed-car';
@@ -70,6 +70,11 @@ export async function searchPlaces(query, near) {
 
 // ---------- Routing ----------
 
+// Autobahnen der Route und die Stellen, an denen sie wechselt (für Baustellen-Meldungen)
+function roadInfo(steps, extraNames = []) {
+  return { roads: autobahnRoads([...steps.flatMap(st => st.names), ...extraNames]), junctions: motorwayChanges(steps) };
+}
+
 async function routeTomTom(from, to, key) {
   const url = `https://api.tomtom.com/routing/1/calculateRoute/${from.lat},${from.lon}:${to.lat},${to.lon}/json`
     + `?key=${encodeURIComponent(key)}&traffic=true&travelMode=car&routeType=fastest&computeTravelTimeFor=all&instructionsType=coded`;
@@ -82,7 +87,7 @@ async function routeTomTom(from, to, key) {
     lengthKm: r.summary.lengthInMeters / 1000,
     durationMin: r.summary.travelTimeInSeconds / 60,
     trafficDelayMin: (r.summary.trafficDelayInSeconds || 0) / 60,
-    roads: autobahnRoads((r.guidance?.instructions || []).flatMap(i => i.roadNumbers || [])),
+    ...roadInfo((r.guidance?.instructions || []).map(i => ({ lat: i.point?.latitude, lon: i.point?.longitude, names: i.roadNumbers || [] }))),
   };
 }
 
@@ -93,13 +98,16 @@ async function routeValhalla(from, to) {
   });
   const leg = d.trip?.legs?.[0];
   if (!leg) throw new Error('Keine Route gefunden');
+  const points = decodePolyline(leg.shape, 6);
   return {
     provider: 'Valhalla (FOSSGIS e.V.)',
-    points: decodePolyline(leg.shape, 6),
+    points,
     lengthKm: d.trip.summary.length,
     durationMin: d.trip.summary.time / 60,
     trafficDelayMin: null,
-    roads: autobahnRoads((leg.maneuvers || []).flatMap(m => [...(m.street_names || []), ...(m.begin_street_names || [])])),
+    ...roadInfo((leg.maneuvers || []).map(m => ({
+      lat: points[m.begin_shape_index]?.[0], lon: points[m.begin_shape_index]?.[1], names: m.street_names || [],
+    })), (leg.maneuvers || []).flatMap(m => m.begin_street_names || [])),
   };
 }
 
@@ -113,7 +121,7 @@ async function routeOsrm(from, to) {
     lengthKm: r.distance / 1000,
     durationMin: r.duration / 60,
     trafficDelayMin: null,
-    roads: autobahnRoads(r.legs.flatMap(l => l.steps.flatMap(st => [st.ref, st.name]))),
+    ...roadInfo(r.legs.flatMap(l => l.steps.map(st => ({ lat: st.maneuver?.location?.[1], lon: st.maneuver?.location?.[0], names: [st.ref, st.name] })))),
   };
 }
 
