@@ -58,24 +58,40 @@ function sameDirection(line, hit, [aLat, aLon, bLat, bLon]) {
   return ex * (q[1] - p[1]) * kx + ey * (q[0] - p[0]) >= 0;
 }
 
+// Art einer Meldung an einer Anschlussstelle, aus dem Untertitel der Autobahn GmbH:
+// „AK/AD … (aus Richtung …)“ → Überleitung im Kreuz/Dreieck, „AS … nach A6“ → Auffahrt, „AS … (aus Richtung …)“ → Abfahrt
+export function rampType(subtitle) {
+  const s = String(subtitle || '').trim();
+  if (/^(AK|Autobahnkreuz|Kreuz)\b/i.test(s)) return 'cross';
+  if (/^(AD|Autobahndreieck|Dreieck)\b/i.test(s)) return 'triangle';
+  if (/\bnach\s+A\s?\d+/i.test(s)) return 'on';
+  if (/^(AS|Anschlussstelle)\b/i.test(s)) return 'off';
+  return 'ramp';
+}
+export const RAMP_LABEL = { cross: 'Überleitung im Autobahnkreuz', triangle: 'Überleitung im Autobahndreieck', on: 'Auffahrt', off: 'Abfahrt', ramp: 'Auf- oder Abfahrt' };
+// Wo die eigene Route die Autobahn wechselt: auffahren, abfahren oder auf eine andere Autobahn
+export const JUNCTION_LABEL = { on: 'an deiner Auffahrt', off: 'an deiner Abfahrt', change: 'an deinem Autobahnwechsel' };
+const junctionType = j => j.from === '' ? 'on' : j.to === '' ? 'off' : 'change';
+
 const arrow = x => String(x || '').trim().replace(/\s*->\s*/g, ' → ');
 const KIND = { closure: 0, warning: 1, roadworks: 2 };
 const MARGIN_MS = 30 * 60000;
 
 // items: [{ kind: 'closure'|'warning'|'roadworks', ...Rohdaten der API }]
 // line: RouteLine; passAt(km) → voraussichtliche Uhrzeit an Routen-km; now: aktuelle Zeit;
-// junctions: Autobahnwechsel der Route (motorwayChanges)
+// junctions: Auf-/Abfahrten und Autobahnwechsel der Route (motorwayChanges)
 // Ergebnis: relevante Meldungen in Fahrtrichtung, nach Routen-km sortiert
 export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 0.4, junctions = []) {
   const out = new Map();
-  // Routen-km der Autobahnwechsel; Rampen bis 3 km davor (Ausfädeln) und 1 km danach gelten als „an deinem Wechsel“
-  const jKm = junctions.map(j => line.project(j.lat, j.lon, 1)?.alongKm).filter(k => k != null);
+  // Routen-km der Auf-/Abfahrten und Wechsel; Meldungen an Anschlussstellen bis 3 km davor (Ausfädeln)
+  // und 1 km danach gelten als „an deiner Auffahrt / Abfahrt / deinem Autobahnwechsel“
+  const jKm = junctions.map(j => ({ km: line.project(j.lat, j.lon, 1)?.alongKm, type: junctionType(j) })).filter(j => j.km != null);
   for (const it of items) {
     const lat = Number(it.coordinate?.lat), lon = Number(it.coordinate?.long);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     const hit = line.project(lat, lon, maxKm);
     if (!hit) continue;
-    // Auf-/Abfahrten tragen statt „A → B“ nur die Anschlussstelle („AS …“, „AK … (aus Richtung …)“)
+    // Meldungen an Anschlussstellen tragen statt „A → B“ nur die Stelle („AS …“, „AK … (aus Richtung …)“)
     const ramp = !/->|→/.test(String(it.subtitle || ''));
     const ext = String(it.extent || '').split(',').map(Number);
     if (!ramp && ext.length === 4 && ext.every(Number.isFinite) && !sameDirection(line, hit, ext)) continue;
@@ -95,7 +111,9 @@ export function eventsAlongRoute(items, line, passAt, now = new Date(), maxKm = 
       id: it.identifier,
       kind: it.kind,
       ramp,
-      junction: ramp && jKm.some(k => hit.alongKm >= k - 3 && hit.alongKm <= k + 1),
+      rampType: ramp ? rampType(it.subtitle) : null,
+      // null oder 'on' | 'off' | 'change' (JUNCTION_LABEL)
+      junction: (ramp && jKm.find(j => hit.alongKm >= j.km - 3 && hit.alongKm <= j.km + 1)?.type) || null,
       blocked,
       until,
       title: arrow(it.title),
