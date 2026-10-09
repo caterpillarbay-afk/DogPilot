@@ -5,7 +5,7 @@ import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalI
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, placeLabel, getLiveStatus, getAutobahnEvents } from './services.js';
-import { eventsAlongRoute, RAMP_LABEL, JUNCTION_LABEL } from './traffic.js';
+import { eventsAlongRoute, groupEvents, RAMP_LABEL, JUNCTION_LABEL } from './traffic.js';
 import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue, arrivalText, OFF_ROUTE_TEXT } from './drive.js';
 import { RouteLine, haversineKm } from './geo.js';
 import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
@@ -892,19 +892,34 @@ function tripEvents(t) {
     .map(e => ({ ...e, alongKm: e.alongKm * scale }));
 }
 
+// Art und Zustand einer einzelnen Meldung, z. B. „Überleitung im Autobahnkreuz gesperrt · bis 22:00 Uhr“
+// short: Art steht schon über der Liste – nur „gesperrt“ / „Baustelle“
+function eventLabel(e, short = false) {
+  const rampClosed = e.ramp && (e.kind === 'closure' || e.blocked);
+  const label = e.ramp
+    ? (short ? (rampClosed ? 'gesperrt' : TRAFFIC_LABEL[e.kind]) : `${RAMP_LABEL[e.rampType] || RAMP_LABEL.ramp}${rampClosed ? ' gesperrt' : e.kind === 'roadworks' ? ': Baustelle' : ''}`)
+    : e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind];
+  const u = e.until && new Date(e.until), uDay = u && dayLabel(u, new Date(e.at));
+  return `${label}${u ? ` · bis ${uDay === 'heute' ? '' : uDay + ', '}${clock(u)} Uhr` : ''}${e.delayMin ? ` · +${e.delayMin} min` : ''}`;
+}
+
+// e: Gruppe aus groupEvents – mehrere Meldungen derselben Maßnahme an derselben Stelle in einem Eintrag
 function trafficRow(e) {
+  const parts = e.parts || [e];
   const hard = !e.ramp && (e.kind === 'closure' || e.blocked);
   const ic = hard ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : e.ramp && e.kind === 'closure' ? 'circle-alert' : 'construction';
-  const rampClosed = e.ramp && (e.kind === 'closure' || e.blocked);
-  const cls = hard ? 'bad' : e.kind === 'warning' || (e.junction && rampClosed) ? 'warn' : '';
-  const label = (e.ramp ? `${RAMP_LABEL[e.rampType] || RAMP_LABEL.ramp}${rampClosed ? ' gesperrt' : e.kind === 'roadworks' ? ': Baustelle' : ''}` : e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind])
-    + (e.junction ? ` · <b>${JUNCTION_LABEL[e.junction]}</b>` : '');
-  const u = e.until && new Date(e.until), uDay = u && dayLabel(u, new Date(e.at));
-  const until = u ? ` · bis ${uDay === 'heute' ? '' : uDay + ', '}${clock(u)} Uhr` : '';
+  const cls = hard ? 'bad' : e.kind === 'warning' || (e.junction && e.ramp && (e.kind === 'closure' || e.blocked)) ? 'warn' : '';
+  const where = e.junction ? ` · <b>${JUNCTION_LABEL[e.junction]}</b>` : '';
+  const sameType = parts.every(p => p.ramp && p.rampType === e.rampType);
+  const meta = parts.length > 1
+    ? `km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr${sameType ? ` · ${RAMP_LABEL[e.rampType] || RAMP_LABEL.ramp}` : ''}${where}`
+    : `km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${eventLabel(e)}${where}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}`;
+  const list = parts.length > 1 ? `<ul class="ev-parts small">${parts.map(p => `<li>${esc(p.subtitle || '–')}: ${eventLabel(p, sameType)}</li>`).join('')}</ul>` : '';
+  const details = [...new Set(parts.flatMap(p => p.details))];
   return `<details class="ev ${cls}">
-    <summary>${icon(ic, 'sm')}<span><b>${esc(e.title)}</b><br>
-      <span class="muted small">km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${label}${until}${e.delayMin ? ` · +${e.delayMin} min` : ''}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}</span></span></summary>
-    <div class="muted small">${e.details.map(esc).join('<br>')}</div>
+    <summary>${icon(ic, 'sm')}<div><b>${esc(e.title)}</b><br>
+      <span class="muted small">${meta}</span>${list}</div></summary>
+    <div class="muted small">${details.map(esc).join('<br>')}</div>
   </details>`;
 }
 
@@ -918,10 +933,10 @@ function trafficCard(t) {
   const ev = tripEvents(t);
   // Offen: Sperrungen der Fahrbahn, Verkehrsmeldungen und Meldungen dort, wo die Route auf-, ab- oder
   // auf eine andere Autobahn fährt. Übrige Auf-/Abfahrten (man fährt nur vorbei) und Baustellen eingeklappt.
-  const major = ev.filter(e => e.junction || (!e.ramp && (e.kind !== 'roadworks' || e.blocked)));
-  const junction = ev.filter(e => e.junction).length;
-  const ramps = ev.filter(e => e.ramp && !e.junction);
-  const works = ev.filter(e => !e.ramp && e.kind === 'roadworks' && !e.blocked);
+  const major = groupEvents(ev.filter(e => e.junction || (!e.ramp && (e.kind !== 'roadworks' || e.blocked))));
+  const junction = major.filter(e => e.junction).length;
+  const ramps = groupEvents(ev.filter(e => e.ramp && !e.junction));
+  const works = groupEvents(ev.filter(e => !e.ramp && e.kind === 'roadworks' && !e.blocked));
   const closures = major.filter(e => !e.ramp && (e.kind === 'closure' || e.blocked)).length, warnings = major.length - closures - junction;
   const summary = !ev.length ? `Keine Meldungen zu deiner Durchfahrtszeit auf ${esc(t.roads.join(', '))}.`
     : 'Zur Durchfahrtszeit auf deiner Strecke: ' + [closures ? `<b>${plural(closures, 'Sperrung', 'Sperrungen')}</b>` : '', warnings ? plural(warnings, 'Verkehrsmeldung', 'Verkehrsmeldungen') : '',
