@@ -2,6 +2,7 @@
 // damit sie ohne GPS und Sprachausgabe testbar sind. Ansagt wird nur, was Google Maps nicht weiß.
 import { FEATURES } from './data.js';
 import { clock } from './format.js';
+import { RAMP_LABEL, JUNCTION_LABEL } from './traffic.js';
 
 // Vorlauf in Minuten
 export const LEAD_MIN = { break: 10, charge: 15, closure: 10 };
@@ -41,7 +42,10 @@ export function chargeText(st, min, live) {
 
 export function closureText(e, km) {
   const dist = `in etwa ${Math.max(1, Math.round(km))} Kilometern`;
-  if (e.ramp) return `Achtung: An deinem Autobahnwechsel ${dist} ist eine Auf- oder Abfahrt gesperrt: ${e.subtitle}. Bitte die Meldung prüfen.`;
+  if (e.ramp) {
+    const at = JUNCTION_LABEL[e.junction] || 'an einer Anschlussstelle';
+    return `Achtung: ${at[0].toUpperCase() + at.slice(1)} ${dist}: ${RAMP_LABEL[e.rampType] || RAMP_LABEL.ramp} gesperrt, ${e.subtitle}. Bitte prüfe, ob das dich betrifft.`;
+  }
   return `Achtung: ${dist[0].toUpperCase() + dist.slice(1)} Sperrung ${where(e.title)}.${e.until ? ` Sie gilt bis ${until(new Date(e.until))}.` : ''}`;
 }
 
@@ -56,7 +60,8 @@ export function delayText(delayMin, arrival, arriveBy) {
 
 export const OFF_ROUTE_TEXT = 'Du bist nicht mehr auf der geplanten Route. Wenn du umgeleitet wirst, tippe in DogPilot auf „Ab hier neu planen“.';
 
-// Sperrungen, die angesagt werden: Fahrbahn gesperrt, oder gesperrte Rampe an einem eigenen Autobahnwechsel
+// Sperrungen, die angesagt werden: Fahrbahn gesperrt, oder gesperrte Auf-/Abfahrt bzw. Überleitung dort,
+// wo die eigene Route auf-, ab- oder auf eine andere Autobahn fährt
 export const announceable = e => (!e.ramp && (e.kind === 'closure' || e.blocked)) || (e.junction && (e.kind === 'closure' || e.blocked));
 
 // Fällige Ansagen an Routen-km „km“ (Fahrt-km, wie stops[].alongKm).

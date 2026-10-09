@@ -45,6 +45,8 @@ test('Ansage-Texte', () => {
   assert.match(chargeText(stops[1], 14, { free: 3, busy: 1, broken: 0, total: 4 }), /Ladestopp: Ionity Feuchtwangen, 350 Kilowatt\. Gerade sind 3 von 4 Ladepunkten frei\. Grün in 120 Metern\./);
   assert.match(chargeText(stops[1], 14, { free: 0, busy: 4, broken: 0, total: 4 }), /alle 4 Ladepunkte belegt\. In der App findest du 2 Alternativen\./);
   assert.equal(closureText(events[0], 9.4), 'Achtung: In etwa 9 Kilometern Sperrung auf der A6 zwischen Weinsberg und Bretzfeld.');
+  assert.equal(closureText({ ramp: true, rampType: 'cross', junction: 'change', subtitle: 'AK Ulm/Elchingen (aus Richtung Leibisee)' }, 5),
+    'Achtung: An deinem Autobahnwechsel in etwa 5 Kilometern: Überleitung im Autobahnkreuz gesperrt, AK Ulm/Elchingen (aus Richtung Leibisee). Bitte prüfe, ob das dich betrifft.');
   const arr = new Date(2026, 9, 10, 14, 20), by = new Date(2026, 9, 10, 14, 0);
   assert.equal(delayText(15, arr, by), 'Du liegst etwa 15 Minuten hinter dem Plan. Neue Ankunft gegen 14:20 Uhr. Das ist 20 Minuten nach 14:00 Uhr.');
 });

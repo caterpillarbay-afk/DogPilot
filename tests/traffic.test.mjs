@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RouteLine } from '../js/geo.js';
-import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute } from '../js/traffic.js';
+import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute, rampType } from '../js/traffic.js';
 
 test('Autobahnkennungen aus Straßennamen der Routendienste', () => {
   assert.deepEqual(autobahnRoads(['A 61', 'A7; E 45', 'B 9', 'Alzeyer Straße', 'A1', 'L 401', 'A 7']).sort(), ['A1', 'A61', 'A7']);
@@ -59,5 +59,13 @@ test('Rampen an Autobahnwechseln werden markiert', () => {
   const passAt = () => new Date();
   const ramp = (id, lat) => ({ kind: 'closure', identifier: id, coordinate: { lat, long: 10.001 }, subtitle: ' AK Test (aus Richtung Süd)', description: [], future: false });
   const ev = eventsAlongRoute([ramp('am-wechsel', 48.98), ramp('woanders', 49.5)], line, passAt, new Date(), 0.4, [{ lat: 49, lon: 10 }]);
-  assert.deepEqual(ev.map(e => [e.id, e.junction]), [['am-wechsel', true], ['woanders', false]]);
+  assert.deepEqual(ev.map(e => [e.id, e.junction, e.rampType]), [['am-wechsel', 'change', 'cross'], ['woanders', null, 'cross']]);
+});
+
+test('Art der Anschlussstelle aus dem Untertitel', () => {
+  assert.equal(rampType(' AK Walldorf (aus Richtung Am Hockenheimring)'), 'cross');
+  assert.equal(rampType('AD Hockenheim (aus Richtung Speyer)'), 'triangle');
+  assert.equal(rampType(' AS Ilshofen/Wolpertshausen (aus Richtung Kochertalbrücke) nach A6'), 'on');
+  assert.equal(rampType(' AS Bretzfeld (aus Richtung Sommerhalden)'), 'off');
+  assert.equal(rampType('Parkplatz Musterwald'), 'ramp');
 });
