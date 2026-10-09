@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RouteLine } from '../js/geo.js';
-import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute, rampType } from '../js/traffic.js';
+import { autobahnRoads, motorwayChanges, parsePeriods, eventsAlongRoute, rampType, plain } from '../js/traffic.js';
 
 test('Autobahnkennungen aus Straßennamen der Routendienste', () => {
   assert.deepEqual(autobahnRoads(['A 61', 'A7; E 45', 'B 9', 'Alzeyer Straße', 'A1', 'L 401', 'A 7']).sort(), ['A1', 'A61', 'A7']);
@@ -68,4 +68,11 @@ test('Art der Anschlussstelle aus dem Untertitel', () => {
   assert.equal(rampType(' AS Ilshofen/Wolpertshausen (aus Richtung Kochertalbrücke) nach A6'), 'on');
   assert.equal(rampType(' AS Bretzfeld (aus Richtung Sommerhalden)'), 'off');
   assert.equal(rampType('Parkplatz Musterwald'), 'ramp');
+});
+
+test('Fachwort „Rampe“ wird in Alltagssprache übersetzt', () => {
+  assert.equal(plain('A5-A6 FDI AK Walldorf Rampenprogramm'), 'A5-A6 FDI AK Walldorf Erneuerung der Auf- und Abfahrten');
+  assert.equal(plain('A8 Vollsperrung AS Flughafen - Sanierung Rampen'), 'A8 Vollsperrung AS Flughafen - Sanierung Auf- und Abfahrten');
+  assert.equal(plain('Rampe gesperrt'), 'Auf- oder Abfahrt gesperrt');
+  assert.equal(plain(' Ulm -> München'), 'Ulm → München');
 });
