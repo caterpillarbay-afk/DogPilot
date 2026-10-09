@@ -5,7 +5,7 @@ import { esc, num, duration, shortDuration, clock, dayLabel, dateLabel, toLocalI
 import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } from './store.js';
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, getLiveStatus } from './services.js';
-import { computeTrip, prepareTrip, planFromContext, LOAD_FACTORS } from './trip.js';
+import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 import { watchForUpdates } from './update.js';
@@ -282,6 +282,22 @@ function bindOnboarding(root) {
 // ---------- Planen ----------
 
 // Zeigt, mit welchem Verbrauch geplant wird – so fällt ein falsch eingetragener Grundverbrauch sofort auf
+// Puffer für „Ankunft bis …“ (Stau, besetzte Säulen); Auswahl gilt auch für spätere Fahrten
+const BUFFER = {
+  tight: { label: 'Knapp', text: '5 % der Fahrzeit + 5 min je Ladestopp' },
+  normal: { label: 'Normal', text: '10 % der Fahrzeit + 10 min je Ladestopp' },
+  generous: { label: 'Großzügig', text: '20 % der Fahrzeit + 15 min je Ladestopp – z. B. zum Ferienbeginn' },
+  custom: { label: 'Eigener', text: 'feste Minuten, unabhängig von der Strecke' },
+};
+
+function bufferField() {
+  const t = state.settings.trip, k = BUFFER[t.buffer] ? t.buffer : 'normal';
+  return `<div style="margin-top:12px">${field('Puffer', `<div class="chips" role="radiogroup">${Object.entries(BUFFER).map(([b, { label }]) =>
+    `<button type="button" class="chip ${k === b ? 'on' : ''}" role="radio" aria-checked="${k === b}" data-buffer="${b}">${label}${b === 'custom' && k === 'custom' ? ` · ${t.customBufferMin} min` : ''}</button>`).join('')}</div>
+    ${k === 'custom' ? `<div style="margin-top:8px;max-width:10rem">${numberInput('bufferMin', t.customBufferMin, { min: 5, max: 300, step: 5, suffix: 'min' })}</div>` : ''}`,
+    `${BUFFER[k].text} – für Stau, Baustellen und besetzte Säulen. DogPilot rechnet die Abfahrtszeit rückwärts aus.`)}</div>`;
+}
+
 // Beladung: Auswahl-Chip, Kurzform in der Fahrtübersicht, Erklärung (Aufschlag aus LOAD_FACTORS)
 const LOAD = {
   normal: { label: 'Normal', short: '', text: 'Alltagsbeladung' },
@@ -336,13 +352,19 @@ function viewPlan() {
         ${placeField('to', 'Ziel', f.to, 'Ziel – Ort oder Adresse')}
         <button class="icon-btn swap" type="button" id="swap" aria-label="Start und Ziel tauschen">${icon('arrow-up-down')}</button>
       </div>
-      <div class="grid-2 depart-row" style="margin-top:16px">
-        ${field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
+      <div class="chips" role="radiogroup" aria-label="Zeit angeben als" style="margin-top:16px">
+        ${[['depart', 'Abfahrt'], ['arrive', 'Ankunft']].map(([k, label]) => `<button type="button" class="chip ${f.timeMode === k ? 'on' : ''}" role="radio" aria-checked="${f.timeMode === k}" data-tmode="${k}">${label}</button>`).join('')}
+      </div>
+      <div class="grid-2 depart-row" style="margin-top:12px">
+        ${f.timeMode === 'arrive'
+          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`)
+          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
+      ${f.timeMode === 'arrive' ? bufferField() : ''}
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
       </button>
@@ -422,9 +444,19 @@ function bindPlan(root) {
     $('#from', root).value = state.form.from?.label || '';
     $('#to', root).value = state.form.to?.label || '';
   });
-  $('#departure', root).addEventListener('change', e => {
+  $('#departure', root)?.addEventListener('change', e => {
     const d = new Date(e.target.value);
     if (!Number.isNaN(d.getTime())) state.form.departure = d;
+  });
+  $('#arriveBy', root)?.addEventListener('change', e => {
+    const d = new Date(e.target.value);
+    if (!Number.isNaN(d.getTime())) state.form.arriveBy = d;
+  });
+  $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
+  $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
+  $('#bufferMin', root)?.addEventListener('change', () => {
+    const v = readNumber('bufferMin', 5, 300);
+    if (v != null) { state.settings.trip.customBufferMin = Math.round(v); save(); render(); }
   });
   $$('[data-load]', root).forEach(b => b.addEventListener('click', () => {
     state.form.load = b.dataset.load;
@@ -436,6 +468,27 @@ function bindPlan(root) {
     if (v != null) { state.form.startSoc = Math.round(v); $('#startSoc', root).value = state.form.startSoc; }
   });
   $('#planBtn', root).addEventListener('click', plan);
+}
+
+// „Ankunft bis …“: Abfahrt = Ankunft − (Fahrzeit + Stopps + Puffer). Wetter und Zeitplan hängen von der
+// Abfahrt ab, daher zweimal nachrechnen; Route und Wetter werden nur bei größerer Verschiebung neu geholt.
+async function planBackwards(args, arriveBy, setProgress) {
+  const t = state.settings.trip;
+  let departure = new Date(arriveBy.getTime() - 5 * 3600000), ctx = null, trip = null, bufferMin = 0;
+  for (let i = 0; i < 3; i++) {
+    if (!ctx || Math.abs(departure - ctx.departure) > 45 * 60000) ctx = await prepareTrip({ ...args, departure, arriveBy });
+    else ctx = { ...ctx, departure };
+    setProgress('Abfahrtszeit wird berechnet …');
+    trip = planFromContext(ctx);
+    bufferMin = bufferMinutes(t.buffer, trip.driveMin, trip.stops.filter(s => s.kind === 'charge').length, t.customBufferMin);
+    const next = new Date(arriveBy.getTime() - (trip.totalMin + bufferMin) * 60000);
+    next.setSeconds(0, 0);
+    next.setMinutes(Math.floor(next.getMinutes() / 5) * 5);   // auf 5 Minuten früher runden
+    if (Math.abs(next - departure) < 60000) break;
+    departure = next;
+  }
+  ctx = { ...ctx, departure, bufferMin };
+  return { ctx, trip: planFromContext(ctx) };
 }
 
 async function plan() {
@@ -453,10 +506,13 @@ async function plan() {
     setProgress('Daten werden geladen …');
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
-    const { ctx, trip: result } = await computeTrip({
+    const args = {
       from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
-    });
+    };
+    let { ctx, trip: result } = f.timeMode === 'arrive'
+      ? await planBackwards(args, f.arriveBy, setProgress)
+      : await computeTrip(args);
     state.tripCtx = ctx;
     state.settings.lastTrip = result;
     await save();
@@ -486,6 +542,19 @@ function googleMapsUrl(t) {
   const params = new URLSearchParams({ api: '1', origin: p(t.from), destination: p(t.to), travelmode: 'driving' });
   if (t.stops.length) params.set('waypoints', t.stops.slice(0, 9).map(p).join('|'));
   return `https://www.google.com/maps/dir/?${params}`;
+}
+
+// „Ankunft bis …“: späteste Abfahrt und verbleibender Puffer (passt sich an, wenn Stopps gewechselt werden)
+function arrivalPlan(t) {
+  if (!t.arriveBy) return '';
+  const dep = new Date(t.departure), arr = new Date(t.arrivalAt), by = new Date(t.arriveBy);
+  const slack = Math.round((by - arr) / 60000);
+  const past = dep < new Date();
+  const cls = slack < 0 || past ? 'warn' : 'info';
+  return `<div class="notice ${cls}" style="margin-top:12px">${icon(cls === 'warn' ? 'triangle-alert' : 'clock')}<span>
+    <b>Spätestens losfahren: ${dayLabel(dep) === 'heute' ? '' : dayLabel(dep) + ', '}${clock(dep)} Uhr</b><br>
+    Geplante Ankunft ${clock(arr)} Uhr · ${slack >= 0 ? `${duration(slack)} Puffer bis ${clock(by)} Uhr` : `${duration(-slack)} nach ${clock(by)} Uhr`}
+    ${past ? '<br>Diese Abfahrtszeit ist schon vorbei – der Puffer wird knapp.' : ''}</span></div>`;
 }
 
 function viewTrip() {
@@ -529,6 +598,7 @@ function viewTrip() {
       <div class="grow"><div class="title">${esc(t.from.label.split(',')[0])} → ${esc(t.to.label.split(',')[0])}</div>
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
+    ${arrivalPlan(t)}
     <div class="summary">
       <div class="metric"><div class="label">${icon('flag')} Ankunft</div><div class="value">${clock(arrival)} <small>${dayLabel(arrival, dep) === 'heute' ? '' : dayLabel(arrival, dep)}</small></div></div>
       <div class="metric"><div class="label">${icon('clock')} Dauer</div><div class="value">${shortDuration(t.totalMin)}</div></div>
@@ -702,7 +772,7 @@ async function chooseAlternative(i, j) {
       // Nach einem Neuladen der App: Route & Co. einmal neu holen
       await loadData();
       state.tripCtx = await prepareTrip({
-        from: t.from, to: t.to, departure: new Date(t.departure), startSoc: t.startSoc, load: t.load, settings: state.settings,
+        from: t.from, to: t.to, departure: new Date(t.departure), arriveBy: t.arriveBy ? new Date(t.arriveBy) : null, bufferMin: t.bufferMin, startSoc: t.startSoc, load: t.load, settings: state.settings,
         chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [],
       });
     }
@@ -943,7 +1013,7 @@ document.addEventListener('click', async e => {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#drawerRoot').innerHTML) closeMenu(); });
 
-const emptyForm = () => ({ from: null, to: null, departure: defaultDeparture(), startSoc: 80, load: 'normal' });
+const emptyForm = () => ({ from: null, to: null, timeMode: 'depart', departure: defaultDeparture(), arriveBy: new Date(defaultDeparture().getTime() + 6 * 3600000), startSoc: 80, load: 'normal' });
 
 async function start() {
   state.settings = await loadSettings();

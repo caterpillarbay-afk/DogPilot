@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   dogs: [],
   charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
   keys: { tomtom: '' },
+  trip: { buffer: 'normal', customBufferMin: 45 },   // Puffer für „Ankunft bis …“
   lastTrip: null,
 };
 
