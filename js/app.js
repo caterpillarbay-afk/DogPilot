@@ -817,14 +817,20 @@ function tripEvents(t) {
 }
 
 function trafficRow(e) {
-  const ic = e.kind === 'closure' || e.blocked ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : 'construction';
-  const cls = e.kind === 'closure' || e.blocked ? 'bad' : e.kind === 'warning' ? 'warn' : '';
+  const hard = !e.ramp && (e.kind === 'closure' || e.blocked);
+  const ic = hard ? 'octagon-x' : e.kind === 'warning' ? 'triangle-alert' : e.ramp && e.kind === 'closure' ? 'circle-alert' : 'construction';
+  const cls = hard ? 'bad' : e.kind === 'warning' ? 'warn' : '';
+  const label = e.ramp ? (e.kind === 'closure' || e.blocked ? 'Auf-/Abfahrt gesperrt' : 'Auf-/Abfahrt') : e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind];
+  const u = e.until && new Date(e.until), uDay = u && dayLabel(u, new Date(e.at));
+  const until = u ? ` · bis ${uDay === 'heute' ? '' : uDay + ', '}${clock(u)} Uhr` : '';
   return `<details class="ev ${cls}">
     <summary>${icon(ic, 'sm')}<span><b>${esc(e.title)}</b><br>
-      <span class="muted small">km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${e.blocked ? 'gesperrt' : TRAFFIC_LABEL[e.kind]}${e.delayMin ? ` · +${e.delayMin} min` : ''}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}</span></span></summary>
+      <span class="muted small">km ${num(e.alongKm)} · ca. ${clock(new Date(e.at))} Uhr · ${label}${until}${e.delayMin ? ` · +${e.delayMin} min` : ''}${e.subtitle ? ` · ${esc(e.subtitle)}` : ''}</span></span></summary>
     <div class="muted small">${e.details.map(esc).join('<br>')}</div>
   </details>`;
 }
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 function trafficCard(t) {
   const head = `<div class="card-head">${icon('construction')} Baustellen &amp; Sperrungen</div>`;
@@ -832,15 +838,21 @@ function trafficCard(t) {
   if (!s || s.loading) return `${head}<div class="live"><span class="muted">${icon('loader-circle', 'sm spin')} Meldungen der Autobahn GmbH werden abgerufen …</span></div>`;
   if (!s.items) return `${head}<div class="live"><span class="muted">${icon('circle-alert', 'sm')} Meldungen gerade nicht abrufbar</span></div>`;
   const ev = tripEvents(t);
-  const major = ev.filter(e => e.kind !== 'roadworks' || e.blocked), works = ev.filter(e => e.kind === 'roadworks' && !e.blocked);
-  const closures = ev.filter(e => e.kind === 'closure' || e.blocked).length;
+  // Sperrungen der Fahrbahn und Verkehrsmeldungen offen, Auf-/Abfahrten und Baustellen eingeklappt
+  const major = ev.filter(e => !e.ramp && (e.kind !== 'roadworks' || e.blocked));
+  const ramps = ev.filter(e => e.ramp);
+  const works = ev.filter(e => !e.ramp && e.kind === 'roadworks' && !e.blocked);
+  const closures = major.filter(e => e.kind === 'closure' || e.blocked).length, warnings = major.length - closures;
   const summary = !ev.length ? `Keine Meldungen zu deiner Durchfahrtszeit auf ${esc(t.roads.join(', '))}.`
-    : [closures ? `<b>${closures} ${closures === 1 ? 'Sperrung' : 'Sperrungen'}</b>` : '', major.length - closures ? `${major.length - closures} Verkehrsmeldung${major.length - closures === 1 ? '' : 'en'}` : '', works.length ? `${works.length} Baustelle${works.length === 1 ? '' : 'n'}` : '']
+    : [closures ? `<b>${plural(closures, 'Sperrung', 'Sperrungen')}</b>` : '', warnings ? plural(warnings, 'Verkehrsmeldung', 'Verkehrsmeldungen') : '',
+      ramps.length ? plural(ramps.length, 'Auf-/Abfahrt', 'Auf-/Abfahrten') : '', works.length ? plural(works.length, 'Baustelle', 'Baustellen') : '']
       .filter(Boolean).join(' · ') + ' auf deiner Strecke zur Durchfahrtszeit.';
+  const group = (list, text) => list.length ? `<details class="ev-more"><summary class="small">${text}</summary>${list.map(trafficRow).join('')}</details>` : '';
   return `${head}
     <p class="small" style="margin:0 0 8px">${summary}</p>
     ${major.map(trafficRow).join('')}
-    ${works.length ? `<details class="ev-more"><summary class="small">${works.length} Baustelle${works.length === 1 ? '' : 'n'} anzeigen</summary>${works.map(trafficRow).join('')}</details>` : ''}
+    ${group(ramps, `${plural(ramps.length, 'Auf-/Abfahrt', 'Auf-/Abfahrten')} anzeigen <span class="muted" style="font-weight:400">(betrifft dich nur, wenn du dort auf- oder abfährst)</span>`)}
+    ${group(works, `${plural(works.length, 'Baustelle', 'Baustellen')} anzeigen`)}
     <p class="muted small" style="margin:8px 0 0">${closures ? 'DP plant nicht automatisch um. Folge der Umleitung und tippe danach auf „Ab hier neu planen“. ' : ''}Quelle: Autobahn GmbH des Bundes, Stand ${clock(new Date(s.at))} Uhr. Nur Autobahnen.</p>`;
 }
 

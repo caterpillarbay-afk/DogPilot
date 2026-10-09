@@ -19,10 +19,13 @@ test('Meldungen: nur in Fahrtrichtung, zur Durchfahrtszeit gültig, sortiert', (
   const line = new RouteLine([[48, 10], [49, 10], [50, 10]]);
   const dep = new Date(2026, 9, 10, 8, 0);
   const passAt = km => new Date(dep.getTime() + km * 36000);   // 100 km/h
-  const base = { coordinate: { lat: 49.5, long: 10 }, description: [], future: false, isBlocked: 'false' };
+  const base = { coordinate: { lat: 49.5, long: 10 }, subtitle: ' Süd -> Nord', description: [], future: false, isBlocked: 'false' };
   const items = [
     { ...base, kind: 'roadworks', identifier: 'nord', extent: '49.5,10,49.6,10' },
     { ...base, kind: 'roadworks', identifier: 'sued', extent: '49.6,10,49.5,10' },          // Gegenrichtung
+    // Gegenrichtung, Ausdehnung endet vor dem Start der Route (nur ein Ende auf der Route)
+    { ...base, kind: 'roadworks', identifier: 'sued-rand', coordinate: { lat: 48.05, long: 10 }, extent: '48.05,10,47.9,10' },
+    { ...base, kind: 'closure', identifier: 'rampe', coordinate: { lat: 49.8, long: 10.001 }, subtitle: ' AS Musterstadt (aus Richtung Süd)', extent: '49.8,10.001,49.79,10.003' },
     { ...base, kind: 'closure', identifier: 'zu', coordinate: { lat: 48.2, long: 10 }, isBlocked: 'true',
       description: ['10.10.26 von 07:00 bis 12:00 Uhr'] },
     { ...base, kind: 'closure', identifier: 'nachts', description: ['10.10.26 22:00 bis zum 11.10.26 05:00 Uhr.'] },
@@ -30,6 +33,9 @@ test('Meldungen: nur in Fahrtrichtung, zur Durchfahrtszeit gültig, sortiert', (
     { ...base, kind: 'roadworks', identifier: 'spaeter', future: true },
   ];
   const ev = eventsAlongRoute(items, line, passAt, dep);
-  assert.deepEqual(ev.map(e => e.id), ['zu', 'nord']);
+  assert.deepEqual(ev.map(e => e.id), ['zu', 'nord', 'rampe']);
   assert.equal(ev[0].blocked, true);
+  assert.equal(ev[0].until, new Date(2026, 9, 10, 12, 0).toISOString());
+  assert.deepEqual(ev.map(e => e.ramp), [false, false, true]);
+  assert.equal(ev[1].subtitle, 'Süd → Nord');
 });
