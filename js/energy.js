@@ -102,3 +102,17 @@ export function chargeMinutes({ capacityKWh, socFrom, socTo, chargerKw, carMaxKw
   }
   return minutes;
 }
+
+// Verbrauch aus echten Fahrten lernen. Verglichen wird der letzte Abschnitt (letzter Ladestopp bzw.
+// Start → Ziel): geplanter Energiebedarf gegen tatsächlich verbrauchte Akku-Prozente.
+// prev: bisheriger Lernfaktor (steckt schon in plannedKWh). Ergebnis: { ratio, factor } oder null,
+// wenn der Abschnitt zu kurz ist (unter 5 kWh) oder die Angaben nicht passen.
+export const LEARN_MIN_KWH = 5;
+export function learnFactor(prev, { fromSoc, actualSoc, plannedKWh, capacityKWh }) {
+  const usedKWh = (fromSoc - actualSoc) / 100 * capacityKWh;
+  if (!(plannedKWh >= LEARN_MIN_KWH) || !(usedKWh > 0)) return null;
+  const ratio = Math.min(1.4, Math.max(0.7, usedKWh / plannedKWh));
+  // halb übernehmen, damit ein Ausreißer (Stau, Gegenwind) nicht alles verstellt
+  const factor = Math.min(1.3, Math.max(0.75, prev * (1 + 0.5 * (ratio - 1))));
+  return { ratio, factor };
+}

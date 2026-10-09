@@ -6,9 +6,10 @@ import { loadSettings, saveSettings, resetAll, resizePhoto, DEFAULT_SETTINGS } f
 import { loadChargers, loadRestAreas, loadChargerSites, loadVehicles, loadVehicleSpecs, matchVariants, FEATURES } from './data.js';
 import { searchPlaces, getLiveStatus, getAutobahnEvents } from './services.js';
 import { eventsAlongRoute } from './traffic.js';
-import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, OFF_ROUTE_TEXT } from './drive.js';
-import { RouteLine } from './geo.js';
+import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue, arrivalText, OFF_ROUTE_TEXT } from './drive.js';
+import { RouteLine, haversineKm } from './geo.js';
 import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
+import { learnFactor } from './energy.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 import { watchForUpdates } from './update.js';
@@ -29,6 +30,7 @@ const state = {
   live: {},            // Live-Belegung der Ladestopps (siehe refreshLive)
   traffic: {},         // Autobahn-Meldungen je Straßenliste (siehe refreshTraffic)
   drive: { on: false }, // Fahrt-Modus mit Sprachansagen (siehe startDrive)
+  arrived: false,      // Fahrt-Modus hat das Ziel erkannt → „Angekommen?“ sofort zeigen
   tripCtx: null,       // Route & Ladesäulen der aktuellen Fahrt im Speicher (für Alternativen)
 };
 
@@ -45,6 +47,7 @@ function toast(text) {
 
 const save = () => saveSettings(state.settings);
 const trip = () => state.settings.lastTrip;
+const placeName = p => p.label.split(',')[0];   // „Alzey, Rheinland-Pfalz“ → „Alzey“
 const go = hash => { if (location.hash === hash) render(); else location.hash = hash; };
 
 function loadData(force = false) {
@@ -105,8 +108,18 @@ function vehicleFormHtml(v) {
       ${field('Verbrauch normal beladen', numberInput('vConsumption', v.consumptionKWh100, { min: 8, max: 60, step: 0.1, suffix: 'kWh/100 km' }),
         'Trag deinen echten Verbrauch normal beladen bei deinem üblichen Autobahntempo ein. Bei Auswahl eines Modells steht hier zunächst der WLTP-Normwert – der liegt meist 10–20 % zu niedrig. Dachbox oder volle Beladung wählst du pro Fahrt; Temperatur und Steigungen rechnet DogPilot automatisch dazu.')}
       <div id="vConsumptionWarn">${consumptionWarning(v)}</div>
+      ${learnedHint(v)}
     </div>
     <p class="hint">Ohne passende Variante: Nutzbare Akku-Kapazität (netto) und maximale DC-Ladeleistung findest du im Datenblatt deines Fahrzeugs.</p>`;
+}
+
+const pct = f => `${f >= 1 ? '+' : '−'}${Math.abs(Math.round((f - 1) * 100))} %`;
+
+function learnedHint(v) {
+  const l = v.learned;
+  if (!l?.trips) return '';
+  return `<p class="hint" id="learnedHint">Aus ${l.trips === 1 ? 'einer Fahrt' : `${l.trips} Fahrten`} gelernt: DogPilot plant mit <b>${pct(l.factor)}</b> auf deinen Verbrauch.
+    <button class="btn-ghost" type="button" data-action="learn-reset" style="padding:0;min-height:0">Zurücksetzen</button></p>`;
 }
 
 // Schutz vor Verwechslung: Wer hier den Verbrauch voll beladen einträgt, bekommt die Beladung pro Fahrt doppelt aufgeschlagen
@@ -156,7 +169,11 @@ function bindVehicleForm(root, v, onChange) {
   for (const [id, key, min, max] of [['vCapacity', 'capacityKWh', 10, 200], ['vMaxKw', 'carMaxKw', 11, 400], ['vConsumption', 'consumptionKWh100', 8, 60]]) {
     $('#' + id, root)?.addEventListener('change', () => {
       const val = readNumber(id, min, max);
-      if (val != null) { v[key] = val; $('#' + id, root).value = val; onChange(false); }
+      if (val != null) {
+        // Verbrauch von Hand neu eingetragen: Gelerntes gilt dafür nicht mehr
+        if (key === 'consumptionKWh100' && val !== v[key]) v.learned = { factor: 1, trips: 0 };
+        v[key] = val; $('#' + id, root).value = val; onChange(false);
+      }
       const warn = $('#vConsumptionWarn', root);
       if (warn) warn.innerHTML = consumptionWarning(v);
     });
@@ -313,7 +330,8 @@ const LOAD = {
 function loadHint(load) {
   const base = state.settings.vehicle.consumptionKWh100;
   const f = LOAD_FACTORS[load] || 1;
-  return `${LOAD[load]?.text || ''}${f > 1 ? `, +${Math.round((f - 1) * 100)} %` : ''} – geplant mit <b>${num(base * f, 1)} kWh/100 km</b>${f > 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)})` : ''}, dazu Wetter und Steigungen.`;
+  const learned = state.settings.vehicle.learned?.factor || 1;
+  return `${LOAD[load]?.text || ''}${f > 1 ? `, +${Math.round((f - 1) * 100)} %` : ''} – geplant mit <b>${num(base * f * learned, 1)} kWh/100 km</b>${f > 1 || learned !== 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)}${learned !== 1 ? `, aus deinen Fahrten ${pct(learned)}` : ''})` : ''}, dazu Wetter und Steigungen.`;
 }
 
 function placeField(id, label, value, placeholder) {
@@ -520,6 +538,7 @@ async function plan() {
       ? await planBackwards(args, f.arriveBy, setProgress)
       : await computeTrip(args);
     if (f.replan) result.replanned = true;
+    state.arrived = false;   // „Angekommen?“ gilt für die vorige Fahrt
     state.tripCtx = ctx;
     state.settings.lastTrip = result;
     await save();
@@ -566,13 +585,53 @@ function arrivalPlan(t) {
     ${past ? '<br>Diese Abfahrtszeit ist schon vorbei – der Puffer wird knapp.' : ''}</span></div>`;
 }
 
+// Nach der Ankunft: Akkustand abfragen und daraus den Verbrauch lernen (learnFactor)
+function arrivalCard(t) {
+  if (t.feedback || !t.lastLeg) return '';
+  const arrival = new Date(t.arrivalAt).getTime();
+  if (!state.arrived && Date.now() < arrival - 45 * 60000) return '';
+  if (Date.now() > arrival + 3 * 86400000) return '';
+  return `<div class="card" style="margin-top:12px" id="arrivalCard">
+    <div class="card-head">${icon('flag')} Angekommen?</div>
+    <p class="muted small" style="margin:0 0 10px">Mit dem Akkustand am Ziel lernt DogPilot deinen echten Verbrauch – die nächsten Fahrten werden genauer.</p>
+    <div class="grid-2">
+      ${field('Akku am Ziel', numberInput('fbSoc', '', { min: 0, max: 100, suffix: '%', placeholder: `Plan: ${t.arrivalSoc}` }))}
+      ${t.lastLeg.name ? field(`Geladen bis (${esc(t.lastLeg.name.split(',')[0])})`, numberInput('fbFrom', Math.round(t.lastLeg.fromSoc), { min: 1, max: 100, suffix: '%' })) : ''}
+    </div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-secondary" type="button" data-action="fb-skip">Überspringen</button>
+      <button class="btn btn-primary" type="button" data-action="fb-save">Übernehmen</button>
+    </div>
+    ${state.fbError ? `<div class="notice error" style="margin-top:12px">${icon('circle-alert')}<span>${esc(state.fbError)}</span></div>` : ''}
+  </div>`;
+}
+
+async function saveFeedback(skip) {
+  const t = trip(), v = state.settings.vehicle;
+  state.fbError = null;
+  if (skip) { t.feedback = { skipped: true }; await save(); render(); return; }
+  const actual = readNumber('fbSoc', 0, 100), from = t.lastLeg.name ? readNumber('fbFrom', 1, 100) : t.lastLeg.fromSoc;
+  if (actual == null || from == null) { state.fbError = 'Bitte den Akkustand eintragen.'; render(); return; }
+  const prev = t.learned || 1;
+  const r = learnFactor(prev, { fromSoc: from, actualSoc: actual, plannedKWh: t.lastLeg.kWh, capacityKWh: v.capacityKWh });
+  t.feedback = { actualSoc: actual, fromSoc: from, ratio: r?.ratio ?? null };
+  if (r) {
+    v.learned = { factor: r.factor, trips: (v.learned?.trips || 0) + 1 };
+    const diff = Math.round((r.ratio - 1) * 100);
+    toast(Math.abs(diff) < 3 ? 'Verbrauch wie geplant – passt!' : `Verbrauch ${Math.abs(diff)} % ${diff > 0 ? 'höher' : 'niedriger'} als geplant – DogPilot plant jetzt mit ${pct(r.factor)}`);
+  } else toast('Abschnitt zu kurz zum Lernen – trotzdem danke!');
+  state.arrived = false;
+  await save();
+  render();
+}
+
 // Unterwegs: Fahrt ab dem aktuellen Standort neu planen (z. B. nach einer Umleitung) – Ziel, Beladung
 // und „Ankunft bis …“ bleiben, nur der Akkustand wird abgefragt
 function replanCard(t) {
   if (!state.replanOpen) return `<button class="btn btn-secondary block" type="button" data-action="replan-open" style="margin-top:12px">${icon('locate')} Ab hier neu planen</button>`;
   return `<div class="card" style="margin-top:12px">
     <div class="card-head">${icon('locate')} Ab hier neu planen</div>
-    <p class="muted small" style="margin:0 0 10px">Von deinem aktuellen Standort nach ${esc(t.to.label.split(',')[0])}${t.arriveBy ? `, Ankunft bis ${clock(new Date(t.arriveBy))} Uhr` : ''}.</p>
+    <p class="muted small" style="margin:0 0 10px">Von deinem aktuellen Standort nach ${esc(placeName(t.to))}${t.arriveBy ? `, Ankunft bis ${clock(new Date(t.arriveBy))} Uhr` : ''}.</p>
     ${field('Akku jetzt', numberInput('replanSoc', state.replanSoc ?? '', { min: 1, max: 100, suffix: '%', placeholder: 'z. B. 45' }))}
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-secondary" type="button" data-action="replan-cancel">Abbrechen</button>
@@ -649,9 +708,10 @@ function viewTrip() {
   return `
     <button class="btn-ghost back" type="button" data-href="#/plan">${icon('chevron-left')} Fahrt ändern</button>
     <div class="route-head">
-      <div class="grow"><div class="title">${esc(t.from.label.split(',')[0])} → ${esc(t.to.label.split(',')[0])}</div>
+      <div class="grow"><div class="title">${esc(placeName(t.from))} → ${esc(placeName(t.to))}</div>
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
+    ${arrivalCard(t)}
     ${arrivalPlan(t)}
     ${driveCard(t)}
     ${replanCard(t)}
@@ -923,18 +983,22 @@ function startDrive() {
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
   // Meldungen der Autobahn GmbH regelmäßig auffrischen (refreshTraffic hält sie max. 10 min)
   state.drive.timer = setInterval(() => refreshTraffic(trip()), 5 * 60000);
+  // Am Ladestopp/an der Pause kommen kaum GPS-Meldungen – Timer daher unabhängig davon prüfen
+  state.drive.tick = setInterval(checkStopTimer, 20000);
   render();
 }
 
-function stopDrive(silent = false) {
+// keepSpeech: letzte Ansage (z. B. „am Ziel“) noch zu Ende sprechen lassen
+function stopDrive(keepSpeech = false) {
   const d = state.drive;
   if (d.watch != null) navigator.geolocation.clearWatch(d.watch);
   clearInterval(d.timer);
+  clearInterval(d.tick);
   d.lock?.release().catch(() => {});
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if ('speechSynthesis' in window && !keepSpeech) speechSynthesis.cancel();
   const pending = d.pendingUpdate;
   state.drive = { on: false };
-  if (!silent) render();
+  render();
   if (pending) { toast('Neue Version von DogPilot – wird geladen …'); setTimeout(() => location.replace(location.pathname), 1200); }
 }
 
@@ -943,8 +1007,23 @@ async function onDrivePosition(pos) {
   if (!d.on || !t) return;
   d.gpsError = false;
   const { line, scale, minPerKm, plannedAt } = tripTiming(t);
-  const hit = line.project(pos.coords.latitude, pos.coords.longitude, OFF_ROUTE_KM);
+  const lat = pos.coords.latitude, lon = pos.coords.longitude;
   const now = Date.now(), prefs = state.settings.drive;
+  // Am Ziel: Ansage, Akkustand abfragen, Fahrt-Modus beenden
+  if (haversineKm(lat, lon, t.to.lat, t.to.lon) <= 0.4) {
+    speak(arrivalText(placeName(t.to)));
+    state.arrived = true;
+    stopDrive(true);
+    return;
+  }
+  // Am Ladestopp bzw. an der Pause (auch abseits der Route, z. B. Autohof): Timer starten
+  const dist = st => haversineKm(lat, lon, st.lat, st.lon);
+  const here = t.stops.find(st => dist(st) <= 0.4);
+  if (here && d.visit?.stop !== here) d.visit = { stop: here, arrivedAt: now, said: new Set() };
+  if (d.visit && dist(d.visit.stop) > 1) d.visit = null;
+  checkStopTimer();
+  const hit = line.project(lat, lon, OFF_ROUTE_KM);
+  if (!hit && t.stops.some(st => dist(st) <= OFF_ROUTE_KM + 1)) { d.off = false; updateDriveCard(); return; }   // Umweg zum Stopp
   if (!hit) {
     d.offSince ??= now;
     if (!d.offSaid && now - d.offSince > OFF_ROUTE_MS && prefs.closures) { d.offSaid = true; speak(OFF_ROUTE_TEXT); }
@@ -980,11 +1059,27 @@ async function onDrivePosition(pos) {
   updateDriveCard();
 }
 
+function checkStopTimer() {
+  const t = trip(), d = state.drive;
+  if (!d.on || !d.visit || !t) return;
+  const st = d.visit.stop;
+  if (!state.settings.drive[st.kind === 'charge' ? 'charge' : 'breaks']) return;
+  const i = t.stops.indexOf(st), nxt = t.stops[i + 1];
+  const { minPerKm } = tripTiming(t);
+  const next = nxt ? { name: nxt.name, min: (nxt.alongKm - st.alongKm) * minPerKm } : { name: placeName(t.to), min: (t.lengthKm - st.alongKm) * minPerKm };
+  for (const a of stopTimerDue(d.visit, Date.now(), next)) { d.visit.said.add(a.key); speak(a.text); }
+  updateDriveCard();
+}
+
 function driveStatus(t) {
   const d = state.drive;
   if (d.gpsError && d.km == null) return `${icon('circle-alert', 'sm')} Kein GPS – Ortung erlauben`;
   if (d.km == null) return `${icon('loader-circle', 'sm spin')} Warte auf GPS …`;
   if (d.off) return `${icon('triangle-alert', 'sm')} Nicht auf der geplanten Route`;
+  if (d.visit) {
+    const left = Math.round((d.visit.arrivedAt + d.visit.stop.stopMin * 60000 - Date.now()) / 60000);
+    return `${icon(d.visit.stop.kind === 'charge' ? 'zap' : 'paw-print', 'sm')} ${esc(d.visit.stop.name)} · ${left > 0 ? `noch ca. ${duration(left)}` : 'Weiterfahrt laut Plan'}`;
+  }
   const { minPerKm } = tripTiming(t);
   const s = state.traffic[t.roads?.length ? trafficKey(t) : ''];
   const next = nextUp({ stops: t.stops, events: s?.items ? tripEvents(t) : [], km: d.km, minPerKm, prefs: state.settings.drive });
@@ -1291,6 +1386,9 @@ document.addEventListener('click', async e => {
   if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }
   if (a === 'replan-go') { replanFromHere(); return; }
   if (a === 'drive-start') { startDrive(); return; }
+  if (a === 'fb-save') { saveFeedback(false); return; }
+  if (a === 'fb-skip') { saveFeedback(true); return; }
+  if (a === 'learn-reset') { state.settings.vehicle.learned = { factor: 1, trips: 0 }; await save(); $('#learnedHint')?.remove(); toast('Gelernter Verbrauch zurückgesetzt'); return; }
   if (a === 'drive-stop') { stopDrive(); return; }
   if (a === 'drive-repeat') { if (state.drive.last) speak(state.drive.last); return; }
   if (a === 'reload-data') {

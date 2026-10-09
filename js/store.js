@@ -10,7 +10,8 @@ export const DEFAULT_SETTINGS = {
   version: SETTINGS_VERSION,
   onboarded: false,
   // Akku und Ladeleistung stehen nicht in der Fahrzeugliste – bewusst leer, damit niemand mit fremden Werten plant
-  vehicle: { make: '', model: '', variant: '', capacityKWh: null, consumptionKWh100: 20, carMaxKw: null, photo: null },
+  vehicle: { make: '', model: '', variant: '', capacityKWh: null, consumptionKWh100: 20, carMaxKw: null, photo: null,
+    learned: { factor: 1, trips: 0 } },   // Verbrauch aus echten Fahrten (learnFactor)
   dogs: [],
   charging: { minChargerKw: 150, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80, minBreakMin: 15, maxDriveMin: 120, corridorKm: 2 },
   keys: { tomtom: '' },

@@ -107,23 +107,27 @@ export async function prepareTrip({ from, to, departure, arriveBy = null, buffer
   // Linienlänge und Streckenlänge des Routendienstes weichen leicht ab: Verbrauch und angezeigte
   // Kilometer auf die offizielle Streckenlänge beziehen
   const kmScale = Math.min(1.25, Math.max(0.8, route.lengthKm / line.lengthKm));
-  const factor = kmScale * temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin) * (LOAD_FACTORS[load] || 1);
+  const learned = settings.vehicle.learned?.factor || 1;   // aus echten Fahrten gelernt (learnFactor)
+  const factor = kmScale * temperatureFactor(temperature) * trafficFactor(route.trafficDelayMin, route.durationMin) * (LOAD_FACTORS[load] || 1) * learned;
   const energy = new EnergyProfile({ lengthKm: line.lengthKm, baseKWh100: s.baseKWh100, factor, heights });
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
     findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line, sites);
-  return { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
+  return { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, learned, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
 }
 
 // Teil 2: Stopps planen. forced: { [Nummer des Ladestopps]: hubKey } – vom Nutzer gewählte Alternativen
 export function planFromContext(ctx, forced = {}) {
-  const { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, energy, hubs, fallbackHubs, areas } = ctx;
+  const { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, learned = 1, energy, hubs, fallbackHubs, areas } = ctx;
   const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s, forced });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
   const stops = addDogBreaks(chargeStops, line, route.durationMin, areas, s.maxDriveMin, s.minBreakMin);
   for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(stops, energy, s, st.alongKm);
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
+  // Letzter Abschnitt bis zum Ziel – damit lernt DogPilot nach der Ankunft den echten Verbrauch
+  const last = chargeStops.at(-1);
+  const lastLeg = { fromSoc: last ? last.targetSoc : startSoc, kWh: energy.between(last ? last.alongKm : 0, line.lengthKm), name: last?.name || null };
 
   return {
     from, to, departure: departure.toISOString(), startSoc, load,
@@ -145,6 +149,8 @@ export function planFromContext(ctx, forced = {}) {
       alternatives: st.alternatives?.map(a => ({ ...a, shiftKm: a.shiftKm * kmScale })),
     })),
     forced,
+    learned,
+    lastLeg,
     arrivalAt: timed.arrivalAt.toISOString(),
     totalMin: timed.totalMin,
     arrivalSoc: plan.arrivalSoc,
