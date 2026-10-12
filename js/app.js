@@ -1332,11 +1332,27 @@ function openMenu() {
       ${item('#/legal/quellen', 'file-text', 'Quellen und Lizenzen')}
       <div class="drawer-group">Hilfe</div>
       ${item('#/welcome', 'info', 'Einführung erneut zeigen')}
+      <button class="list-row" type="button" data-action="share-app">${icon('share-2')}<span class="grow">DogPilot teilen</span></button>
       <div class="drawer-foot">DogPilot ${APP_VERSION} · Gemeinsam weiter<br>
         Ladesäulen: ${d.chargers ? dateLabel(d.chargers.datenstand) : '–'} · Rastanlagen: ${d.restAreas ? dateLabel(d.restAreas.datenstand) : '–'}</div>
     </aside>`;
   $('#menuBtn').setAttribute('aria-expanded', 'true');
   $('#drawerRoot .drawer .icon-btn').focus();
+}
+
+// Link zur App weitergeben – über das Teilen-Fenster des Handys (WhatsApp, Mail …), sonst in die Zwischenablage
+async function shareApp() {
+  const url = new URL('./', location.href).href;
+  const text = 'DogPilot – Reise-Co-Pilot für Mensch, Hund & Auto. So installierst du ihn auf Android: '
+    + 'Link in Chrome öffnen → ⋮ → „App installieren“ bzw. „Zum Startbildschirm hinzufügen“. '
+    + 'iPhone: in Safari öffnen → Teilen → „Zum Home-Bildschirm“.';
+  try {
+    if (navigator.share) { await navigator.share({ title: 'DogPilot', text, url }); return; }
+    await navigator.clipboard.writeText(`${text}\n${url}`);
+    toast('Link kopiert – jetzt einfügen und verschicken');
+  } catch (err) {
+    if (err?.name !== 'AbortError') toast(url);   // Teilen abgebrochen: nichts tun
+  }
 }
 
 function closeMenu() {
@@ -1399,6 +1415,7 @@ document.addEventListener('click', async e => {
   if (el.dataset.href) { e.preventDefault(); go(el.dataset.href); return; }
   const a = el.dataset.action;
   if (a === 'close-menu') closeMenu();
+  if (a === 'share-app') { closeMenu(); shareApp(); return; }
   if (a === 'back') history.length > 1 ? history.back() : go('#/plan');
   if (a === 'replan-open') { state.replanOpen = true; state.replanError = null; render(); return; }
   if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }
