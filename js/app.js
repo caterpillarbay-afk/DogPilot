@@ -440,7 +440,8 @@ function bindPlace(root, id) {
       : !opts.length && noHits ? `<div class="suggest-empty">${icon('search', 'sm')}<span><span class="main">Nichts gefunden</span><br><span class="sub">Tipp: In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</span></span></div>` : '';
     list.innerHTML = tip + opts.map((r, i) => `<button type="button" role="option" data-i="${i}" class="${i === active ? 'active' : ''}">
       ${icon(r.here ? 'locate' : 'map-pin', 'sm')}<span><span class="main">${esc(r.main)}</span>${r.sub ? `<br><span class="sub">${esc(r.sub)}</span>` : ''}</span></button>`).join('');
-    list.hidden = !opts.length && !tip;
+    // Antwort kommt erst, wenn das Feld schon verlassen ist: Liste nicht mehr aufklappen (würde andere Knöpfe verdecken)
+    list.hidden = (!opts.length && !tip) || document.activeElement !== inp;
     inp.setAttribute('aria-expanded', String(!list.hidden));
     $$('button', list).forEach(b => b.addEventListener('mousedown', e => { e.preventDefault(); pick(+b.dataset.i); }));
   };
