@@ -334,11 +334,13 @@ function loadHint(load) {
   return `${LOAD[load]?.text || ''}${f > 1 ? `, +${Math.round((f - 1) * 100)} %` : ''} – geplant mit <b>${num(base * f * learned, 1)} kWh/100 km</b>${f > 1 || learned !== 1 ? ` (dein Verbrauch normal beladen: ${num(base, 1)}${learned !== 1 ? `, aus deinen Fahrten ${pct(learned)}` : ''})` : ''}, dazu Wetter und Steigungen.`;
 }
 
+// value: gewählter Ort; sonst bleibt der eingetippte Text stehen (state.form.draft), auch wenn das
+// Formular neu gezeichnet wird – etwa beim Umschalten Abfahrt/Ankunft oder der Beladung
 function placeField(id, label, value, placeholder) {
   return `<div class="place" data-place="${id}">
     <label class="sr-only" for="${id}">${label}</label>
     <span class="input-wrap">${icon(id === 'from' ? 'map-pin' : 'flag')}
-      <input class="input" id="${id}" type="text" autocomplete="off" spellcheck="false" placeholder="${placeholder}" value="${esc(value?.label || '')}"
+      <input class="input" id="${id}" type="text" autocomplete="off" spellcheck="false" placeholder="${placeholder}" value="${esc(value?.label || state.form.draft?.[id] || '')}"
         role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="${id}-list">
     </span>
     <div class="suggest" id="${id}-list" role="listbox" hidden></div>
@@ -404,6 +406,7 @@ function bindPlace(root, id) {
   const choose = r => {
     state.form[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
     inp.value = state.form[id].label;
+    if (state.form.draft) delete state.form.draft[id];
     close();
     state.error = null;
   };
@@ -438,6 +441,7 @@ function bindPlace(root, id) {
   inp.addEventListener('blur', () => setTimeout(close, 150));
   inp.addEventListener('input', () => {
     state.form[id] = null;
+    state.form.draft = { ...state.form.draft, [id]: inp.value };
     noHits = false;
     clearTimeout(timer);
     const q = inp.value;
@@ -468,9 +472,11 @@ function bindPlan(root) {
   bindPlace(root, 'from');
   bindPlace(root, 'to');
   $('#swap', root).addEventListener('click', () => {
-    [state.form.from, state.form.to] = [state.form.to, state.form.from];
-    $('#from', root).value = state.form.from?.label || '';
-    $('#to', root).value = state.form.to?.label || '';
+    const f = state.form, d = f.draft || {};
+    [f.from, f.to] = [f.to, f.from];
+    f.draft = { from: d.to, to: d.from };
+    $('#from', root).value = f.from?.label || f.draft.from || '';
+    $('#to', root).value = f.to?.label || f.draft.to || '';
   });
   $('#departure', root)?.addEventListener('change', e => {
     const d = new Date(e.target.value);
