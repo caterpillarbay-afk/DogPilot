@@ -377,3 +377,24 @@ button.chip.on { border-color: var(--accent); }
 .day.other { position: relative; min-width: 88px; }
 .day.other .icon { width: 16px; height: 16px; }
 .day.other input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+/* Uhrzeit-Feld und eigene runde Uhr (js/clock.js) */
+.time-btn { display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
+.time-btn .icon { color: var(--text-2); }
+.clock-sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.clock-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); }
+.clock-card { position: relative; width: min(100%, 360px); max-height: 100%; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.clock-time { display: flex; justify-content: center; align-items: baseline; gap: 4px; font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.clock-time button { background: none; border: 0; padding: 2px 8px; border-radius: 10px; font: inherit; color: inherit; cursor: pointer; }
+.clock-time button.on { color: var(--accent); background: var(--accent-soft); }
+.clock-presets { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.clock-wrap { display: flex; justify-content: center; }
+.clock-dial { width: min(100%, 280px, calc(100dvh - 300px)); min-width: 180px; aspect-ratio: 1; touch-action: none; user-select: none; }
+.clock-dial .face { fill: var(--surface-2); }
+.clock-dial .hand { stroke: var(--accent); stroke-width: 0.8; }
+.clock-dial .hand-dot, .clock-dial .sel { fill: var(--accent); }
+.clock-dial text { text-anchor: middle; fill: var(--text); font-size: 6.5px; font-weight: 600; pointer-events: none; }
+.clock-dial text.small { font-size: 4.6px; fill: var(--text-2); }
+.clock-dial text.on { fill: var(--bg, #0b1513); }
+.clock-actions { display: flex; gap: 8px; }
+.clock-actions .btn { flex: 1; }
