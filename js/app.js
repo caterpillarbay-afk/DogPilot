@@ -399,7 +399,7 @@ function viewPlan() {
 
 function bindPlace(root, id) {
   const inp = $('#' + id, root), list = $('#' + id + '-list', root);
-  let results = [], active = -1, timer, seq = 0, noHits = false;   // noHits: Suche lief, aber ohne Treffer
+  let results = [], active = -1, timer, seq = 0, noHits = false, searching = false;   // noHits: Suche lief, aber ohne Treffer
   const close = () => { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); active = -1; };
   const choose = r => {
     state.form[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
@@ -410,7 +410,8 @@ function bindPlace(root, id) {
   const show = () => {
     const opts = [...results];
     // Tipp zur Koordinaten-Eingabe erst, wenn die Suche wirklich nichts gefunden hat
-    const tip = !opts.length && noHits ? `<div class="suggest-empty">${icon('search', 'sm')}<span><span class="main">Nichts gefunden</span><br><span class="sub">Tipp: In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</span></span></div>` : '';
+    const tip = !opts.length && searching ? `<div class="suggest-empty">${icon('loader-circle', 'sm spin')}<span class="sub">Suche läuft …</span></div>`
+      : !opts.length && noHits ? `<div class="suggest-empty">${icon('search', 'sm')}<span><span class="main">Nichts gefunden</span><br><span class="sub">Tipp: In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</span></span></div>` : '';
     list.innerHTML = tip + opts.map((r, i) => `<button type="button" role="option" data-i="${i}" class="${i === active ? 'active' : ''}">
       ${icon(r.here ? 'locate' : 'map-pin', 'sm')}<span><span class="main">${esc(r.main)}</span>${r.sub ? `<br><span class="sub">${esc(r.sub)}</span>` : ''}</span></button>`).join('');
     list.hidden = !opts.length && !tip;
@@ -440,16 +441,17 @@ function bindPlace(root, id) {
     noHits = false;
     clearTimeout(timer);
     const q = inp.value;
-    if (q.trim().length < 2) { results = q ? [] : [here]; show(); return; }
+    if (q.trim().length < 2) { results = q ? [] : [here]; searching = false; show(); return; }
+    results = []; searching = true; show();
     timer = setTimeout(async () => {
       const my = ++seq;
       try {
         const near = state.form.from && id === 'to' ? [state.form.from.lat, state.form.from.lon] : null;
         const r = await searchPlaces(q, near);
         if (my !== seq) return;
-        results = r; active = -1; noHits = !r.length; show();
+        results = r; active = -1; noHits = !r.length; searching = false; show();
       } catch (err) {
-        if (my === seq) { results = []; show(); toast(err.message); }
+        if (my === seq) { results = []; searching = false; show(); toast(err.message); }
       }
     }, 250);
   });
@@ -522,8 +524,26 @@ async function plan() {
   state.error = null;
   const missing = vehicleMissing(state.settings.vehicle);
   if (missing) { state.error = missing + ' (Einstellungen → Fahrzeug)'; render(); return; }
+  // Ort eingetippt, aber (noch) keinen Vorschlag angetippt – z. B. weil die Ortssuche langsam antwortet:
+  // dann den besten Treffer selbst nehmen
+  const typed = Object.fromEntries(['from', 'to'].map(id => [id, f[id] ? '' : ($('#' + id)?.value || '').trim()]));
+  for (const id of ['from', 'to']) {
+    if (f[id] || typed[id].length < 2 || typed[id].startsWith('Standort wird')) continue;
+    state.computing = 'Ort wird gesucht …';
+    render();
+    try {
+      const near = id === 'to' && f.from ? [f.from.lat, f.from.lon] : null;
+      const [r] = await searchPlaces(typed[id], near);
+      if (r) f[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
+      else state.error = `„${typed[id]}“ nicht gefunden – bitte anders schreiben oder einen Vorschlag aus der Liste wählen.`;
+    } catch (err) {
+      state.error = `Ortssuche gerade nicht erreichbar (${err.message}).`;
+    }
+    state.computing = null;
+    if (state.error) { render(); return; }
+  }
   if (!f.from || !f.to) {
-    state.error = !f.from ? 'Bitte einen Start aus der Vorschlagsliste wählen.' : 'Bitte ein Ziel aus der Vorschlagsliste wählen.';
+    state.error = !f.from ? 'Bitte einen Start eingeben.' : 'Bitte ein Ziel eingeben.';
     render();
     return;
   }

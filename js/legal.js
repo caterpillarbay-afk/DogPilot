@@ -24,6 +24,7 @@ export const LEGAL = {
 <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
 <ul>
   <li><b>komoot GmbH (Deutschland), Photon</b> – eingegebener Suchtext für Start und Ziel</li>
+  <li><b>OpenStreetMap Foundation (Vereinigtes Königreich), Nominatim</b> – nur wenn Photon nicht antwortet: eingegebener Suchtext für Start und Ziel</li>
   <li><b>FOSSGIS e.V. (Deutschland), Valhalla und OSRM</b> – Koordinaten von Start und Ziel für Route und Höhenprofil</li>
   <li><b>Open-Meteo (APIs GmbH, Schweiz)</b> – grobe Koordinaten (Start, Mitte, Ziel) für die Temperaturvorhersage</li>
   <li><b>OpenStreetMap Foundation (Großbritannien)</b> – Kartenkacheln für den sichtbaren Kartenausschnitt</li>
@@ -43,7 +44,7 @@ export const LEGAL = {
   <li><b>Ladesäulen:</b> Ladesäulenregister der Bundesnetzagentur – ${link('https://www.bundesnetzagentur.de/ladesaeulenkarte', 'bundesnetzagentur.de/ladesaeulenkarte')}, Lizenz ${link('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0')}. Daten verändert: auf Ladepunkte ab 11 kW gefiltert, Standorte zusammengefasst; monatlich aktualisiert. Ohne Gewähr für Richtigkeit und Vollständigkeit.</li>
   <li><b>Rastanlagen und Ausstattung:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, ODbL; über die Overpass API, monatlich aktualisiert.</li>
   <li><b>Karte:</b> © ${link('https://www.openstreetmap.org/copyright', 'OpenStreetMap-Mitwirkende')}, Kacheln der OpenStreetMap Foundation.</li>
-  <li><b>Ortssuche:</b> ${link('https://photon.komoot.io', 'Photon')} von komoot, Daten © OpenStreetMap-Mitwirkende.</li>
+  <li><b>Ortssuche:</b> ${link('https://photon.komoot.io', 'Photon')} von komoot, ersatzweise ${link('https://nominatim.openstreetmap.org', 'Nominatim')} der OpenStreetMap Foundation; Daten © OpenStreetMap-Mitwirkende.</li>
   <li><b>Routing und Höhenprofil:</b> ${link('https://valhalla1.openstreetmap.de', 'Valhalla')} und ${link('https://routing.openstreetmap.de', 'OSRM')}, betrieben von FOSSGIS e.V.; mit eigenem Schlüssel © TomTom.</li>
   <li><b>Wetter:</b> ${link('https://open-meteo.com', 'Open-Meteo.com')}, CC BY 4.0.</li>
   <li><b>Ladesäulen-Belegung (live):</b> Meldungen der Betreiber nach der EU-Verordnung AFIR, gebündelt von ${link('https://api.mobidata-bw.de', 'MobiData BW')} (NVBW, Open ChargePoint DataBase); Betreiberdaten CC0, Daten der Bundesnetzagentur CC BY 4.0.</li>
