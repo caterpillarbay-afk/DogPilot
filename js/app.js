@@ -8,7 +8,7 @@ import { searchPlaces, placeLabel, getLiveStatus, getAutobahnEvents } from './se
 import { eventsAlongRoute, groupEvents, RAMP_LABEL, JUNCTION_LABEL } from './traffic.js';
 import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue, arrivalText, OFF_ROUTE_TEXT } from './drive.js';
 import { RouteLine, haversineKm } from './geo.js';
-import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
+import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS, DRIVER_MAX_DRIVE_MIN } from './trip.js';
 import { learnFactor } from './energy.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
@@ -409,7 +409,7 @@ function viewPlan() {
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
       ${state.settings.dogs.length ? `<div style="margin-top:12px">${field('Hunde', `<div class="chips"><button type="button" class="chip ${f.withDogs ? 'on' : ''}" aria-pressed="${f.withDogs}" data-dogs>${icon('paw-print')} Mit Hunden</button></div>`,
-        f.withDogs ? `Gassi-Pausen spätestens nach ${hours(state.settings.charging.maxDriveMin || 120)} Fahrt, Stopps mit Grün bevorzugt.` : 'Ohne Hunde: Pause spätestens nach 3 Stunden, Stopps nach WC und Essen.')}</div>` : ''}
+        f.withDogs ? `Gassi-Pausen spätestens nach ${hours(state.settings.charging.maxDriveMin || 120)} Fahrt, Stopps mit Grün bevorzugt.` : `Ohne Hunde: Pause spätestens nach ${hours(Math.max(DRIVER_MAX_DRIVE_MIN, state.settings.charging.maxDriveMin || 0))}, Stopps nach WC und Essen.`)}</div>` : ''}
       ${f.timeMode === 'arrive' ? bufferField() : ''}
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
@@ -501,8 +501,8 @@ function bindPlan(root) {
   });
   // Tag (Kacheln oder Kalender) und Uhrzeit getrennt; beides setzt Abfahrt bzw. „Ankommen bis“
   const tKey = () => (state.form.timeMode === 'arrive' ? 'arriveBy' : 'departure');
-  const setDay = ymd => {
-    const [y, m, d] = ymd.split('-').map(Number);
+  const setDay = value => {
+    const [y, m, d] = value.split('-').map(Number);
     if (!y) return;
     const t = new Date(state.form[tKey()]);
     t.setFullYear(y, m - 1, d);
@@ -871,12 +871,12 @@ function viewStop(i) {
         <div class="live" id="live-${i}">${liveLine(st, true)}</div>
         <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
       </div>`
-      : `<p class="muted small" style="margin:0">${st.dogs === false ? 'Pause für dich – spätestens nach 3 Stunden Fahrt' : `Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt`}. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
+      : `<p class="muted small" style="margin:0">${st.dogs === false ? `Pause für dich – spätestens nach ${hours(Math.max(DRIVER_MAX_DRIVE_MIN, state.settings.charging.maxDriveMin || 0))} Fahrt` : `Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt`}. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     ${state.computing ? `<div class="progress" style="margin-top:12px">${icon('loader-circle', 'spin')} ${esc(state.computing)}</div>` : altCard(st)}
     <h3 class="section-title">${trip()?.withDogs === false ? 'Vor Ort' : 'Für Hund und Mensch'}</h3>
     ${st.dog != null ? `<div class="rating">
-      <div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>
+      ${trip()?.withDogs === false ? '' : `<div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>`}
       <div class="metric"><div class="label">${icon('coffee')} Mensch</div><div class="value">${num(st.human, 1)}<small>/5</small></div></div>
       <div class="metric"><div class="label">${icon('info')} Typ</div><div class="value" style="font-size:15px">${typeLabel}</div></div>
     </div>` : ''}
