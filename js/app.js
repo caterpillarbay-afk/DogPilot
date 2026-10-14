@@ -8,7 +8,7 @@ import { searchPlaces, placeLabel, getLiveStatus, getAutobahnEvents } from './se
 import { eventsAlongRoute, groupEvents, RAMP_LABEL, JUNCTION_LABEL } from './traffic.js';
 import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayText, nextUp, stopTimerDue, arrivalText, OFF_ROUTE_TEXT } from './drive.js';
 import { RouteLine, haversineKm } from './geo.js';
-import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS } from './trip.js';
+import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS, DRIVER_MAX_DRIVE_MIN } from './trip.js';
 import { learnFactor } from './energy.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
@@ -47,11 +47,23 @@ function toast(text) {
 
 const save = () => saveSettings(state.settings);
 const trip = () => state.settings.lastTrip;
-// Wochentag unter dem Datumsfeld: „Mittwoch (morgen)“ – das Datumsfeld des Browsers zeigt ihn nicht
-const weekday = d => {
-  const name = d.toLocaleDateString('de-DE', { weekday: 'long' }), rel = dayLabel(d);
-  return rel === 'heute' || rel === 'morgen' ? `${name} (${rel})` : name;
-};
+// Tagesauswahl als Kacheln mit Wochentag (der Kalender des Browsers zeigt beim Antippen keinen Wochentag):
+// die nächsten 14 Tage, dazu „Anderes Datum“ über den Kalender
+const ymd = d => toLocalInput(d).slice(0, 10);
+const daySummary = d => `${d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}, ${clock(d)} Uhr`;
+function dayPicker(key) {
+  const sel = state.form[key], today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const days = Array.from({ length: 14 }, (_, i) => new Date(today.getTime() + i * 86400000));
+  if (!days.some(d => ymd(d) === ymd(sel))) days.push(sel);
+  const label = d => { const r = dayLabel(d); return r === 'heute' ? 'Heute' : r === 'morgen' ? 'Morgen' : d.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', ''); };
+  // eigener Rahmen statt field(): ein <label> um die Kacheln würde Taps auf die erste Kachel umleiten
+  return `<div class="field" style="margin-top:12px"><span class="field-label">${key === 'arriveBy' ? 'Ankommen am' : 'Abfahrt am'}</span><div class="days" role="radiogroup">
+    ${days.map(d => `<button type="button" class="day ${ymd(d) === ymd(sel) ? 'on' : ''}" role="radio" aria-checked="${ymd(d) === ymd(sel)}" data-day="${ymd(d)}">
+      <span>${label(d)}</span><b>${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}</b></button>`).join('')}
+    <span class="day other">${icon('calendar-clock')}<span>Anderes Datum</span><input type="date" id="dayOther" value="${ymd(sel)}" min="${ymd(today)}" aria-label="Anderes Datum"></span>
+  </div><p class="hint" id="daySummary">${daySummary(sel)}</p></div>`;
+}
 // 120 → „2 Stunden“, 150 → „2 h 30 min“
 const hours = min => min % 60 ? duration(min) : `${min / 60} ${min === 60 ? 'Stunde' : 'Stunden'}`;
 const breakLabel = st => st.dogs === false ? 'Pause' : 'Gassi-Pause';   // ältere Fahrten: mit Hunden
@@ -388,17 +400,16 @@ function viewPlan() {
       <div class="chips" role="radiogroup" aria-label="Zeit angeben als" style="margin-top:16px">
         ${[['depart', 'Abfahrt'], ['arrive', 'Ankunft']].map(([k, label]) => `<button type="button" class="chip ${f.timeMode === k ? 'on' : ''}" role="radio" aria-checked="${f.timeMode === k}" data-tmode="${k}">${label}</button>`).join('')}
       </div>
+      ${dayPicker(f.timeMode === 'arrive' ? 'arriveBy' : 'departure')}
       <div class="grid-2 depart-row" style="margin-top:12px">
-        ${f.timeMode === 'arrive'
-          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`, `<span id="arriveByDay">${weekday(f.arriveBy)}</span>`)
-          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`, `<span id="departureDay">${weekday(f.departure)}</span>`)}
+        ${field(f.timeMode === 'arrive' ? 'Ankommen bis (Uhrzeit)' : 'Abfahrt (Uhrzeit)', `<input class="input" id="tripTime" type="time" value="${toLocalInput(f[f.timeMode === 'arrive' ? 'arriveBy' : 'departure']).slice(11, 16)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
       ${state.settings.dogs.length ? `<div style="margin-top:12px">${field('Hunde', `<div class="chips"><button type="button" class="chip ${f.withDogs ? 'on' : ''}" aria-pressed="${f.withDogs}" data-dogs>${icon('paw-print')} Mit Hunden</button></div>`,
-        f.withDogs ? `Gassi-Pausen spätestens nach ${hours(state.settings.charging.maxDriveMin || 120)} Fahrt, Stopps mit Grün bevorzugt.` : 'Ohne Hunde: Pause spätestens nach 3 Stunden, Stopps nach WC und Essen.')}</div>` : ''}
+        f.withDogs ? `Gassi-Pausen spätestens nach ${hours(state.settings.charging.maxDriveMin || 120)} Fahrt, Stopps mit Grün bevorzugt.` : `Ohne Hunde: Pause spätestens nach ${hours(Math.max(DRIVER_MAX_DRIVE_MIN, state.settings.charging.maxDriveMin || 0))}, Stopps nach WC und Essen.`)}</div>` : ''}
       ${f.timeMode === 'arrive' ? bufferField() : ''}
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
@@ -488,18 +499,30 @@ function bindPlan(root) {
     $('#from', root).value = f.from?.label || f.draft.from || '';
     $('#to', root).value = f.to?.label || f.draft.to || '';
   });
-  // Datum übernehmen und den Wochentag darunter gleich mitziehen
-  for (const id of ['departure', 'arriveBy']) {
-    const update = e => {
-      const d = new Date(e.target.value);
-      if (Number.isNaN(d.getTime())) return;
-      state.form[id] = d;
-      const day = $(`#${id}Day`, root);
-      if (day) day.textContent = weekday(d);
-    };
-    $('#' + id, root)?.addEventListener('input', update);
-    $('#' + id, root)?.addEventListener('change', update);
-  }
+  // Tag (Kacheln oder Kalender) und Uhrzeit getrennt; beides setzt Abfahrt bzw. „Ankommen bis“
+  const tKey = () => (state.form.timeMode === 'arrive' ? 'arriveBy' : 'departure');
+  const setDay = value => {
+    const [y, m, d] = value.split('-').map(Number);
+    if (!y) return;
+    const t = new Date(state.form[tKey()]);
+    t.setFullYear(y, m - 1, d);
+    state.form[tKey()] = t;
+    render();
+  };
+  $$('[data-day]', root).forEach(b => b.addEventListener('click', () => setDay(b.dataset.day)));
+  // gewählter Tag sichtbar, auch wenn er weiter hinten in der Reihe liegt
+  const days = $('.days', root), onDay = $('.day.on', root);
+  if (days && onDay) days.scrollLeft = Math.max(0, onDay.offsetLeft - days.offsetLeft - days.clientWidth / 2 + onDay.offsetWidth / 2);
+  $('#dayOther', root)?.addEventListener('change', e => setDay(e.target.value));
+  $('#tripTime', root)?.addEventListener('change', e => {
+    const [h, min] = e.target.value.split(':').map(Number);
+    if (Number.isNaN(h)) return;
+    const t = new Date(state.form[tKey()]);
+    t.setHours(h, min || 0, 0, 0);
+    state.form[tKey()] = t;
+    const sum = $('#daySummary', root);
+    if (sum) sum.textContent = daySummary(t);
+  });
   $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
   $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
   $('#bufferMin', root)?.addEventListener('change', () => {
@@ -848,12 +871,12 @@ function viewStop(i) {
         <div class="live" id="live-${i}">${liveLine(st, true)}</div>
         <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
       </div>`
-      : `<p class="muted small" style="margin:0">${st.dogs === false ? 'Pause für dich – spätestens nach 3 Stunden Fahrt' : `Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt`}. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
+      : `<p class="muted small" style="margin:0">${st.dogs === false ? `Pause für dich – spätestens nach ${hours(Math.max(DRIVER_MAX_DRIVE_MIN, state.settings.charging.maxDriveMin || 0))} Fahrt` : `Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt`}. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     ${state.computing ? `<div class="progress" style="margin-top:12px">${icon('loader-circle', 'spin')} ${esc(state.computing)}</div>` : altCard(st)}
     <h3 class="section-title">${trip()?.withDogs === false ? 'Vor Ort' : 'Für Hund und Mensch'}</h3>
     ${st.dog != null ? `<div class="rating">
-      <div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>
+      ${trip()?.withDogs === false ? '' : `<div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>`}
       <div class="metric"><div class="label">${icon('coffee')} Mensch</div><div class="value">${num(st.human, 1)}<small>/5</small></div></div>
       <div class="metric"><div class="label">${icon('info')} Typ</div><div class="value" style="font-size:15px">${typeLabel}</div></div>
     </div>` : ''}
