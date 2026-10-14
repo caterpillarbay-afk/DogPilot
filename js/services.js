@@ -1,5 +1,5 @@
 // Externe, kostenlose Dienste:
-// - Ortssuche: Photon (komoot, OpenStreetMap-Daten), kein Schlüssel
+// - Ortssuche: Photon (komoot, OpenStreetMap-Daten), kein Schlüssel; ersatzweise Nominatim (OSMF)
 // - Routing: TomTom (mit eigenem Schlüssel, inkl. Live-Verkehr), sonst Valhalla von FOSSGIS e.V.,
 //   ersatzweise OSRM von FOSSGIS e.V.
 // - Höhenprofil: Valhalla /height (FOSSGIS)
@@ -69,18 +69,41 @@ export async function placeLabel(lat, lon) {
   }
 }
 
+async function searchPhoton(query, near) {
+  const params = new URLSearchParams({ q: query, limit: '6', lang: 'de' });
+  if (near) { params.set('lat', near[0]); params.set('lon', near[1]); }
+  const d = await getJson(`https://photon.komoot.io/api/?${params}`, { timeout: 8000 });
+  return (d.features || []).map(f => ({ ...photonLabel(f.properties), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] }));
+}
+
+// Ersatz, wenn Photon nicht antwortet: Nominatim (OpenStreetMap Foundation), nur bei Bedarf und je Eingabe einmal
+async function searchNominatim(query) {
+  const params = new URLSearchParams({ q: query, format: 'jsonv2', limit: '6', addressdetails: '1', 'accept-language': 'de' });
+  const d = await getJson(`https://nominatim.openstreetmap.org/search?${params}`, { timeout: 8000 });
+  return (Array.isArray(d) ? d : []).map(r => {
+    const a = r.address || {};
+    const city = a.city || a.town || a.village || a.municipality || '';
+    const street = [a.road, a.house_number].filter(Boolean).join(' ');
+    const main = r.name || street || city || r.display_name?.split(',')[0] || '';
+    const place = city && city !== main ? [a.postcode, city].filter(Boolean).join(' ') : '';
+    const sub = [street && street !== main ? street : '', place || (a.state !== main ? a.state : ''), a.country_code && a.country_code !== 'de' ? a.country : '']
+      .filter(Boolean).join(', ');
+    return { main, sub, lat: Number(r.lat), lon: Number(r.lon) };
+  });
+}
+
 export async function searchPlaces(query, near) {
   if (!query || query.trim().length < 2) return [];
   const coords = parseCoordinates(query);
   if (coords) return coordinatePlace(coords);
-  const params = new URLSearchParams({ q: query.trim(), limit: '6', lang: 'de' });
-  if (near) { params.set('lat', near[0]); params.set('lon', near[1]); }
-  const d = await getJson(`https://photon.komoot.io/api/?${params}`, { timeout: 8000 });
+  let list;
+  try {
+    list = await searchPhoton(query.trim(), near);
+  } catch (err) {
+    try { list = await searchNominatim(query.trim()); } catch { throw err; }
+  }
   const seen = new Set();
-  return (d.features || []).map(f => {
-    const { main, sub } = photonLabel(f.properties);
-    return { main, sub, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] };
-  }).filter(r => r.main && !seen.has(r.main + r.sub) && seen.add(r.main + r.sub));
+  return list.filter(r => r.main && !seen.has(r.main + r.sub) && seen.add(r.main + r.sub));
 }
 
 // ---------- Routing ----------
