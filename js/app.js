@@ -47,6 +47,11 @@ function toast(text) {
 
 const save = () => saveSettings(state.settings);
 const trip = () => state.settings.lastTrip;
+// Wochentag unter dem Datumsfeld: „Mittwoch (morgen)“ – das Datumsfeld des Browsers zeigt ihn nicht
+const weekday = d => {
+  const name = d.toLocaleDateString('de-DE', { weekday: 'long' }), rel = dayLabel(d);
+  return rel === 'heute' || rel === 'morgen' ? `${name} (${rel})` : name;
+};
 // 120 → „2 Stunden“, 150 → „2 h 30 min“
 const hours = min => min % 60 ? duration(min) : `${min / 60} ${min === 60 ? 'Stunde' : 'Stunden'}`;
 const breakLabel = st => st.dogs === false ? 'Pause' : 'Gassi-Pause';   // ältere Fahrten: mit Hunden
@@ -385,8 +390,8 @@ function viewPlan() {
       </div>
       <div class="grid-2 depart-row" style="margin-top:12px">
         ${f.timeMode === 'arrive'
-          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`)
-          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`)}
+          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`, `<span id="arriveByDay">${weekday(f.arriveBy)}</span>`)
+          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`, `<span id="departureDay">${weekday(f.departure)}</span>`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
@@ -483,14 +488,18 @@ function bindPlan(root) {
     $('#from', root).value = f.from?.label || f.draft.from || '';
     $('#to', root).value = f.to?.label || f.draft.to || '';
   });
-  $('#departure', root)?.addEventListener('change', e => {
-    const d = new Date(e.target.value);
-    if (!Number.isNaN(d.getTime())) state.form.departure = d;
-  });
-  $('#arriveBy', root)?.addEventListener('change', e => {
-    const d = new Date(e.target.value);
-    if (!Number.isNaN(d.getTime())) state.form.arriveBy = d;
-  });
+  // Datum übernehmen und den Wochentag darunter gleich mitziehen
+  for (const id of ['departure', 'arriveBy']) {
+    const update = e => {
+      const d = new Date(e.target.value);
+      if (Number.isNaN(d.getTime())) return;
+      state.form[id] = d;
+      const day = $(`#${id}Day`, root);
+      if (day) day.textContent = weekday(d);
+    };
+    $('#' + id, root)?.addEventListener('input', update);
+    $('#' + id, root)?.addEventListener('change', update);
+  }
   $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
   $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
   $('#bufferMin', root)?.addEventListener('change', () => {
