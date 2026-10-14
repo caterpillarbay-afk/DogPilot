@@ -75,3 +75,11 @@ test('Verbrauch lernen: halbe Korrektur, Grenzen, zu kurze Abschnitte', () => {
   assert.equal(learnFactor(1, { fromSoc: 80, actualSoc: 77, plannedKWh: 3, capacityKWh: 77 }), null);
   assert.equal(learnFactor(1, { fromSoc: 50, actualSoc: 60, plannedKWh: 10, capacityKWh: 77 }), null);
 });
+
+test('Ohne Hunde: Pause spätestens nach 3 h statt nach der Gassi-Einstellung', async () => {
+  const { settingsForPlanner } = await import('../js/trip.js');
+  const settings = { vehicle: { capacityKWh: 77, carMaxKw: 175, consumptionKWh100: 19 }, charging: { maxDriveMin: 120, reserveSoc: 10, arrivalSoc: 15, maxChargeSoc: 80 } };
+  assert.equal(settingsForPlanner(settings, 80).maxDriveMin, 120);
+  assert.equal(settingsForPlanner(settings, 80, false).maxDriveMin, 180);
+  assert.equal(settingsForPlanner(settings, 80, false).withDogs, false);
+});

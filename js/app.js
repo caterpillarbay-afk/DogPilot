@@ -47,6 +47,9 @@ function toast(text) {
 
 const save = () => saveSettings(state.settings);
 const trip = () => state.settings.lastTrip;
+// 120 → „2 Stunden“, 150 → „2 h 30 min“
+const hours = min => min % 60 ? duration(min) : `${min / 60} ${min === 60 ? 'Stunde' : 'Stunden'}`;
+const breakLabel = st => st.dogs === false ? 'Pause' : 'Gassi-Pause';   // ältere Fahrten: mit Hunden
 const placeName = p => p.label.split(',')[0];   // „Alzey, Rheinland-Pfalz“ → „Alzey“
 const go = hash => { if (location.hash === hash) render(); else location.hash = hash; };
 
@@ -389,6 +392,8 @@ function viewPlan() {
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
         `<button type="button" class="chip ${f.load === k ? 'on' : ''}" role="radio" aria-checked="${f.load === k}" data-load="${k}">${label}</button>`).join('')}</div>`,
         `<span id="loadHint">${loadHint(f.load)}</span>`)}</div>
+      ${state.settings.dogs.length ? `<div style="margin-top:12px">${field('Hunde', `<div class="chips"><button type="button" class="chip ${f.withDogs ? 'on' : ''}" aria-pressed="${f.withDogs}" data-dogs>${icon('paw-print')} Mit Hunden</button></div>`,
+        f.withDogs ? `Gassi-Pausen spätestens nach ${hours(state.settings.charging.maxDriveMin || 120)} Fahrt, Stopps mit Grün bevorzugt.` : 'Ohne Hunde: Pause spätestens nach 3 Stunden, Stopps nach WC und Essen.')}</div>` : ''}
       ${f.timeMode === 'arrive' ? bufferField() : ''}
       <button class="btn btn-primary block" id="planBtn" type="button" style="margin-top:20px" ${busy ? 'disabled' : ''}>
         ${busy ? `${icon('loader-circle', 'spin')} ${esc(state.computing)}` : `${icon('route')} Fahrt planen`}
@@ -492,6 +497,7 @@ function bindPlan(root) {
     const v = readNumber('bufferMin', 5, 300);
     if (v != null) { state.settings.trip.customBufferMin = Math.round(v); save(); render(); }
   });
+  $('[data-dogs]', root)?.addEventListener('click', () => { state.form.withDogs = !state.form.withDogs; render(); });
   $$('[data-load]', root).forEach(b => b.addEventListener('click', () => {
     state.form.load = b.dataset.load;
     $$('[data-load]', root).forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
@@ -559,7 +565,7 @@ async function plan() {
     await loadData();
     if (!state.data.chargers) throw new Error('Ladesäulen-Daten konnten nicht geladen werden. Bitte Verbindung prüfen.');
     const args = {
-      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, settings: state.settings,
+      from: f.from, to: f.to, departure: f.departure, startSoc: f.startSoc, load: f.load, withDogs: Boolean(f.withDogs && state.settings.dogs.length), settings: state.settings,
       ...(f.replan && f.arriveBy ? { arriveBy: f.arriveBy } : {}),
       chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [], onProgress: setProgress,
     };
@@ -588,9 +594,10 @@ function socBar(from, to) {
   return `<div class="soc"><span>${Math.round(from)} %</span><div class="soc-bar" aria-hidden="true"><span class="from" style="width:${a}%"></span><span class="add" style="left:${a}%;width:${b - a}%"></span></div><span>${Math.round(to)} %</span></div>`;
 }
 
-function scores(st) {
+// dogs: Fahrt mit Hunden (ältere Fahrten ohne Angabe: ja)
+function scores(st, dogs = trip()?.withDogs !== false) {
   if (st.dog == null) return `<div class="scores"><span>${icon('info')} Ausstattung unbekannt</span></div>`;
-  return `<div class="scores"><span title="Hund">${icon('paw-print')} Hund ${num(st.dog, 1)}/5</span><span title="Mensch">${icon('coffee')} Mensch ${num(st.human, 1)}/5</span></div>`;
+  return `<div class="scores">${dogs ? `<span title="Hund">${icon('paw-print')} Hund ${num(st.dog, 1)}/5</span>` : ''}<span title="Mensch">${icon('coffee')} Mensch ${num(st.human, 1)}/5</span></div>`;
 }
 
 function googleMapsUrl(t) {
@@ -685,7 +692,7 @@ async function replanFromHere() {
     });
     state.form = {
       ...emptyForm(), from: { label: await placeLabel(p.coords.latitude, p.coords.longitude) || 'Aktueller Standort', lat: p.coords.latitude, lon: p.coords.longitude }, to: t.to,
-      startSoc: state.replanSoc, load: t.load || 'normal', departure: new Date(), replan: true,
+      startSoc: state.replanSoc, load: t.load || 'normal', withDogs: t.withDogs !== false, departure: new Date(), replan: true,
       // unterwegs: Abfahrt ist jetzt; „Ankunft bis …“ bleibt nur zum Vergleich
       ...(t.arriveBy ? { arriveBy: new Date(t.arriveBy) } : {}),
     };
@@ -722,7 +729,7 @@ function viewTrip() {
         <div class="tl-body">
           ${leg(st.alongKm)}
           <button class="stop-card" type="button" data-href="#/stop/${i}">
-            <span class="tl-time">${clock(new Date(st.arriveAt))} – ${clock(new Date(st.departAt))} Uhr · ${charge ? `${st.stopMin} min` : `Gassi-Pause ${st.stopMin} min`}</span>
+            <span class="tl-time">${clock(new Date(st.arriveAt))} – ${clock(new Date(st.departAt))} Uhr · ${charge ? `${st.stopMin} min` : `${breakLabel(st)} ${st.stopMin} min`}</span>
             <span class="name">${esc(st.name)} ${icon('chevron-right', 'sm chev')}</span>
             <span class="meta">${charge ? `${num(st.maxKw)} kW · ${st.points} Ladepunkte${st.operators.length ? ' · ' + esc(st.operators.slice(0, 2).join(', ')) : ''}` : `Akku bei Ankunft ca. ${st.arriveSoc} %`}${st.detour.km ? ` · ${num(st.detour.km, 1)} km Umweg` : ''}</span>
             ${charge ? socBar(st.arriveSoc, st.targetSoc) : ''}
@@ -832,10 +839,10 @@ function viewStop(i) {
         <div class="live" id="live-${i}">${liveLine(st, true)}</div>
         <button class="btn-ghost" type="button" data-action="live-refresh" aria-label="Belegung aktualisieren">${icon('refresh-cw')}</button>
       </div>`
-      : `<p class="muted small" style="margin:0">Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
+      : `<p class="muted small" style="margin:0">${st.dogs === false ? 'Pause für dich – spätestens nach 3 Stunden Fahrt' : `Pause für den Hund – spätestens nach ${duration(state.settings.charging.maxDriveMin || 120)} Fahrt`}. Akku bei Ankunft ca. ${st.arriveSoc} %.</p>`}
     </div>
     ${state.computing ? `<div class="progress" style="margin-top:12px">${icon('loader-circle', 'spin')} ${esc(state.computing)}</div>` : altCard(st)}
-    <h3 class="section-title">Für Hund und Mensch</h3>
+    <h3 class="section-title">${trip()?.withDogs === false ? 'Vor Ort' : 'Für Hund und Mensch'}</h3>
     ${st.dog != null ? `<div class="rating">
       <div class="metric"><div class="label">${icon('paw-print')} Hund</div><div class="value">${num(st.dog, 1)}<small>/5</small></div></div>
       <div class="metric"><div class="label">${icon('coffee')} Mensch</div><div class="value">${num(st.human, 1)}<small>/5</small></div></div>
@@ -993,7 +1000,7 @@ async function refreshTraffic(t) {
 // ---------- Fahrt-Modus: Sprachansagen unterwegs ----------
 // DogPilot bleibt im Vordergrund (Handy im Halter am Kabel, Google Maps läuft über Android Auto):
 // Bildschirm wach halten, GPS verfolgen, Ansagen per Sprachausgabe des Browsers.
-const DRIVE_PREFS = [['breaks', 'paw-print', 'Gassi-Pausen'], ['charge', 'zap', 'Ladestopps'], ['closures', 'octagon-x', 'Sperrungen'], ['schedule', 'clock', 'Zeitplan']];
+const DRIVE_PREFS = [['breaks', 'paw-print', 'Pausen'], ['charge', 'zap', 'Ladestopps'], ['closures', 'octagon-x', 'Sperrungen'], ['schedule', 'clock', 'Zeitplan']];
 const OFF_ROUTE_KM = 1.5, OFF_ROUTE_MS = 90000;
 
 function speak(text) {
@@ -1020,7 +1027,7 @@ function startDrive() {
   if (!navigator.geolocation) { toast('Ortung wird nicht unterstützt'); return; }
   state.drive = { on: true, done: new Set(), level: 0, km: null, offSince: null, offSaid: false, last: '', lastAt: 0, pendingUpdate: false };
   // Erste Ansage direkt beim Tippen – danach darf die Seite weiter sprechen
-  speak('Fahrt-Modus an. Ich melde mich vor Gassi-Pausen, Ladestopps, Sperrungen und wenn du hinter dem Zeitplan liegst.');
+  speak(`Fahrt-Modus an. Ich melde mich vor ${t.withDogs === false ? 'Pausen' : 'Gassi-Pausen'}, Ladestopps, Sperrungen und wenn du hinter dem Zeitplan liegst.`);
   keepAwake();
   state.drive.watch = navigator.geolocation.watchPosition(onDrivePosition,
     () => { state.drive.gpsError = true; updateDriveCard(); },
@@ -1089,7 +1096,7 @@ async function onDrivePosition(pos) {
     else {
       let live = null;
       try { live = await getLiveStatus(a.stop.lat, a.stop.lon); state.live[posKey(a.stop)] = { data: live, at: Date.now() }; } catch { /* ohne Belegung */ }
-      speak(chargeText(a.stop, a.min, live));
+      speak(chargeText(a.stop, a.min, live, t.withDogs !== false));
     }
   }
   // Zeitplan: nur während der Fahrt vergleichen (beim Laden oder an der Pause steht man ohnehin)
@@ -1127,7 +1134,7 @@ function driveStatus(t) {
   const { minPerKm } = tripTiming(t);
   const s = state.traffic[t.roads?.length ? trafficKey(t) : ''];
   const next = nextUp({ stops: t.stops, events: s?.items ? tripEvents(t) : [], km: d.km, minPerKm, prefs: state.settings.drive });
-  const label = { break: 'Gassi-Pause', charge: 'Ladestopp', closure: 'Sperrung' };
+  const label = { break: t.withDogs === false ? 'Pause' : 'Gassi-Pause', charge: 'Ladestopp', closure: 'Sperrung' };
   return `${icon('route', 'sm')} km ${num(d.km)} von ${num(t.lengthKm)}${next ? ` · als Nächstes ${label[next.kind]} in ca. ${duration(next.min)}` : ''}`;
 }
 
@@ -1200,7 +1207,7 @@ async function chooseAlternative(i, j) {
       // Nach einem Neuladen der App: Route & Co. einmal neu holen
       await loadData();
       state.tripCtx = await prepareTrip({
-        from: t.from, to: t.to, departure: new Date(t.departure), arriveBy: t.arriveBy ? new Date(t.arriveBy) : null, bufferMin: t.bufferMin, startSoc: t.startSoc, load: t.load, settings: state.settings,
+        from: t.from, to: t.to, departure: new Date(t.departure), arriveBy: t.arriveBy ? new Date(t.arriveBy) : null, bufferMin: t.bufferMin, startSoc: t.startSoc, load: t.load, withDogs: t.withDogs !== false, settings: state.settings,
         chargers: state.data.chargers.list, restAreas: state.data.restAreas?.list || [], sites: state.data.sites?.list || [],
       });
     }
@@ -1469,7 +1476,7 @@ document.addEventListener('click', async e => {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#drawerRoot').innerHTML) closeMenu(); });
 
-const emptyForm = () => ({ from: null, to: null, timeMode: 'depart', departure: defaultDeparture(), arriveBy: new Date(defaultDeparture().getTime() + 6 * 3600000), startSoc: 80, load: 'normal' });
+const emptyForm = () => ({ from: null, to: null, timeMode: 'depart', departure: defaultDeparture(), arriveBy: new Date(defaultDeparture().getTime() + 6 * 3600000), startSoc: 80, load: 'normal', withDogs: false });
 
 async function start() {
   state.settings = await loadSettings();

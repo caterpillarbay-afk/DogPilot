@@ -192,3 +192,13 @@ test('planTrip: keine schöne Anlage zu früh, wenn sie eine zusätzliche Pause 
   assert.equal(plan.stops.length, 3, plan.stops.map(s => Math.round(s.alongKm)).join(', '));
   assert.ok(plan.feasible, plan.warnings.join(' | '));
 });
+
+test('planTrip: ohne Hunde zählen WC und Essen, mit Hunden das Grün', () => {
+  const energy = new EnergyProfile({ lengthKm: route.lengthKm, baseKWh100: 20 });
+  const area = (km, name, flags) => { const [lat, lon] = atKm(km); return { lat, lon: lon + 0.002, name, type: 'rastanlage', flags }; };
+  const hubs = attachRestAreas(findHubs(route, [charger(300, 150), charger(305, 150)], { corridorKm: 2, minKw: 150 }),
+    [area(300, 'Hundewiese', FEATURES.dogPark | FEATURES.picnic | FEATURES.water), area(305, 'Raststätte', FEATURES.toilets | FEATURES.food | FEATURES.shop)]);
+  const base = { capacityKWh: 200, carMaxKw: 150, startSoc: 80, reserveSoc: 10, arrivalSoc: 15, minBreakMin: 15, maxDriveKm: 400 };
+  assert.equal(planTrip({ route, energy, hubs, settings: { ...base, withDogs: true } }).stops[0].name, 'Hundewiese');
+  assert.equal(planTrip({ route, energy, hubs, settings: { ...base, withDogs: false } }).stops[0].name, 'Raststätte');
+});

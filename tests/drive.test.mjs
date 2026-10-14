@@ -65,3 +65,10 @@ test('Timer am Ladestopp und an der Gassi-Pause', () => {
   assert.deepEqual(stopTimerDue(pause, t0 + 7 * 60000), []);
   assert.equal(stopTimerDue(pause, t0 + 8 * 60000)[0].text, "Die Gassi-Pause ist vorbei. Weiter geht's.");
 });
+
+test('Ohne Hunde: „Pause“ statt „Gassi-Pause“, kein Hinweis auf Hundewiese', () => {
+  assert.equal(breakText({ name: 'Rastplatz Kraichgau', dogs: false, restArea: { flags: FEATURES.dogPark } }, 9.6), 'In etwa 10 Minuten Pause: Rastplatz Kraichgau.');
+  assert.doesNotMatch(chargeText(stops[1], 14, null, false), /Grün|Hundewiese/);
+  const v = { stop: { kind: 'break', stopMin: 15, dogs: false }, arrivedAt: 0, said: new Set() };
+  assert.equal(stopTimerDue(v, 15 * 60000)[0].text, "Die Pause ist vorbei. Weiter geht's.");
+});
