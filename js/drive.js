@@ -22,11 +22,12 @@ export function breakText(st, min) {
   const f = st.restArea?.flags ?? 0;
   const green = f & FEATURES.dogPark ? ' Dort gibt es eine Hundewiese.'
     : f & (FEATURES.park | FEATURES.forest | FEATURES.meadow) ? ' Dort gibt es Grün zum Laufen.' : '';
+  if (st.dogs === false) return `In etwa ${mins(min)} Minuten Pause: ${st.name}.`;
   return `In etwa ${mins(min)} Minuten Gassi-Pause: ${st.name}.${green}`;
 }
 
 // live: Ergebnis von summarizeLive ({ free, busy, broken, total }) oder null
-export function chargeText(st, min, live) {
+export function chargeText(st, min, live, dogs = true) {
   let text = `In etwa ${mins(min)} Minuten Ladestopp: ${st.name}, ${Math.round(st.maxKw)} Kilowatt.`;
   if (live?.total) {
     if (live.free) text += ` Gerade sind ${live.free} von ${live.total} Ladepunkten frei.`;
@@ -34,7 +35,7 @@ export function chargeText(st, min, live) {
       + (st.alternatives?.length ? ` In der App findest du ${st.alternatives.length === 1 ? 'eine Alternative' : `${st.alternatives.length} Alternativen`}.` : '');
     else text += ' Alle gemeldeten Ladepunkte sind gestört.';
   }
-  const w = st.walk || {};
+  const w = (dogs && st.walk) || {};
   if (w.dogPark != null) text += ` Hundewiese in ${meters(w.dogPark)}.`;
   else if (w.green != null) text += ` Grün in ${meters(w.green)}.`;
   return text;
@@ -112,11 +113,11 @@ export function stopTimerDue(visit, now, next = null) {
   const end = visit.arrivedAt + st.stopMin * 60000;
   const out = [];
   if (st.stopMin >= 10 && now >= end - 5 * 60000 && now < end && !visit.said.has('warn')) {
-    out.push({ key: 'warn', text: charge ? `Noch etwa 5 Minuten Laden, dann ist der Akku laut Plan bei ${Math.round(st.targetSoc)} Prozent.` : 'Noch etwa 5 Minuten Gassi-Pause.' });
+    out.push({ key: 'warn', text: charge ? `Noch etwa 5 Minuten Laden, dann ist der Akku laut Plan bei ${Math.round(st.targetSoc)} Prozent.` : `Noch etwa 5 Minuten ${st.dogs === false ? 'Pause' : 'Gassi-Pause'}.` });
   }
   if (now >= end && !visit.said.has('done')) {
     const then = next ? ` Nächster Halt: ${next.name}, in etwa ${durationText(next.min)}.` : '';
-    out.push({ key: 'done', text: (charge ? `Laut Plan ist der Akku jetzt bei ${Math.round(st.targetSoc)} Prozent. Du kannst weiterfahren.` : 'Die Gassi-Pause ist vorbei. Weiter geht\'s.') + then });
+    out.push({ key: 'done', text: (charge ? `Laut Plan ist der Akku jetzt bei ${Math.round(st.targetSoc)} Prozent. Du kannst weiterfahren.` : `Die ${st.dogs === false ? 'Pause' : 'Gassi-Pause'} ist vorbei. Weiter geht's.`) + then });
   }
   return out;
 }

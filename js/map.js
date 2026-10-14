@@ -32,7 +32,7 @@ export function mountMap(el, trip, { focusStop = null } = {}) {
   const markers = trip.stops.map((st, i) => {
     const charge = st.kind === 'charge';
     const m = L.marker([st.lat, st.lon], { icon: pin(charge ? (st.fallback ? 'warn' : 'charge') : 'start', charge ? 'zap' : 'paw-print'), title: st.name })
-      .bindPopup(`<b>${i + 1}. ${esc(st.name)}</b><br>${charge ? `Laden ${st.arriveSoc} → ${st.targetSoc} % · ${st.chargeMin} min` : `Gassi-Pause · ${st.stopMin} min`}`
+      .bindPopup(`<b>${i + 1}. ${esc(st.name)}</b><br>${charge ? `Laden ${st.arriveSoc} → ${st.targetSoc} % · ${st.chargeMin} min` : `${st.dogs === false ? 'Pause' : 'Gassi-Pause'} · ${st.stopMin} min`}`
         + `<br>${clock(new Date(st.arriveAt))} Uhr<br><a href="#/stop/${i}">Details</a>`)
       .addTo(layers);
     return m;

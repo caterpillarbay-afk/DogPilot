@@ -7,6 +7,7 @@ import { dogScore, humanScore } from './data.js';
 import { getRoute, getHeights, getTemperature } from './services.js';
 
 const DEFAULT_MAX_DRIVE_MIN = 120;  // spätestens nach 2 h Fahrt eine Pause für die Hunde
+export const DRIVER_MAX_DRIVE_MIN = 180;   // ohne Hunde: Fahrerpause spätestens nach 3 h
 // Beladung relativ zum eingetragenen Verbrauch (normal beladen, übliches Autobahntempo):
 // Dachbox ≈ +12 % Luftwiderstand; voll beladen (Dachbox, Kofferraum, Rückbank, 2 Personen, Hunde) ≈ +20 %
 export const LOAD_FACTORS = { normal: 1, roof: 1.12, full: 1.2 };
@@ -21,13 +22,16 @@ export function bufferMinutes(kind, driveMin, chargeStops, customMin = 45) {
   return Math.round((driveMin * p.share + chargeStops * p.perStop) / 5) * 5;
 }
 
-export function settingsForPlanner(settings, startSoc) {
+// withDogs: mit Hunden Gassi-Pausen nach der eingestellten Fahrzeit und hundefreundliche Stopps bevorzugt;
+// ohne Hunde Fahrerpause nach höchstens 3 h, Stopps nach WC/Essen
+export function settingsForPlanner(settings, startSoc, withDogs = true) {
   const v = settings.vehicle, c = settings.charging;
   return {
     capacityKWh: v.capacityKWh, carMaxKw: v.carMaxKw, baseKWh100: v.consumptionKWh100, startSoc,
     reserveSoc: c.reserveSoc, arrivalSoc: c.arrivalSoc, maxChargeSoc: c.maxChargeSoc,
     minChargerKw: c.minChargerKw, fallbackMinKw: 22, corridorKm: c.corridorKm, minBreakMin: c.minBreakMin,
-    maxDriveMin: c.maxDriveMin || DEFAULT_MAX_DRIVE_MIN,
+    maxDriveMin: withDogs ? (c.maxDriveMin || DEFAULT_MAX_DRIVE_MIN) : Math.max(DRIVER_MAX_DRIVE_MIN, c.maxDriveMin || 0),
+    withDogs,
   };
 }
 
@@ -43,7 +47,8 @@ function restAreasAlong(line, restAreas) {
 
 // Wo trotzdem länger als die eingestellte Fahrzeit ohne Stopp gefahren würde (keine passende Säule),
 // die hundefreundlichste Rastanlage als Gassi-Pause ohne Laden einfügen
-function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
+function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin, withDogs = true) {
+  const score = a => (withDogs ? a.dog : a.human) - detourOf(a).km * 0.1;
   const minPerKm = durationMin / line.lengthKm;
   const maxKm = maxDriveMin / minPerKm;
   const result = [];
@@ -61,13 +66,13 @@ function addDogBreaks(stops, line, durationMin, areas, maxDriveMin, breakMin) {
     // Fenster: frühestens nach 60 % der Maximalstrecke, spätestens bei der Maximalstrecke
     const cands = areas.filter(a => a.alongKm > pos + maxKm * 0.6 && a.alongKm <= pos + maxKm);
     const pick = cands.length
-      ? cands.reduce((b, a) => (a.dog - detourOf(a).km * 0.1) > (b.dog - detourOf(b).km * 0.1) ? a : b)
+      ? cands.reduce((b, a) => score(a) > score(b) ? a : b)
       : null;
     if (!pick) { if (i < stops.length) result.push(stops[i]); pos = next; i++; continue; }
     result.push({
       kind: 'break', lat: pick.lat, lon: pick.lon, alongKm: pick.alongKm, offsetKm: pick.offsetKm,
       name: pick.name || 'Rastplatz', restArea: pick, dog: pick.dog, human: pick.human,
-      chargeMin: 0, stopMin: breakMin, detour: detourOf(pick), operators: [],
+      chargeMin: 0, stopMin: breakMin, detour: detourOf(pick), operators: [], dogs: withDogs,
     });
     pos = pick.alongKm;
   }
@@ -85,7 +90,7 @@ function socAt(stops, energy, s, km) {
 
 // Teil 1: alles, was Netz braucht (Route, Höhen, Wetter) und die Ladesäulen entlang der Route.
 // Das Ergebnis bleibt im Speicher, damit ein Wechsel auf eine Alternative ohne neue Abfragen geht.
-export async function prepareTrip({ from, to, departure, arriveBy = null, bufferMin = null, startSoc, load = 'normal', settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
+export async function prepareTrip({ from, to, departure, arriveBy = null, bufferMin = null, startSoc, load = 'normal', withDogs = true, settings, chargers, restAreas, sites = [], onProgress = () => {} }) {
   onProgress('Route wird berechnet …');
   const route = await getRoute(from, to, { tomtomKey: settings.keys.tomtom });
   const line = new RouteLine(route.points);
@@ -102,7 +107,7 @@ export async function prepareTrip({ from, to, departure, arriveBy = null, buffer
     ]),
   ]);
 
-  const s = settingsForPlanner(settings, startSoc);
+  const s = settingsForPlanner(settings, startSoc, withDogs);
   s.maxDriveKm = s.maxDriveMin / (route.durationMin / line.lengthKm);
   // Linienlänge und Streckenlänge des Routendienstes weichen leicht ab: Verbrauch und angezeigte
   // Kilometer auf die offizielle Streckenlänge beziehen
@@ -113,16 +118,16 @@ export async function prepareTrip({ from, to, departure, arriveBy = null, buffer
   const hubs = attachRestAreas(findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.minChargerKw }), restAreas, line, sites);
   const fallbackHubs = attachRestAreas(
     findHubs(line, chargers, { corridorKm: s.corridorKm, minKw: s.fallbackMinKw }).filter(h => h.maxKw < s.minChargerKw), restAreas, line, sites);
-  return { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, learned, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
+  return { from, to, departure, arriveBy, bufferMin, startSoc, load, withDogs, route, line, heights, temperature, s, kmScale, learned, energy, hubs, fallbackHubs, areas: restAreasAlong(line, restAreas) };
 }
 
 // Teil 2: Stopps planen. forced: { [Nummer des Ladestopps]: hubKey } – vom Nutzer gewählte Alternativen
 export function planFromContext(ctx, forced = {}) {
-  const { from, to, departure, arriveBy, bufferMin, startSoc, load, route, line, heights, temperature, s, kmScale, learned = 1, energy, hubs, fallbackHubs, areas } = ctx;
+  const { from, to, departure, arriveBy, bufferMin, startSoc, load, withDogs = true, route, line, heights, temperature, s, kmScale, learned = 1, energy, hubs, fallbackHubs, areas } = ctx;
   const plan = planTrip({ route: line, energy, hubs, fallbackHubs, settings: s, forced });
 
   const chargeStops = plan.stops.map(st => ({ ...st, kind: 'charge' }));
-  const stops = addDogBreaks(chargeStops, line, route.durationMin, areas, s.maxDriveMin, s.minBreakMin);
+  const stops = addDogBreaks(chargeStops, line, route.durationMin, areas, s.maxDriveMin, s.minBreakMin, withDogs);
   for (const st of stops) if (st.kind === 'break') st.arriveSoc = socAt(stops, energy, s, st.alongKm);
   const timed = schedule({ plan: { stops }, lengthKm: line.lengthKm, durationMin: route.durationMin, departure });
   // Letzter Abschnitt bis zum Ziel – damit lernt DogPilot nach der Ankunft den echten Verbrauch
@@ -130,7 +135,7 @@ export function planFromContext(ctx, forced = {}) {
   const lastLeg = { fromSoc: last ? last.targetSoc : startSoc, kWh: energy.between(last ? last.alongKm : 0, line.lengthKm), name: last?.name || null };
 
   return {
-    from, to, departure: departure.toISOString(), startSoc, load,
+    from, to, departure: departure.toISOString(), startSoc, load, withDogs,
     arriveBy: arriveBy ? arriveBy.toISOString() : null, bufferMin,
     provider: route.provider,
     points: route.points,

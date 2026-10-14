@@ -131,7 +131,8 @@ function hubScore(hub, fromKm, reachKm, s, nearFirst = false) {
   const along = reachKm > fromKm ? (hub.alongKm - fromKm) / (reachKm - fromKm) : 0;
   const progress = nearFirst ? 1 - Math.min(1, along + detourOf(hub).km / Math.max(1, reachKm - fromKm)) : along;
   const power = Math.min(hub.maxKw, s.carMaxKw) / s.carMaxKw;
-  const amen = hub.restArea ? ((hub.dog ?? 2) * 0.6 + (hub.human ?? 2) * 0.4) / 5 : 0.25;
+  // ohne Hunde zählt nur, was Menschen brauchen (WC, Essen)
+  const amen = !hub.restArea ? 0.25 : s.withDogs === false ? (hub.human ?? 2) / 5 : ((hub.dog ?? 2) * 0.6 + (hub.human ?? 2) * 0.4) / 5;
   return 0.5 * progress + 0.25 * power + 0.25 * amen - detourOf(hub).km * 0.02;
 }
 
