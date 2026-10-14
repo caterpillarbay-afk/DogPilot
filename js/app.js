@@ -11,6 +11,7 @@ import { refreshTraffic } from './ui/traffic.js';
 import { speak, startDrive, stopDrive } from './ui/drive.js';
 import { saveFeedback, replanFromHere, viewTrip, viewStop, refreshLive, chooseAlternative } from './ui/result.js';
 import { viewMap, bindMap, viewSettings, viewSettingsPage, bindSettingsPage, viewLegal, openMenu, shareApp, closeMenu } from './ui/settings.js';
+import { saveBackup, bindRestore } from './ui/backup.js';
 import { $, $$, state, toast, save, trip, go, loadData, route, emptyForm, setRender, render } from './ui/core.js';
 
 // ---------- Router ----------
@@ -46,6 +47,7 @@ function renderApp() {
   if (name === 'plan' || !views[name]) bindPlan(main);
   if (name === 'map') bindMap(main, arg != null ? +arg : null);
   if (name === 'settings' && arg) bindSettingsPage(main, arg);
+  if (name === 'settings' && !arg) bindRestore(main);
   if (name === 'trip' && trip()) refreshTraffic(trip());
   if (name === 'trip' && trip()) refreshLive(trip().stops.map((st, i) => ({ st, i })).filter(x => x.st.kind === 'charge').map(({ st, i }) => ({ p: st, el: `live-${i}` })));
   const st = name === 'stop' && trip()?.stops[+arg];
@@ -65,6 +67,8 @@ document.addEventListener('click', async e => {
   const a = el.dataset.action;
   if (a === 'close-menu') closeMenu();
   if (a === 'share-app') { closeMenu(); shareApp(); return; }
+  if (a === 'feedback') { setTimeout(closeMenu); return; }   // Mail-Link erst öffnen lassen, dann Menü schließen
+  if (a === 'backup-save') { saveBackup(); return; }
   if (a === 'back') history.length > 1 ? history.back() : go('#/plan');
   if (a === 'replan-open') { state.replanOpen = true; state.replanError = null; render(); return; }
   if (a === 'replan-cancel') { state.replanOpen = false; render(); return; }

@@ -1,5 +1,7 @@
 // Impressum, Datenschutz, Quellen.
 
+export const CONTACT_MAIL = 'caterpillar.bay@gmx.de';
+
 const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
 
 export const LEGAL = {
@@ -8,7 +10,7 @@ export const LEGAL = {
     html: `
 <p>Angaben gemäß § 5 DDG</p>
 <p>Klaus Stumm<br>Carl-Theodor-Straße 12<br>55232 Alzey<br>Deutschland</p>
-<p>E-Mail: <a href="mailto:caterpillar.bay@gmx.de">caterpillar.bay@gmx.de</a></p>
+<p>E-Mail: <a href="mailto:${CONTACT_MAIL}">${CONTACT_MAIL}</a></p>
 <p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Klaus Stumm, Anschrift wie oben</p>
 <p><b>Haftungshinweis:</b> Reichweiten, Ladezeiten und Ankunftszeiten sind Schätzungen auf Basis öffentlicher Daten. Verfügbarkeit und Zustand von Ladesäulen und Rastanlagen können abweichen. Bitte plane eine Reserve ein und beachte die Anzeige deines Fahrzeugs.</p>`,
   },
@@ -20,6 +22,8 @@ export const LEGAL = {
 <p><b>Speicherung auf deinem Gerät:</b> Fahrzeug, Hunde (Name, Foto), Ladevorlieben, optionale Schlüssel und deine letzte Fahrt werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst alles unter Einstellungen → „Alle Daten löschen“ entfernen.</p>
 <p><b>Standort:</b> Nur wenn du „Aktueller Standort“ oder die Ortung auf der Karte nutzt, fragt der Browser nach Erlaubnis. Die Position wird nur für die jeweilige Funktion verwendet.</p>
 <p><b>Fahrt-Modus:</b> Solange er läuft, vergleicht DogPilot deine Position laufend mit der geplanten Route – nur auf deinem Gerät, sie wird nicht übertragen. Die Ansagen erzeugt die Sprachausgabe deines Geräts. Für die Live-Belegung eines Ladestopps werden wie sonst auch nur dessen Koordinaten an MobiData BW gesendet.</p>
+<p><b>Feedback:</b> „Feedback senden“ im Menü öffnet nur dein eigenes Mail-Programm mit einem vorbereiteten Text (App-Version, Gerät, Bildschirmgröße, Start- und Zielort sowie Zeit deiner letzten Fahrt). Übertragen wird erst, was du selbst abschickst – du kannst vorher alles ändern oder löschen.</p>
+<p><b>Sichern und Wiederherstellen:</b> Die Sicherungsdatei unter Einstellungen enthält Fahrzeug, Hunde samt Fotos und deine Vorlieben, aber keine Schlüssel und keine Fahrten. Sie wird nur auf deinem Gerät gespeichert; wohin du sie weitergibst, entscheidest du.</p>
 <p><b>Hosting:</b> Die App wird über Cloudflare (Cloudflare, Inc., USA) ausgeliefert. Dabei verarbeitet Cloudflare technisch notwendige Verbindungsdaten wie IP-Adresse und Zeitpunkt des Abrufs (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
 <ul>

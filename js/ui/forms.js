@@ -4,6 +4,7 @@ import { icon } from '../icons.js';
 import { esc, num, prettyMake, prettyModel } from '../format.js';
 import { resizePhoto } from '../store.js';
 import { matchVariants } from '../data.js';
+import { bindRestore } from './backup.js';
 import { $, $$, state, toast, save, go, avatar, field, numberInput, readNumber, render } from './core.js';
 
 // ---------- Fahrzeug-Formular (Einführung und Einstellungen) ----------
@@ -181,7 +182,8 @@ export function viewOnboarding() {
            ['shield-check', 'Ohne Konto, ohne Tracking', 'Deine Angaben bleiben auf deinem Gerät.']].map(([ic, t, d]) => `
         <div class="benefit"><span class="badge">${icon(ic)}</span><div><b>${t}</b><div class="muted small">${d}</div></div></div>`).join('')}
       </div>
-      <div class="actions"><button class="btn btn-primary block" id="obNext" type="button">Los geht's</button></div>
+      <div class="actions"><button class="btn btn-primary block" id="obNext" type="button">Los geht's</button>
+        <label class="btn btn-ghost block" style="margin-top:8px">${icon('upload')} Sicherung wiederherstellen<input type="file" id="backupFile" accept=".json,application/json" hidden></label></div>
     </div>`;
   }
   const titles = ['', ['Dein Fahrzeug', 'Damit Reichweite und Ladezeiten stimmen.'], ['Deine Hunde', 'Optional – für die Übersicht und die Planung der Pausen.'], ['Laden und Pausen', 'Du kannst alles später in den Einstellungen ändern.']];
@@ -199,6 +201,7 @@ export function viewOnboarding() {
 }
 
 export function bindOnboarding(root) {
+  if (state.onboardingStep === 0) bindRestore(root);
   const s = state.settings;
   const step = state.onboardingStep;
   if (step === 1) bindVehicleForm(root, s.vehicle, rerender => rerender && render());

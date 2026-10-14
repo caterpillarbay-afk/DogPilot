@@ -4,6 +4,7 @@ import { icon } from '../icons.js';
 import { esc, num, dateLabel, vehicleName } from '../format.js';
 import { resizePhoto } from '../store.js';
 import { LEGAL } from '../legal.js';
+import { feedbackMail } from '../feedback.js';
 import { mountMap, fitRoute, toggleLocate } from '../map.js';
 import { vehicleFormHtml, bindVehicleForm, dogsFormHtml, bindDogsForm, chargingFormHtml, bindChargingForm } from './forms.js';
 import { APP_VERSION, $, $$, state, toast, save, trip, avatar, field, numberInput, readNumber, emptyState, render } from './core.js';
@@ -59,6 +60,12 @@ export function viewSettings() {
     </div>
     <p class="hint">Die Daten werden monatlich automatisch aus Bundesnetzagentur, OpenStreetMap und EU-Zulassungsdaten aktualisiert.</p>
     <button class="btn btn-secondary block" type="button" data-action="reload-data" style="margin-top:12px">${icon('refresh-cw')} Daten neu laden</button>
+    <h3 class="section-title">Sichern</h3>
+    <p class="hint">Fahrzeug, Hunde samt Fotos und deine Vorlieben als Datei – z. B. für ein neues Handy. Schlüssel und Fahrten sind nicht enthalten.</p>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-secondary grow" type="button" data-action="backup-save">${icon('download')} Sichern</button>
+      <label class="btn btn-secondary grow">${icon('upload')} Wiederherstellen<input type="file" id="backupFile" accept=".json,application/json" hidden></label>
+    </div>
     <h3 class="section-title">Zurücksetzen</h3>
     <button class="btn btn-danger block" type="button" data-action="reset">${icon('trash-2')} Alle Daten löschen</button>`;
 }
@@ -145,6 +152,7 @@ export function openMenu() {
       <div class="drawer-group">Hilfe</div>
       ${item('#/welcome', 'info', 'Einführung erneut zeigen')}
       <button class="list-row" type="button" data-action="share-app">${icon('share-2')}<span class="grow">DogPilot teilen</span></button>
+      <a class="list-row" id="feedbackLink" href="${esc(feedbackMail({ version: APP_VERSION, ua: navigator.userAgent, screen: `${screen.width}×${screen.height}`, trip: trip() }))}" data-action="feedback">${icon('message-square')}<span class="grow">Feedback senden</span></a>
       <div class="drawer-foot">DogPilot ${APP_VERSION} · Gemeinsam weiter<br>
         Ladesäulen: ${d.chargers ? dateLabel(d.chargers.datenstand) : '–'} · Rastanlagen: ${d.restAreas ? dateLabel(d.restAreas.datenstand) : '–'}</div>
     </aside>`;
@@ -171,3 +179,4 @@ export function closeMenu() {
   $('#drawerRoot').innerHTML = '';
   $('#menuBtn').setAttribute('aria-expanded', 'false');
 }
+
