@@ -10,6 +10,7 @@ import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayT
 import { RouteLine, haversineKm } from './geo.js';
 import { computeTrip, prepareTrip, planFromContext, bufferMinutes, LOAD_FACTORS, DRIVER_MAX_DRIVE_MIN } from './trip.js';
 import { learnFactor } from './energy.js';
+import { openClock } from './clock.js';
 import { LEGAL } from './legal.js';
 import { mountMap, unmountMap, fitRoute, toggleLocate } from './map.js';
 import { watchForUpdates } from './update.js';
@@ -402,7 +403,8 @@ function viewPlan() {
       </div>
       ${dayPicker(f.timeMode === 'arrive' ? 'arriveBy' : 'departure')}
       <div class="grid-2 depart-row" style="margin-top:12px">
-        ${field(f.timeMode === 'arrive' ? 'Ankommen bis (Uhrzeit)' : 'Abfahrt (Uhrzeit)', `<input class="input" id="tripTime" type="time" value="${toLocalInput(f[f.timeMode === 'arrive' ? 'arriveBy' : 'departure']).slice(11, 16)}">`)}
+        <div class="field"><span class="field-label">${f.timeMode === 'arrive' ? 'Ankommen bis (Uhrzeit)' : 'Abfahrt (Uhrzeit)'}</span>
+          <button type="button" class="input time-btn" id="tripTime">${clock(f[f.timeMode === 'arrive' ? 'arriveBy' : 'departure'])} Uhr ${icon('clock')}</button></div>
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
@@ -514,14 +516,14 @@ function bindPlan(root) {
   const days = $('.days', root), onDay = $('.day.on', root);
   if (days && onDay) days.scrollLeft = Math.max(0, onDay.offsetLeft - days.offsetLeft - days.clientWidth / 2 + onDay.offsetWidth / 2);
   $('#dayOther', root)?.addEventListener('change', e => setDay(e.target.value));
-  $('#tripTime', root)?.addEventListener('change', e => {
-    const [h, min] = e.target.value.split(':').map(Number);
-    if (Number.isNaN(h)) return;
-    const t = new Date(state.form[tKey()]);
-    t.setHours(h, min || 0, 0, 0);
-    state.form[tKey()] = t;
-    const sum = $('#daySummary', root);
-    if (sum) sum.textContent = daySummary(t);
+  // eigene runde Uhr (js/clock.js) statt des Android-Uhrfensters
+  $('#tripTime', root)?.addEventListener('click', () => {
+    const t = new Date(state.form[tKey()]), arrive = tKey() === 'arriveBy';
+    openClock({
+      hours: t.getHours(), minutes: t.getMinutes(), title: arrive ? 'Ankommen bis' : 'Abfahrt',
+      presets: arrive ? [[12, 0], [14, 0], [16, 0], [18, 0]] : [[null, 0], [6, 0], [7, 0], [8, 0], [9, 0]],
+      onPick: (h, min) => { const d = new Date(state.form[tKey()]); d.setHours(h, min, 0, 0); state.form[tKey()] = d; render(); },
+    });
   });
   $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
   $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
