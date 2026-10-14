@@ -47,11 +47,23 @@ function toast(text) {
 
 const save = () => saveSettings(state.settings);
 const trip = () => state.settings.lastTrip;
-// Wochentag unter dem Datumsfeld: „Mittwoch (morgen)“ – das Datumsfeld des Browsers zeigt ihn nicht
-const weekday = d => {
-  const name = d.toLocaleDateString('de-DE', { weekday: 'long' }), rel = dayLabel(d);
-  return rel === 'heute' || rel === 'morgen' ? `${name} (${rel})` : name;
-};
+// Tagesauswahl als Kacheln mit Wochentag (der Kalender des Browsers zeigt beim Antippen keinen Wochentag):
+// die nächsten 14 Tage, dazu „Anderes Datum“ über den Kalender
+const ymd = d => toLocalInput(d).slice(0, 10);
+const daySummary = d => `${d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}, ${clock(d)} Uhr`;
+function dayPicker(key) {
+  const sel = state.form[key], today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const days = Array.from({ length: 14 }, (_, i) => new Date(today.getTime() + i * 86400000));
+  if (!days.some(d => ymd(d) === ymd(sel))) days.push(sel);
+  const label = d => { const r = dayLabel(d); return r === 'heute' ? 'Heute' : r === 'morgen' ? 'Morgen' : d.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', ''); };
+  // eigener Rahmen statt field(): ein <label> um die Kacheln würde Taps auf die erste Kachel umleiten
+  return `<div class="field" style="margin-top:12px"><span class="field-label">${key === 'arriveBy' ? 'Ankommen am' : 'Abfahrt am'}</span><div class="days" role="radiogroup">
+    ${days.map(d => `<button type="button" class="day ${ymd(d) === ymd(sel) ? 'on' : ''}" role="radio" aria-checked="${ymd(d) === ymd(sel)}" data-day="${ymd(d)}">
+      <span>${label(d)}</span><b>${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}</b></button>`).join('')}
+    <span class="day other">${icon('calendar-clock')}<span>Anderes Datum</span><input type="date" id="dayOther" value="${ymd(sel)}" min="${ymd(today)}" aria-label="Anderes Datum"></span>
+  </div><p class="hint" id="daySummary">${daySummary(sel)}</p></div>`;
+}
 // 120 → „2 Stunden“, 150 → „2 h 30 min“
 const hours = min => min % 60 ? duration(min) : `${min / 60} ${min === 60 ? 'Stunde' : 'Stunden'}`;
 const breakLabel = st => st.dogs === false ? 'Pause' : 'Gassi-Pause';   // ältere Fahrten: mit Hunden
@@ -388,10 +400,9 @@ function viewPlan() {
       <div class="chips" role="radiogroup" aria-label="Zeit angeben als" style="margin-top:16px">
         ${[['depart', 'Abfahrt'], ['arrive', 'Ankunft']].map(([k, label]) => `<button type="button" class="chip ${f.timeMode === k ? 'on' : ''}" role="radio" aria-checked="${f.timeMode === k}" data-tmode="${k}">${label}</button>`).join('')}
       </div>
+      ${dayPicker(f.timeMode === 'arrive' ? 'arriveBy' : 'departure')}
       <div class="grid-2 depart-row" style="margin-top:12px">
-        ${f.timeMode === 'arrive'
-          ? field('Ankommen bis', `<input class="input" id="arriveBy" type="datetime-local" value="${toLocalInput(f.arriveBy)}">`, `<span id="arriveByDay">${weekday(f.arriveBy)}</span>`)
-          : field('Abfahrt', `<input class="input" id="departure" type="datetime-local" value="${toLocalInput(f.departure)}">`, `<span id="departureDay">${weekday(f.departure)}</span>`)}
+        ${field(f.timeMode === 'arrive' ? 'Ankommen bis (Uhrzeit)' : 'Abfahrt (Uhrzeit)', `<input class="input" id="tripTime" type="time" value="${toLocalInput(f[f.timeMode === 'arrive' ? 'arriveBy' : 'departure']).slice(11, 16)}">`)}
         ${field('Akku bei Abfahrt', numberInput('startSoc', f.startSoc, { min: 5, max: 100, suffix: '%' }))}
       </div>
       <div style="margin-top:12px">${field('Beladung', `<div class="chips" role="radiogroup">${Object.entries(LOAD).map(([k, { label }]) =>
@@ -488,18 +499,30 @@ function bindPlan(root) {
     $('#from', root).value = f.from?.label || f.draft.from || '';
     $('#to', root).value = f.to?.label || f.draft.to || '';
   });
-  // Datum übernehmen und den Wochentag darunter gleich mitziehen
-  for (const id of ['departure', 'arriveBy']) {
-    const update = e => {
-      const d = new Date(e.target.value);
-      if (Number.isNaN(d.getTime())) return;
-      state.form[id] = d;
-      const day = $(`#${id}Day`, root);
-      if (day) day.textContent = weekday(d);
-    };
-    $('#' + id, root)?.addEventListener('input', update);
-    $('#' + id, root)?.addEventListener('change', update);
-  }
+  // Tag (Kacheln oder Kalender) und Uhrzeit getrennt; beides setzt Abfahrt bzw. „Ankommen bis“
+  const tKey = () => (state.form.timeMode === 'arrive' ? 'arriveBy' : 'departure');
+  const setDay = ymd => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    if (!y) return;
+    const t = new Date(state.form[tKey()]);
+    t.setFullYear(y, m - 1, d);
+    state.form[tKey()] = t;
+    render();
+  };
+  $$('[data-day]', root).forEach(b => b.addEventListener('click', () => setDay(b.dataset.day)));
+  // gewählter Tag sichtbar, auch wenn er weiter hinten in der Reihe liegt
+  const days = $('.days', root), onDay = $('.day.on', root);
+  if (days && onDay) days.scrollLeft = Math.max(0, onDay.offsetLeft - days.offsetLeft - days.clientWidth / 2 + onDay.offsetWidth / 2);
+  $('#dayOther', root)?.addEventListener('change', e => setDay(e.target.value));
+  $('#tripTime', root)?.addEventListener('change', e => {
+    const [h, min] = e.target.value.split(':').map(Number);
+    if (Number.isNaN(h)) return;
+    const t = new Date(state.form[tKey()]);
+    t.setHours(h, min || 0, 0, 0);
+    state.form[tKey()] = t;
+    const sum = $('#daySummary', root);
+    if (sum) sum.textContent = daySummary(t);
+  });
   $$('[data-tmode]', root).forEach(b => b.addEventListener('click', () => { state.form.timeMode = b.dataset.tmode; render(); }));
   $$('[data-buffer]', root).forEach(b => b.addEventListener('click', () => { state.settings.trip.buffer = b.dataset.buffer; save(); render(); }));
   $('#bufferMin', root)?.addEventListener('change', () => {
