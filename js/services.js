@@ -73,7 +73,9 @@ async function searchPhoton(query, near) {
   const params = new URLSearchParams({ q: query, limit: '6', lang: 'de' });
   if (near) { params.set('lat', near[0]); params.set('lon', near[1]); }
   const d = await getJson(`https://photon.komoot.io/api/?${params}`, { timeout: 8000 });
-  return (d.features || []).map(f => ({ ...photonLabel(f.properties), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] }));
+  return (d.features || []).map(f => ({ ...photonLabel(f.properties), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
+    street: f.properties.type === 'street' ? f.properties.name : null,
+    road: f.properties.street || null, housenumber: f.properties.housenumber || null }));
 }
 
 // Ersatz, wenn Photon nicht antwortet: Nominatim (OpenStreetMap Foundation), nur bei Bedarf und je Eingabe einmal
@@ -88,11 +90,40 @@ async function searchNominatim(query) {
     const place = city && city !== main ? [a.postcode, city].filter(Boolean).join(' ') : '';
     const sub = [street && street !== main ? street : '', place || (a.state !== main ? a.state : ''), a.country_code && a.country_code !== 'de' ? a.country : '']
       .filter(Boolean).join(', ');
-    return { main, sub, lat: Number(r.lat), lon: Number(r.lon) };
+    return { main, sub, lat: Number(r.lat), lon: Number(r.lon), street: r.addresstype === 'road' ? a.road || r.name : null, road: a.road || null, housenumber: a.house_number || null };
   });
 }
 
-export async function searchPlaces(query, near) {
+// Hausnummer aus der Eingabe („Carl-Theodor-Straße 12, 55232 Alzey“ → „12“); Postleitzahlen zählen nicht
+export function houseNumber(query) {
+  const m = /(?:^|[\s,])(\d{1,4}\s?[a-z]?)(?=$|[\s,])/i.exec(String(query || ''));
+  return m ? m[1].replace(/\s/g, '').toLowerCase() : null;
+}
+
+// Gibt es das Haus „Straße + Nummer“ in den Treffern? (andere Straßen mit derselben Nummer zählen nicht)
+const hasHouse = (list, street, hn) => list.some(r => r.housenumber?.toLowerCase() === hn && r.road?.toLowerCase() === street.toLowerCase());
+
+// Kennt die Karte die Hausnummer nicht, liefert die Suche nur die Straße. Dann bleibt die eingetippte
+// Nummer in der Beschriftung stehen, mit Hinweis, dass die Straße angesteuert wird.
+export function keepHouseNumber(list, hn) {
+  if (!hn) return list;
+  return list.map(r => r.street && !hasHouse(list, r.street, hn)
+    ? { ...r, main: `${r.street} ${hn}`, sub: [r.sub, 'Hausnummer nicht in der Karte – Ziel ist die Straße'].filter(Boolean).join(' · ') }
+    : r);
+}
+
+// TomTom kennt auch Hausnummern, die in OpenStreetMap fehlen (nur mit eigenem Schlüssel)
+async function searchTomTom(query, key) {
+  const params = new URLSearchParams({ key, language: 'de-DE', limit: '3', countrySet: 'DE,AT,CH,FR,IT,NL,BE,LU,DK,CZ,PL' });
+  const d = await getJson(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(query)}.json?${params}`, { timeout: 6000 });
+  return (d.results || []).filter(r => r.address?.streetNumber && r.position).map(r => ({
+    main: `${r.address.streetName} ${r.address.streetNumber}`,
+    sub: [[r.address.postalCode, r.address.municipality].filter(Boolean).join(' '), r.address.countryCode !== 'DE' ? r.address.country : ''].filter(Boolean).join(', '),
+    lat: r.position.lat, lon: r.position.lon, road: r.address.streetName, housenumber: String(r.address.streetNumber),
+  }));
+}
+
+export async function searchPlaces(query, near, { tomtomKey } = {}) {
   if (!query || query.trim().length < 2) return [];
   const coords = parseCoordinates(query);
   if (coords) return coordinatePlace(coords);
@@ -102,6 +133,12 @@ export async function searchPlaces(query, near) {
   } catch (err) {
     try { list = await searchNominatim(query.trim()); } catch { throw err; }
   }
+  const hn = houseNumber(query);
+  // Straße gefunden, das Haus aber nicht: TomTom fragen (falls Schlüssel da)
+  if (hn && tomtomKey && list.some(r => r.street && !hasHouse(list, r.street, hn))) {
+    try { list = [...(await searchTomTom(query.trim(), tomtomKey)), ...list]; } catch { /* dann eben ohne */ }
+  }
+  list = keepHouseNumber(list, hn);
   const seen = new Set();
   return list.filter(r => r.main && !seen.has(r.main + r.sub) && seen.add(r.main + r.sub));
 }

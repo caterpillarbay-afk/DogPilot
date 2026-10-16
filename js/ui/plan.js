@@ -188,7 +188,7 @@ export function bindPlace(root, id, onPick = place => { state.form[id] = place; 
       const my = ++seq;
       try {
         const near = state.form.from && id === 'to' ? [state.form.from.lat, state.form.from.lon] : null;
-        const r = await searchPlaces(q, near);
+        const r = await searchPlaces(q, near, { tomtomKey: state.settings.keys.tomtom });
         if (my !== seq) return;
         results = r; active = -1; noHits = !r.length; searching = false; show();
       } catch (err) {
@@ -294,7 +294,7 @@ export async function plan() {
     render();
     try {
       const near = id === 'to' && f.from ? [f.from.lat, f.from.lon] : null;
-      const [r] = await searchPlaces(typed[id], near);
+      const [r] = await searchPlaces(typed[id], near, { tomtomKey: state.settings.keys.tomtom });
       if (r) f[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
       else state.error = `„${typed[id]}“ nicht gefunden – bitte anders schreiben oder einen Vorschlag aus der Liste wählen.`;
     } catch (err) {

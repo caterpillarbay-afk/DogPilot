@@ -33,7 +33,7 @@ export const LEGAL = {
   <li><b>FOSSGIS e.V. (Deutschland), Valhalla und OSRM</b> – Koordinaten von Start und Ziel für Route und Höhenprofil</li>
   <li><b>Open-Meteo (APIs GmbH, Schweiz)</b> – grobe Koordinaten (Start, Mitte, Ziel) für die Temperaturvorhersage</li>
   <li><b>OpenStreetMap Foundation (Großbritannien)</b> – Kartenkacheln für den sichtbaren Kartenausschnitt</li>
-  <li><b>TomTom International B.V. (Niederlande)</b> – Koordinaten von Start und Ziel sowie dein Schlüssel, nur wenn du einen TomTom-Schlüssel einträgst</li>
+  <li><b>TomTom International B.V. (Niederlande)</b> – Koordinaten von Start und Ziel sowie dein Schlüssel, nur wenn du einen TomTom-Schlüssel einträgst; außerdem der Suchtext, wenn du eine Hausnummer eingibst, die OpenStreetMap nicht kennt</li>
   <li><b>Nahverkehrsgesellschaft Baden-Württemberg mbH (Deutschland), MobiData BW</b> – Koordinaten deiner Ladestopps, um die aktuelle Belegung abzurufen</li>
   <li><b>Die Autobahn GmbH des Bundes (Deutschland)</b> – nur die Namen der Autobahnen auf deiner Route (z. B. „A61“), um Baustellen, Sperrungen und Verkehrsmeldungen abzurufen</li>
 </ul>
