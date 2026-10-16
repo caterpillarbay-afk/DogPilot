@@ -170,9 +170,9 @@ export function bindPlace(root, id, onPick = place => { state.form[id] = place; 
   // Schnellauswahl beim Antippen: Zuhause (oder Hinweis zum Festlegen) und aktueller Standort
   const quick = () => {
     const h = state.settings.home;
-    if (id === 'home') return [{ here: true, main: 'Aktueller Standort', sub: '' }];
-    return [h ? { home: true, main: 'Zuhause', sub: h.label } : { setHome: true, main: 'Zuhause festlegen', sub: 'Einmal eintragen, dann hier mit einem Tipp übernehmen' },
-      { here: true, main: 'Aktueller Standort', sub: '' }];
+    const here = { quick: true, here: true, main: 'Aktueller Standort', sub: '' };
+    if (id === 'home') return [here];
+    return [h ? { quick: true, home: true, main: 'Zuhause', sub: h.label } : { quick: true, setHome: true, main: 'Zuhause festlegen', sub: 'Einmal eintragen, dann hier mit einem Tipp übernehmen' }, here];
   };
   inp.addEventListener('focus', () => { if (inp.value) inp.select(); results = quick(); active = -1; noHits = false; show(); });
   inp.addEventListener('blur', () => setTimeout(close, 150));
@@ -200,7 +200,8 @@ export function bindPlace(root, id, onPick = place => { state.form[id] = place; 
     if (list.hidden) return;
     if (e.key === 'ArrowDown') { active = Math.min(results.length - 1, active + 1); show(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); show(); e.preventDefault(); }
-    else if (e.key === 'Enter') { pick(active >= 0 ? active : 0); e.preventDefault(); }
+    // Schnellauswahl (Zuhause, Standort) nur nach Markieren übernehmen, Suchtreffer auch direkt
+    else if (e.key === 'Enter' && (active >= 0 || !results[0]?.quick)) { pick(active >= 0 ? active : 0); e.preventDefault(); }
     else if (e.key === 'Escape') close();
   });
 }

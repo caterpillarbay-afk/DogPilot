@@ -60,8 +60,8 @@ public class MainActivity extends Activity {
         });
         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override public void onStart(String id) {}
-            @Override public void onDone(String id) { releaseFocus(); }
-            @Override public void onError(String id) { releaseFocus(); }
+            @Override public void onDone(String id) { if (!tts.isSpeaking()) releaseFocus(); }
+            @Override public void onError(String id) { if (!tts.isSpeaking()) releaseFocus(); }
         });
 
         web = new WebView(this);
@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback cb) {
-                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (hasLocation()) {
                     cb.invoke(origin, true, false);
                 } else {
                     geoOrigin = origin;
@@ -102,8 +102,14 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = cb;
+                // Eigener Intent statt params.createIntent(): der übernimmt nur den ersten accept-Eintrag
+                // (".json" ist kein Dateityp – dann wäre nichts wählbar). JSON-Dateien melden manche
+                // Dateimanager als „unbekannt“, daher für alles außer Bildern */*.
+                boolean images = false;
+                for (String t : params.getAcceptTypes()) if (t != null && t.startsWith("image/")) images = true;
+                Intent pick = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType(images ? "image/*" : "*/*");
                 try {
-                    startActivityForResult(params.createIntent(), REQ_FILE);
+                    startActivityForResult(pick, REQ_FILE);
                 } catch (ActivityNotFoundException e) {
                     fileCallback = null;
                     return false;
@@ -112,7 +118,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (state != null) web.restoreState(state); else web.loadUrl(APP_URL);
+        if (state == null || web.restoreState(state) == null) web.loadUrl(APP_URL);
     }
 
     @Override
@@ -124,8 +130,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
         if (code == REQ_LOCATION && geoCallback != null) {
-            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
-            geoCallback.invoke(geoOrigin, ok, false);
+            geoCallback.invoke(geoOrigin, hasLocation(), false);   // auch „ungefähr“ (Android 12+) reicht
             geoCallback = null;
         }
     }
@@ -158,6 +163,11 @@ public class MainActivity extends Activity {
         tts.shutdown();
         web.destroy();
         super.onDestroy();
+    }
+
+    boolean hasLocation() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     void toast(String text) {
