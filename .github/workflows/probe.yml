@@ -1,0 +1,14 @@
+name: Probe (temporär)
+on:
+  push:
+    branches: [claude/eu-vehicle-database-dogpilot-vk5isi]
+    paths: ['.github/workflows/probe.yml']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for q in "Hauptstraße 2, Isselbach" "Hauptstraße 2 Isselbach"; do
+            echo "=== $q"
+            curl -s -G "https://photon.komoot.io/api/" --data-urlencode "q=$q" -d limit=6 -d lang=de | jq -c '.features[] | .properties | {type, name, street, housenumber, city, town, village, postcode}'
+          done
