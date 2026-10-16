@@ -1,0 +1,16 @@
+name: Probe (temporär)
+on:
+  push:
+    branches: [claude/eu-vehicle-database-dogpilot-vk5isi]
+    paths: ['.github/workflows/probe.yml']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for q in "Carl-Theodor-Straße 12 Alzey" "Carl-Theodor-Straße 12, 55232 Alzey" "Hauptstraße 5 Garmisch-Partenkirchen" "Marienplatz 8 München" "Bahnhofstraße 10 Worms"; do
+            echo "=== $q"
+            curl -s -G "https://photon.komoot.io/api/" --data-urlencode "q=$q" -d limit=4 -d lang=de | jq -c '.features[] | .properties | {type, name, street, housenumber, city, postcode, osm_key, osm_value}'
+          done
+          echo "=== Nominatim"
+          curl -s -G -A "DogPilot-probe" "https://nominatim.openstreetmap.org/search" --data-urlencode "q=Carl-Theodor-Straße 12 Alzey" -d format=jsonv2 -d addressdetails=1 -d limit=3 | jq -c '.[] | {name, type: .addresstype, road: .address.road, hn: .address.house_number, city: .address.town}'
