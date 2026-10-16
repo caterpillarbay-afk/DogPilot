@@ -121,6 +121,14 @@ export async function openApp(baseUrl, opts = {}) {
   await ctx.route('https://valhalla1.openstreetmap.de/route', r => r.fulfill({ json: { trip: {
     legs: [{ shape: encodePolyline(PTS, 6), maneuvers: [{ begin_shape_index: 0, street_names: ['Hauptstraße'] }, { begin_shape_index: 2, street_names: ['A 7'] }, { begin_shape_index: 1200, street_names: ['A 9'] }] }],
     summary: { length: 775, time: 7.2 * 3600 } } } }));
+  // TomTom: Schlüssel „GUT“ liefert eine Route mit Live-Verkehr, alles andere 403
+  await ctx.route('https://api.tomtom.com/**', r => {
+    if (new URL(r.request().url()).searchParams.get('key') !== 'GUT') return r.fulfill({ status: 403, headers: { 'access-control-allow-origin': '*' }, body: 'Forbidden' });
+    r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { routes: [{
+      legs: [{ points: PTS.map(([latitude, longitude]) => ({ latitude, longitude })) }],
+      summary: { lengthInMeters: 775000, travelTimeInSeconds: 7.5 * 3600, trafficDelayInSeconds: 1200 },
+      guidance: { instructions: [{ point: { latitude: PTS[2][0], longitude: PTS[2][1] }, roadNumbers: ['A7'] }] } }] } });
+  });
   await ctx.route('https://valhalla1.openstreetmap.de/height', r => r.fulfill({ json: { range_height: Array.from({ length: 390 }, (_, i) => [i * 2000, 100 + 300 * Math.sin(i / 20) ** 2]) } }));
   await ctx.route('https://routing.openstreetmap.de/**', r => r.fulfill({ status: 503, body: '' }));
   await ctx.route('https://api.open-meteo.com/**', r => {
