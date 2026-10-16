@@ -1,10 +1,13 @@
 // DogPilot – Einstellungen als Datei sichern und wiederherstellen (Einstellungen und Willkommensseite).
 
+import { native } from '../native.js';
 import { makeBackup, backupFileName, restoreBackup } from '../backup.js';
 import { $, state, toast, save, go, route, render } from './core.js';
 
 export function saveBackup() {
-  const blob = new Blob([JSON.stringify(makeBackup(state.settings), null, 1)], { type: 'application/json' });
+  const json = JSON.stringify(makeBackup(state.settings), null, 1);
+  if (native) { native.saveFile(backupFileName(), 'application/json', json); return; }   // Android-App: Speicherort wählen
+  const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = backupFileName();

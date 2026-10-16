@@ -7,6 +7,7 @@ import { dueAnnouncements, delayStep, breakText, chargeText, closureText, delayT
 import { haversineKm } from '../geo.js';
 import { trafficKey, tripTiming, tripEvents, refreshTraffic } from './traffic.js';
 import { posKey } from './result.js';
+import { native, APK_URL, offerApp } from '../native.js';
 import { state, toast, save, trip, placeName, render } from './core.js';
 
 // ---------- Fahrt-Modus: Sprachansagen unterwegs ----------
@@ -18,6 +19,8 @@ export const OFF_ROUTE_KM = 1.5, OFF_ROUTE_MS = 90000;
 export function speak(text) {
   state.drive.last = text;
   state.drive.lastAt = Date.now();
+  // Android-App: über den Navi-Kanal (Android Auto legt die Ansage über Radio und Musik)
+  if (native) { native.speak(text, state.settings.drive.audio || 'nav'); return; }
   if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'de-DE';
@@ -27,6 +30,7 @@ export function speak(text) {
 }
 
 export async function keepAwake() {
+  if (native) { if (state.drive.on) native.keepScreenOn(true); return; }
   try { if (state.drive.on && 'wakeLock' in navigator && !state.drive.lock) {
     state.drive.lock = await navigator.wakeLock.request('screen');
     state.drive.lock.addEventListener('release', () => { state.drive.lock = null; });
@@ -58,7 +62,8 @@ export function stopDrive(keepSpeech = false) {
   clearInterval(d.timer);
   clearInterval(d.tick);
   d.lock?.release().catch(() => {});
-  if ('speechSynthesis' in window && !keepSpeech) speechSynthesis.cancel();
+  if (native) { native.keepScreenOn(false); if (!keepSpeech) native.stop(); }
+  else if ('speechSynthesis' in window && !keepSpeech) speechSynthesis.cancel();
   const pending = d.pendingUpdate;
   state.drive = { on: false };
   render();
@@ -157,16 +162,32 @@ export function driveCard(t) {
   if (!d.on) return `<div class="card drive" id="drive" style="margin-top:12px">
     <button class="btn btn-primary block" type="button" data-action="drive-start">${icon('volume-2')} Fahrt-Modus mit Ansagen</button>
     <p class="muted small" style="margin:8px 0 0">Sagt an, was Google Maps nicht weiß. DogPilot dafür geöffnet lassen, Handy im Halter am Ladekabel.</p>
-    ${chips}</div>`;
+    ${chips}${audioRow()}</div>`;
   return `<div class="card drive on" id="drive" style="margin-top:12px">
     <div class="card-head">${icon('volume-2')} Fahrt-Modus aktiv</div>
     <div class="live" id="drive-status">${driveStatus(t)}</div>
     <p class="small" id="drive-last" style="margin:6px 0 0">${d.last ? `„${esc(d.last)}“` : ''}</p>
-    ${chips}
+    ${chips}${audioRow()}
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-secondary" type="button" data-action="drive-repeat">${icon('refresh-cw')} Wiederholen</button>
       <button class="btn btn-secondary" type="button" data-action="drive-stop">${icon('x')} Beenden</button>
     </div></div>`;
+}
+
+export const TEST_TEXT = 'Das ist eine Testansage von DogPilot. Wenn du mich hörst, passt alles.';
+
+// Ton-Ausgabe: in der Android-App wählbar; im Browser auf Android Hinweis auf die App
+function audioRow() {
+  const a = state.settings.drive.audio || 'nav';
+  const test = `<button type="button" class="chip" data-action="drive-test">${icon('volume-2')} Testansage</button>`;
+  if (native) {
+    const opt = (k, label) => `<button type="button" class="chip ${a === k ? 'on' : ''}" aria-pressed="${a === k}" data-daudio="${k}">${label}</button>`;
+    return `<div class="muted small" style="margin-top:12px">Ansagen über</div>
+      <div class="chips" style="margin-top:6px">${opt('nav', 'Android Auto / Navi')}${opt('media', 'Medien')}${test}</div>
+      <p class="muted small" style="margin:6px 0 0">„Android Auto / Navi“ legt die Ansage wie ein Navi über Radio und Musik.</p>`;
+  }
+  return `<div class="chips" style="margin-top:10px">${test}</div>`
+    + (offerApp() ? `<p class="muted small" style="margin:6px 0 0">Im Auto mit Android Auto still? Im Browser kommen Ansagen nur, wenn Android Auto die Tonquelle ist. Die <a href="${APK_URL}">DogPilot-App für Android</a> spricht wie ein Navi – auch über das Radio.</p>` : '');
 }
 
 export function updateDriveCard() {
@@ -178,6 +199,13 @@ export function updateDriveCard() {
 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 document.addEventListener('click', e => {
+  const au = e.target.closest('[data-daudio]');
+  if (au) {
+    state.settings.drive.audio = au.dataset.daudio;
+    save();
+    document.querySelectorAll('[data-daudio]').forEach(x => { const on = x === au; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+    return;
+  }
   const b = e.target.closest('[data-dpref]');
   if (!b) return;
   state.settings.drive[b.dataset.dpref] = !state.settings.drive[b.dataset.dpref];

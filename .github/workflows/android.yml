@@ -1,0 +1,50 @@
+name: Android-App
+
+# Baut die Android-App (Hülle um die Web-App mit Ansagen über den Navi-Kanal).
+# Auf main wird sie als GitHub-Release veröffentlicht: …/releases/latest/download/DogPilot.apk
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: APK bauen
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.${{ github.run_number }}
+        run: gradle --no-daemon assembleRelease
+      - name: APK umbenennen
+        run: cp android/app/build/outputs/apk/release/app-release.apk DogPilot.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DogPilot-apk
+          path: DogPilot.apk
+      - name: Als Release veröffentlichen
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "android-${{ github.run_number }}" DogPilot.apk \
+            --title "DogPilot Android 1.${{ github.run_number }}" \
+            --notes "Android-App für DogPilot: Ansagen über den Navi-Kanal (Android Auto). Installation: APK auf dem Handy öffnen und „Installieren“ tippen." \
+            --latest
