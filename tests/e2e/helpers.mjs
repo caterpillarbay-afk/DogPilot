@@ -116,6 +116,14 @@ export async function openApp(baseUrl, opts = {}) {
     if (opts.photonDelayMs) await new Promise(res => setTimeout(res, opts.photonDelayMs));
     const q = u.searchParams.get('q') || '';
     // Wie Photon echt antwortet: Hausnummer 12 kennt die Karte nur in einer anderen Straße
+    // Isselbach: Straße ohne Hausnummer, dazu „Rathaus, Hauptstraße 2“ in Grafling (echte Photon-Antwort)
+    // Mit Ortsbezug (Ziel nahe am Start) liefert Photon nur Häuser „Hauptstraße 2“ in Orten in der Nähe
+    if (/hauptstr/i.test(q) && u.searchParams.has('lat')) return r.fulfill({ json: { features: ['Flonheim', 'Gau-Odernheim'].map((city, i) => (
+      { geometry: { coordinates: [8.0 + i / 10, 49.8] }, properties: { type: 'house', street: 'Hauptstraße', housenumber: '2', city, postcode: '5523' + i, countrycode: 'DE' } })) } });
+    if (/hauptstr/i.test(q)) return r.fulfill({ json: { features: [
+      ...(/isselb/i.test(q) ? [{ geometry: { coordinates: [7.93, 50.33] }, properties: { type: 'street', name: 'Hauptstraße', city: 'Isselbach', postcode: '65558', countrycode: 'DE' } }] : []),
+      { geometry: { coordinates: [13.0, 48.9] }, properties: { type: 'house', name: 'Rathaus', street: 'Hauptstraße', housenumber: '2', city: 'Grafling', postcode: '94539', countrycode: 'DE' } },
+      { geometry: { coordinates: [8.0, 49.0] }, properties: { type: 'street', name: 'Hauptstraße', city: 'Irgendwo', postcode: '12345', countrycode: 'DE' } }] } });
     if (/theodor/i.test(q)) return r.fulfill({ json: { features: [
       { geometry: { coordinates: [8.1150, 49.7470] }, properties: { type: 'street', name: 'Carl-Theodor-Straße', city: 'Alzey', postcode: '55232', countrycode: 'DE' } },
       { geometry: { coordinates: [8.1000, 49.7400] }, properties: { type: 'house', street: 'Carl-von-Ossietzky-Straße', housenumber: '12', city: 'Alzey', postcode: '55232', countrycode: 'DE' } }] } });
@@ -129,6 +137,8 @@ export async function openApp(baseUrl, opts = {}) {
   await ctx.route('https://api.tomtom.com/**', r => {
     const u = new URL(r.request().url());
     if (u.searchParams.get('key') !== 'GUT') return r.fulfill({ status: 403, headers: { 'access-control-allow-origin': '*' }, body: 'Forbidden' });
+    if (u.pathname.includes('Isselbach')) return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { results: [
+      { type: 'Point Address', address: { streetName: 'Hauptstraße', streetNumber: '2', postalCode: '65558', municipality: 'Isselbach', countryCode: 'DE' }, position: { lat: 50.331, lon: 7.932 } }] } });
     if (u.pathname.startsWith('/search/2/geocode/')) return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { results: [
       { type: 'Point Address', address: { streetName: 'Carl-Theodor-Straße', streetNumber: '12', postalCode: '55232', municipality: 'Alzey', countryCode: 'DE' }, position: { lat: 49.7468, lon: 8.1162 } }] } });
     r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { routes: [{

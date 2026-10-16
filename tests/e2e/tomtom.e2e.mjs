@@ -1,7 +1,7 @@
 // TomTom-Schlüssel: testen in den Einstellungen, Grund anzeigen, wenn ohne Live-Verkehr geplant wurde
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startServer, openApp, onboard, planTrip } from './helpers.mjs';
+import { startServer, openApp, onboard, planTrip, choosePlace } from './helpers.mjs';
 
 let srv;
 before(async () => { srv = await startServer(); });
@@ -65,5 +65,24 @@ test('Hausnummer, die OpenStreetMap nicht kennt: bleibt sichtbar, mit Schlüssel
     assert.doesNotMatch(exact, /nicht in der Karte/);
     await page.click('#from-list button >> nth=0');
     assert.equal(await page.inputValue('#from'), 'Carl-Theodor-Straße 12, 55232 Alzey');
+  } finally { await app.close(); }
+});
+
+for (const withStart of [false, true]) test(`Hauptstraße 2, Isselbach: einmal Buchstabe für Buchstabe eintippen reicht${withStart ? ' (Start gesetzt)' : ''}`, async () => {
+  const app = await openApp(srv.url);
+  const { page } = app;
+  try {
+    await onboard(page);
+    await setKey(page, 'GUT');
+    await page.click('#tabbar [data-tab="plan"]');
+    if (withStart) await choosePlace(page, 'from', 'Hamb');
+    await page.click('#to');
+    await page.type('#to', 'Hauptstraße 2, Isselbach', { delay: 60 });
+    await page.waitForSelector('#to-list button:has-text("Isselbach")');
+    const first = await page.textContent('#to-list button >> nth=0');
+    assert.match(first, /Hauptstraße 2\s*65558 Isselbach/);
+    assert.doesNotMatch(first, /nicht in der Karte/);
+    await page.click('#to-list button >> nth=0');
+    assert.equal(await page.inputValue('#to'), 'Hauptstraße 2, 65558 Isselbach');
   } finally { await app.close(); }
 });

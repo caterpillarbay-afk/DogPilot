@@ -106,6 +106,13 @@ export function houseNumber(query) {
 const same = (a, b) => (a || '').toLowerCase() === (b || '').toLowerCase();
 const hasHouse = (list, s, hn) => list.some(r => r.housenumber?.toLowerCase() === hn && same(r.road, s.street) && same(r.city, s.city));
 
+// Treffer, der zur Eingabe passt: gleiche Nummer, Straße steht in der Eingabe, Ort/PLZ auch (falls angegeben)
+function exactHouse(list, query, hn) {
+  const q = query.toLowerCase();
+  return list.some(r => r.housenumber?.toLowerCase() === hn && r.road && q.includes(r.road.toLowerCase())
+    && (!r.city || q.includes(r.city.toLowerCase()) || (r.sub || '').split(' ').some(w => /^\d{5}$/.test(w) && q.includes(w))));
+}
+
 // Kennt die Karte die Hausnummer nicht, liefert die Suche nur die Straße. Dann bleibt die eingetippte
 // Nummer in der Beschriftung stehen, mit Hinweis, dass die Straße angesteuert wird.
 export function keepHouseNumber(list, hn) {
@@ -137,8 +144,9 @@ export async function searchPlaces(query, near, { tomtomKey } = {}) {
     try { list = await searchNominatim(query.trim()); } catch { throw err; }
   }
   const hn = houseNumber(query);
-  // Straße gefunden, das Haus aber nicht: TomTom fragen (falls Schlüssel da)
-  if (hn && tomtomKey && list.some(r => r.street && !hasHouse(list, r, hn))) {
+  // Haus aus der Eingabe nicht unter den Treffern: TomTom fragen (falls Schlüssel da). Unabhängig davon,
+  // welche Straßen Photon liefert – beim Ziel bevorzugt es Straßen in der Nähe des Starts.
+  if (hn && tomtomKey && !exactHouse(list, query, hn)) {
     try { list = [...(await searchTomTom(query.trim(), tomtomKey)), ...list]; } catch { /* dann eben ohne */ }
   }
   list = keepHouseNumber(list, hn);
