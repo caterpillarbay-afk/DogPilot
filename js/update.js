@@ -5,7 +5,8 @@
 const APP_FILES = [
   'index.html', 'css/app.css', 'js/app.js', 'js/update.js', 'js/icons.js', 'js/format.js', 'js/store.js', 'js/data.js',
   'js/services.js', 'js/trip.js', 'js/geo.js', 'js/energy.js', 'js/planner.js', 'js/legal.js', 'js/map.js',
-  'js/traffic.js', 'js/drive.js', 'js/clock.js',
+  'js/traffic.js', 'js/drive.js', 'js/clock.js', 'js/feedback.js', 'js/backup.js',
+  'js/ui/core.js', 'js/ui/forms.js', 'js/ui/plan.js', 'js/ui/result.js', 'js/ui/traffic.js', 'js/ui/drive.js', 'js/ui/settings.js', 'js/ui/backup.js',
 ];
 const MIN_INTERVAL_MS = 60 * 1000;
 
