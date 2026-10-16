@@ -48,3 +48,7 @@ jobs:
             --title "DogPilot Android 1.${{ github.run_number }}" \
             --notes "Android-App für DogPilot: Ansagen über den Navi-Kanal (Android Auto). Installation: APK auf dem Handy öffnen und „Installieren“ tippen." \
             --latest
+          # Ältere App-Versionen entfernen – es zählt nur die neueste
+          gh release list --limit 100 --json tagName --jq '.[].tagName' \
+            | grep '^android-' | grep -vx "android-${{ github.run_number }}" \
+            | while read -r tag; do gh release delete "$tag" --yes --cleanup-tag; done
