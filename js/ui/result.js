@@ -172,6 +172,7 @@ export function viewTrip() {
       <div class="grow"><div class="title">${esc(placeName(t.from))} → ${esc(placeName(t.to))}</div>
       <div class="muted small">${dayLabel(dep)}, ${clock(dep)} Uhr · ${esc(t.provider)}</div></div>
     </div>
+    ${t.tomtomError ? `<div class="notice warn" style="margin-top:12px">${icon('triangle-alert')}<span>TomTom nicht erreichbar: ${esc(t.tomtomError)}. Geplant ohne Live-Verkehr.</span></div>` : ''}
     ${arrivalCard(t)}
     ${arrivalPlan(t)}
     ${driveCard(t)}

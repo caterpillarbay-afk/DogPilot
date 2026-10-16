@@ -138,6 +138,7 @@ export function planFromContext(ctx, forced = {}) {
     from, to, departure: departure.toISOString(), startSoc, load, withDogs,
     arriveBy: arriveBy ? arriveBy.toISOString() : null, bufferMin,
     provider: route.provider,
+    tomtomError: route.tomtomError || null,
     points: route.points,
     roads: route.roads || [],
     junctions: route.junctions || [],

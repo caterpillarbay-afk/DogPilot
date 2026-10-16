@@ -113,10 +113,25 @@ function roadInfo(steps, extraNames = []) {
   return { roads: autobahnRoads([...steps.flatMap(st => st.names), ...extraNames]), junctions: motorwayChanges(steps) };
 }
 
+// Verständlicher Grund, wenn TomTom nicht antwortet (HTTP-Status aus getJson)
+export function tomtomReason(err) {
+  const m = /HTTP (\d+)/.exec(err?.message || '');
+  const code = m ? +m[1] : 0;
+  if (code === 401 || code === 403) return 'Schlüssel ungültig oder gesperrt – bitte unter Einstellungen → Erweitert prüfen';
+  if (code === 429) return 'Tageskontingent des Schlüssels aufgebraucht';
+  return err?.message || 'unbekannter Fehler';
+}
+
+// Schlüssel mit einer kurzen Probe-Route prüfen (Alzey Bahnhof → Marktplatz); wirft mit Grund
+export async function testTomTomKey(key) {
+  await routeTomTom({ lat: 49.7466, lon: 8.1135 }, { lat: 49.7457, lon: 8.1162 }, key);
+}
+
 async function routeTomTom(from, to, key) {
   const url = `https://api.tomtom.com/routing/1/calculateRoute/${from.lat},${from.lon}:${to.lat},${to.lon}/json`
     + `?key=${encodeURIComponent(key)}&traffic=true&travelMode=car&routeType=fastest&computeTravelTimeFor=all&instructionsType=coded`;
-  const d = await getJson(url);
+  let d;
+  try { d = await getJson(url); } catch (err) { throw new Error(tomtomReason(err)); }
   const r = d.routes?.[0];
   if (!r) throw new Error('Keine Route gefunden');
   return {
@@ -169,9 +184,15 @@ export async function getRoute(from, to, { tomtomKey } = {}) {
     () => routeValhalla(from, to),
     () => routeOsrm(from, to),
   ];
-  let lastErr;
-  for (const attempt of attempts) {
-    try { return await attempt(); } catch (err) { lastErr = err; }
+  let lastErr, tomtomError = null;
+  for (const [i, attempt] of attempts.entries()) {
+    try {
+      const route = await attempt();
+      return tomtomError ? { ...route, tomtomError } : route;
+    } catch (err) {
+      lastErr = err;
+      if (tomtomKey && i === 0) tomtomError = err.message;   // anzeigen, warum ohne Live-Verkehr geplant wurde
+    }
   }
   throw new Error(`Route konnte nicht berechnet werden: ${lastErr?.message || 'unbekannter Fehler'}`);
 }

@@ -5,6 +5,7 @@ import { esc, num, dateLabel, vehicleName } from '../format.js';
 import { resizePhoto } from '../store.js';
 import { LEGAL } from '../legal.js';
 import { feedbackMail } from '../feedback.js';
+import { testTomTomKey } from '../services.js';
 import { native, APK_URL, offerApp } from '../native.js';
 import { mountMap, fitRoute, toggleLocate } from '../map.js';
 import { vehicleFormHtml, bindVehicleForm, dogsFormHtml, bindDogsForm, chargingFormHtml, bindChargingForm } from './forms.js';
@@ -97,7 +98,10 @@ export function viewSettingsPage(page) {
     body = `<div class="card">
       ${field('TomTom-Schlüssel (optional)', `<span class="input-wrap">${icon('key')}<input class="input" id="kTomtom" type="password" autocomplete="off" spellcheck="false" value="${esc(s.keys.tomtom)}" placeholder="Nicht hinterlegt"></span>`,
         'Mit eigenem, kostenlosem Schlüssel von developer.tomtom.com berücksichtigt die Route den aktuellen Verkehr. Ohne Schlüssel routet DogPilot über Valhalla bzw. OSRM (FOSSGIS e.V.).')}
-      <label class="row" style="margin-top:12px"><input type="checkbox" id="showKeys"> <span class="small">Schlüssel anzeigen</span></label>
+      <div class="row" style="margin-top:12px;justify-content:space-between">
+        <label class="row"><input type="checkbox" id="showKeys"> <span class="small">Schlüssel anzeigen</span></label>
+        <button class="btn-ghost" type="button" id="testKey">${icon('route')} Schlüssel testen</button>
+      </div>
     </div>
     <div class="card">
       ${field('Max. Abstand der Ladesäule zur Route', numberInput('cCorridor', s.charging.corridorKm, { min: 0.5, max: 10, step: 0.5, suffix: 'km' }))}
@@ -125,9 +129,19 @@ export function bindSettingsPage(root, page) {
   if (page === 'dogs') bindDogsForm(root, s.dogs, saved);
   if (page === 'charging') bindChargingForm(root, s.charging, saved);
   if (page === 'advanced') {
-    for (const [id, key] of [['kTomtom', 'tomtom']]) {
-      $('#' + id, root).addEventListener('change', e => { s.keys[key] = e.target.value.trim(); saved(false); });
-    }
+    // Schon beim Tippen merken (Wechsel der Ansicht ohne Verlassen des Feldes), Hinweis erst beim Verlassen
+    const inp = $('#kTomtom', root);
+    inp.addEventListener('input', () => { s.keys.tomtom = inp.value.trim(); save(); });
+    inp.addEventListener('change', () => { s.keys.tomtom = inp.value.trim(); saved(false); });
+    const btn = $('#testKey', root);
+    btn.addEventListener('click', async () => {
+      const key = inp.value.trim();
+      if (!key) { toast('Kein Schlüssel eingetragen'); return; }
+      btn.disabled = true;
+      try { await testTomTomKey(key); toast('Schlüssel funktioniert – TomTom mit Live-Verkehr ist aktiv'); }
+      catch (err) { toast(`TomTom: ${err.message}`); }
+      finally { btn.disabled = false; }
+    });
     $('#showKeys', root).addEventListener('change', e => $$('#kTomtom', root).forEach(i => { i.type = e.target.checked ? 'text' : 'password'; }));
     $('#cCorridor', root).addEventListener('change', () => {
       const v = readNumber('cCorridor', 0.5, 10);
