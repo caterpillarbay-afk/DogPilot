@@ -75,7 +75,8 @@ async function searchPhoton(query, near) {
   const d = await getJson(`https://photon.komoot.io/api/?${params}`, { timeout: 8000 });
   return (d.features || []).map(f => ({ ...photonLabel(f.properties), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
     street: f.properties.type === 'street' ? f.properties.name : null,
-    road: f.properties.street || null, housenumber: f.properties.housenumber || null }));
+    road: f.properties.street || null, housenumber: f.properties.housenumber || null,
+    city: f.properties.city || f.properties.town || f.properties.village || null }));
 }
 
 // Ersatz, wenn Photon nicht antwortet: Nominatim (OpenStreetMap Foundation), nur bei Bedarf und je Eingabe einmal
@@ -90,7 +91,7 @@ async function searchNominatim(query) {
     const place = city && city !== main ? [a.postcode, city].filter(Boolean).join(' ') : '';
     const sub = [street && street !== main ? street : '', place || (a.state !== main ? a.state : ''), a.country_code && a.country_code !== 'de' ? a.country : '']
       .filter(Boolean).join(', ');
-    return { main, sub, lat: Number(r.lat), lon: Number(r.lon), street: r.addresstype === 'road' ? a.road || r.name : null, road: a.road || null, housenumber: a.house_number || null };
+    return { main, sub, lat: Number(r.lat), lon: Number(r.lon), street: r.addresstype === 'road' ? a.road || r.name : null, road: a.road || null, housenumber: a.house_number || null, city: city || null };
   });
 }
 
@@ -100,14 +101,16 @@ export function houseNumber(query) {
   return m ? m[1].replace(/\s/g, '').toLowerCase() : null;
 }
 
-// Gibt es das Haus „Straße + Nummer“ in den Treffern? (andere Straßen mit derselben Nummer zählen nicht)
-const hasHouse = (list, street, hn) => list.some(r => r.housenumber?.toLowerCase() === hn && r.road?.toLowerCase() === street.toLowerCase());
+// Gibt es das Haus „Straße + Nummer“ im selben Ort in den Treffern? Andere Straßen mit derselben Nummer
+// zählen nicht – und auch nicht dieselbe Straße woanders („Hauptstraße 2“ gibt es in vielen Orten).
+const same = (a, b) => (a || '').toLowerCase() === (b || '').toLowerCase();
+const hasHouse = (list, s, hn) => list.some(r => r.housenumber?.toLowerCase() === hn && same(r.road, s.street) && same(r.city, s.city));
 
 // Kennt die Karte die Hausnummer nicht, liefert die Suche nur die Straße. Dann bleibt die eingetippte
 // Nummer in der Beschriftung stehen, mit Hinweis, dass die Straße angesteuert wird.
 export function keepHouseNumber(list, hn) {
   if (!hn) return list;
-  return list.map(r => r.street && !hasHouse(list, r.street, hn)
+  return list.map(r => r.street && !hasHouse(list, r, hn)
     ? { ...r, main: `${r.street} ${hn}`, sub: [r.sub, 'Hausnummer nicht in der Karte – Ziel ist die Straße'].filter(Boolean).join(' · ') }
     : r);
 }
@@ -119,7 +122,7 @@ async function searchTomTom(query, key) {
   return (d.results || []).filter(r => r.address?.streetNumber && r.position).map(r => ({
     main: `${r.address.streetName} ${r.address.streetNumber}`,
     sub: [[r.address.postalCode, r.address.municipality].filter(Boolean).join(' '), r.address.countryCode !== 'DE' ? r.address.country : ''].filter(Boolean).join(', '),
-    lat: r.position.lat, lon: r.position.lon, road: r.address.streetName, housenumber: String(r.address.streetNumber),
+    lat: r.position.lat, lon: r.position.lon, road: r.address.streetName, housenumber: String(r.address.streetNumber), city: r.address.municipality,
   }));
 }
 
@@ -135,7 +138,7 @@ export async function searchPlaces(query, near, { tomtomKey } = {}) {
   }
   const hn = houseNumber(query);
   // Straße gefunden, das Haus aber nicht: TomTom fragen (falls Schlüssel da)
-  if (hn && tomtomKey && list.some(r => r.street && !hasHouse(list, r.street, hn))) {
+  if (hn && tomtomKey && list.some(r => r.street && !hasHouse(list, r, hn))) {
     try { list = [...(await searchTomTom(query.trim(), tomtomKey)), ...list]; } catch { /* dann eben ohne */ }
   }
   list = keepHouseNumber(list, hn);
