@@ -5,6 +5,7 @@ import { esc, num, dateLabel, vehicleName } from '../format.js';
 import { resizePhoto } from '../store.js';
 import { LEGAL } from '../legal.js';
 import { feedbackMail } from '../feedback.js';
+import { native, APK_URL, offerApp } from '../native.js';
 import { mountMap, fitRoute, toggleLocate } from '../map.js';
 import { vehicleFormHtml, bindVehicleForm, dogsFormHtml, bindDogsForm, chargingFormHtml, bindChargingForm } from './forms.js';
 import { placeField, bindPlace } from './plan.js';
@@ -162,7 +163,8 @@ export function openMenu() {
       <div class="drawer-group">Hilfe</div>
       ${item('#/welcome', 'info', 'Einführung erneut zeigen')}
       <button class="list-row" type="button" data-action="share-app">${icon('share-2')}<span class="grow">DogPilot teilen</span></button>
-      <a class="list-row" id="feedbackLink" href="${esc(feedbackMail({ version: APP_VERSION, ua: navigator.userAgent, screen: `${screen.width}×${screen.height}`, trip: trip() }))}" data-action="feedback">${icon('message-square')}<span class="grow">Feedback senden</span></a>
+      ${offerApp() ? `<a class="list-row" href="${APK_URL}">${icon('download')}<span class="grow">Android-App laden</span></a>` : ''}
+      <a class="list-row" id="feedbackLink" href="${esc(feedbackMail({ version: native ? `${APP_VERSION} · Android-App ${native.version()}` : APP_VERSION, ua: navigator.userAgent, screen: `${screen.width}×${screen.height}`, trip: trip() }))}" data-action="feedback">${icon('message-square')}<span class="grow">Feedback senden</span></a>
       <div class="drawer-foot">DogPilot ${APP_VERSION} · Gemeinsam weiter<br>
         Ladesäulen: ${d.chargers ? dateLabel(d.chargers.datenstand) : '–'} · Rastanlagen: ${d.restAreas ? dateLabel(d.restAreas.datenstand) : '–'}</div>
     </aside>`;
@@ -175,8 +177,10 @@ export async function shareApp() {
   const url = new URL('./', location.href).href;
   const text = 'DogPilot – Reise-Co-Pilot für Mensch, Hund & Auto. So installierst du ihn auf Android: '
     + 'Link in Chrome öffnen → ⋮ → „App installieren“ bzw. „Zum Startbildschirm hinzufügen“. '
-    + 'iPhone: in Safari öffnen → Teilen → „Zum Home-Bildschirm“.';
+    + 'iPhone: in Safari öffnen → Teilen → „Zum Home-Bildschirm“. '
+    + `Für Ansagen über Android Auto gibt es die Android-App: ${APK_URL}`;
   try {
+    if (native) { native.share('DogPilot', `${text}\n${url}`); return; }
     if (navigator.share) { await navigator.share({ title: 'DogPilot', text, url }); return; }
     await navigator.clipboard.writeText(`${text}\n${url}`);
     toast('Link kopiert – jetzt einfügen und verschicken');

@@ -4,7 +4,7 @@ const CACHE = 'dogpilot-v2';
 const SHELL = [
   './', 'index.html', 'manifest.json', 'logo.png', 'icon-192.png', 'css/app.css',
   'js/app.js', 'js/icons.js', 'js/format.js', 'js/store.js', 'js/data.js', 'js/services.js', 'js/trip.js',
-  'js/geo.js', 'js/energy.js', 'js/planner.js', 'js/legal.js', 'js/map.js', 'js/update.js', 'js/traffic.js', 'js/drive.js', 'js/clock.js', 'js/feedback.js', 'js/backup.js',
+  'js/geo.js', 'js/energy.js', 'js/planner.js', 'js/legal.js', 'js/map.js', 'js/update.js', 'js/traffic.js', 'js/drive.js', 'js/clock.js', 'js/feedback.js', 'js/backup.js', 'js/native.js',
   'js/ui/core.js', 'js/ui/forms.js', 'js/ui/plan.js', 'js/ui/result.js', 'js/ui/traffic.js', 'js/ui/drive.js', 'js/ui/settings.js', 'js/ui/backup.js',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css',
 ];

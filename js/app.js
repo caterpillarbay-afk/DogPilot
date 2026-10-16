@@ -8,7 +8,7 @@ import { watchForUpdates } from './update.js';
 import { viewOnboarding, bindOnboarding } from './ui/forms.js';
 import { viewPlan, bindPlan } from './ui/plan.js';
 import { refreshTraffic } from './ui/traffic.js';
-import { speak, startDrive, stopDrive } from './ui/drive.js';
+import { speak, startDrive, stopDrive, TEST_TEXT } from './ui/drive.js';
 import { saveFeedback, replanFromHere, viewTrip, viewStop, refreshLive, chooseAlternative } from './ui/result.js';
 import { viewMap, bindMap, viewSettings, viewSettingsPage, bindSettingsPage, viewLegal, openMenu, shareApp, closeMenu } from './ui/settings.js';
 import { saveBackup, bindRestore } from './ui/backup.js';
@@ -78,6 +78,7 @@ document.addEventListener('click', async e => {
   if (a === 'fb-skip') { saveFeedback(true); return; }
   if (a === 'learn-reset') { state.settings.vehicle.learned = { factor: 1, trips: 0 }; await save(); $('#learnedHint')?.remove(); toast('Gelernter Verbrauch zurückgesetzt'); return; }
   if (a === 'drive-stop') { stopDrive(); return; }
+  if (a === 'drive-test') { speak(TEST_TEXT); return; }
   if (a === 'drive-repeat') { if (state.drive.last) speak(state.drive.last); return; }
   if (a === 'reload-data') {
     await loadData(true);

@@ -87,6 +87,15 @@ export async function openApp(baseUrl, opts = {}) {
     Object.defineProperty(window, 'speechSynthesis', { value: { speak: u => window.__said.push(u.text), cancel() {}, getVoices: () => [] }, configurable: true });
     navigator.share = async d => { window.__shared = d; };
   });
+  // Android-App nachstellen: Brücke window.DogPilotAndroid schneidet Aufrufe mit
+  if (opts.android) await ctx.addInitScript(() => {
+    window.__native = [];
+    window.DogPilotAndroid = {
+      speak: (text, channel) => window.__native.push(['speak', text, channel]), stop: () => window.__native.push(['stop']),
+      keepScreenOn: on => window.__native.push(['screen', on]), saveFile: (name, mime, content) => window.__native.push(['save', name, mime, content]),
+      share: (title, text) => window.__native.push(['share', title, text]), version: () => '1.7', ready: () => true,
+    };
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
