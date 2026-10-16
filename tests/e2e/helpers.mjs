@@ -115,6 +115,10 @@ export async function openApp(baseUrl, opts = {}) {
     if (opts.photonDown) return r.fulfill({ status: 503, body: 'down' });
     if (opts.photonDelayMs) await new Promise(res => setTimeout(res, opts.photonDelayMs));
     const q = u.searchParams.get('q') || '';
+    // Wie Photon echt antwortet: Hausnummer 12 kennt die Karte nur in einer anderen Straße
+    if (/theodor/i.test(q)) return r.fulfill({ json: { features: [
+      { geometry: { coordinates: [8.1150, 49.7470] }, properties: { type: 'street', name: 'Carl-Theodor-Straße', city: 'Alzey', postcode: '55232', countrycode: 'DE' } },
+      { geometry: { coordinates: [8.1000, 49.7400] }, properties: { type: 'house', street: 'Carl-von-Ossietzky-Straße', housenumber: '12', city: 'Alzey', postcode: '55232', countrycode: 'DE' } }] } });
     r.fulfill({ json: { features: /ham/i.test(q) ? [feature('Hamburg')] : /prien/i.test(q) ? [feature('Prien')] : [feature('München')] } });
   });
   await ctx.route('https://nominatim.openstreetmap.org/**', r => r.fulfill({ json: [{ name: 'Prien am Chiemsee', lat: '47.856', lon: '12.346', address: { town: 'Prien am Chiemsee', postcode: '83209', state: 'Bayern', country_code: 'de' } }] }));
@@ -123,7 +127,10 @@ export async function openApp(baseUrl, opts = {}) {
     summary: { length: 775, time: 7.2 * 3600 } } } }));
   // TomTom: Schlüssel „GUT“ liefert eine Route mit Live-Verkehr, alles andere 403
   await ctx.route('https://api.tomtom.com/**', r => {
-    if (new URL(r.request().url()).searchParams.get('key') !== 'GUT') return r.fulfill({ status: 403, headers: { 'access-control-allow-origin': '*' }, body: 'Forbidden' });
+    const u = new URL(r.request().url());
+    if (u.searchParams.get('key') !== 'GUT') return r.fulfill({ status: 403, headers: { 'access-control-allow-origin': '*' }, body: 'Forbidden' });
+    if (u.pathname.startsWith('/search/2/geocode/')) return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { results: [
+      { type: 'Point Address', address: { streetName: 'Carl-Theodor-Straße', streetNumber: '12', postalCode: '55232', municipality: 'Alzey', countryCode: 'DE' }, position: { lat: 49.7468, lon: 8.1162 } }] } });
     r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { routes: [{
       legs: [{ points: PTS.map(([latitude, longitude]) => ({ latitude, longitude })) }],
       summary: { lengthInMeters: 775000, travelTimeInSeconds: 7.5 * 3600, trafficDelayInSeconds: 1200 },

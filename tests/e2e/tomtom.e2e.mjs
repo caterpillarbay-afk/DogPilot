@@ -43,3 +43,27 @@ test('Gültiger Schlüssel: Route mit Live-Verkehr, kein Hinweis', async () => {
     assert.equal(await page.$('.notice.warn:has-text("TomTom")'), null);
   } finally { await app.close(); }
 });
+
+test('Hausnummer, die OpenStreetMap nicht kennt: bleibt sichtbar, mit Schlüssel genau von TomTom', async () => {
+  const app = await openApp(srv.url);
+  const { page } = app;
+  const firstHit = async () => {
+    await page.fill('#from', '');
+    await page.fill('#from', 'Carl-Theodor-Straße 12 Alzey');
+    await page.waitForSelector('#from-list button:has-text("Carl")');
+    return page.textContent('#from-list button >> nth=0');
+  };
+  try {
+    await onboard(page);
+    const plain = await firstHit();
+    assert.match(plain, /Carl-Theodor-Straße 12/);
+    assert.match(plain, /Hausnummer nicht in der Karte/);
+    await setKey(page, 'GUT');
+    await page.click('#tabbar [data-tab="plan"]');
+    const exact = await firstHit();
+    assert.match(exact, /Carl-Theodor-Straße 12\s*55232 Alzey/);
+    assert.doesNotMatch(exact, /nicht in der Karte/);
+    await page.click('#from-list button >> nth=0');
+    assert.equal(await page.inputValue('#from'), 'Carl-Theodor-Straße 12, 55232 Alzey');
+  } finally { await app.close(); }
+});
