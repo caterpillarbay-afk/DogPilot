@@ -7,7 +7,8 @@ import { LEGAL } from '../legal.js';
 import { feedbackMail } from '../feedback.js';
 import { mountMap, fitRoute, toggleLocate } from '../map.js';
 import { vehicleFormHtml, bindVehicleForm, dogsFormHtml, bindDogsForm, chargingFormHtml, bindChargingForm } from './forms.js';
-import { APP_VERSION, $, $$, state, toast, save, trip, avatar, field, numberInput, readNumber, emptyState, render } from './core.js';
+import { placeField, bindPlace } from './plan.js';
+import { APP_VERSION, $, $$, state, toast, save, trip, avatar, field, numberInput, readNumber, emptyState, placeName, render } from './core.js';
 
 // ---------- Karte ----------
 
@@ -48,6 +49,7 @@ export function viewSettings() {
     <div class="list">
       ${row('#/settings/vehicle', 'car', 'Fahrzeug', esc(vehicleName(s.vehicle)))}
       ${row('#/settings/dogs', 'dog', 'Hunde', esc(dogNames))}
+      ${row('#/settings/home', 'house', 'Zuhause', s.home ? esc(placeName(s.home)) : 'Nicht festgelegt')}
       ${row('#/settings/charging', 'battery-charging', 'Laden und Pausen', `ab ${s.charging.minChargerKw} kW`)}
       ${row('#/settings/advanced', 'key', 'Erweitert', s.keys.tomtom ? 'Schlüssel hinterlegt' : '')}
     </div>
@@ -61,7 +63,7 @@ export function viewSettings() {
     <p class="hint">Die Daten werden monatlich automatisch aus Bundesnetzagentur, OpenStreetMap und EU-Zulassungsdaten aktualisiert.</p>
     <button class="btn btn-secondary block" type="button" data-action="reload-data" style="margin-top:12px">${icon('refresh-cw')} Daten neu laden</button>
     <h3 class="section-title">Sichern</h3>
-    <p class="hint">Fahrzeug, Hunde samt Fotos und deine Vorlieben als Datei – z. B. für ein neues Handy. Schlüssel und Fahrten sind nicht enthalten.</p>
+    <p class="hint">Fahrzeug, Hunde samt Fotos, Zuhause und deine Vorlieben als Datei – z. B. für ein neues Handy. Schlüssel und Fahrten sind nicht enthalten.</p>
     <div class="btn-row" style="margin-top:8px">
       <button class="btn btn-secondary grow" type="button" data-action="backup-save">${icon('download')} Sichern</button>
       <label class="btn btn-secondary grow">${icon('upload')} Wiederherstellen<input type="file" id="backupFile" accept=".json,application/json" hidden></label>
@@ -72,7 +74,7 @@ export function viewSettings() {
 
 export function viewSettingsPage(page) {
   const s = state.settings;
-  const titles = { vehicle: 'Fahrzeug', dogs: 'Hunde', charging: 'Laden und Pausen', advanced: 'Erweitert' };
+  const titles = { vehicle: 'Fahrzeug', dogs: 'Hunde', home: 'Zuhause', charging: 'Laden und Pausen', advanced: 'Erweitert' };
   if (!titles[page]) return emptyState('settings', 'Seite nicht gefunden', '#/settings', 'Einstellungen');
   let body = '';
   if (page === 'vehicle') {
@@ -84,6 +86,10 @@ export function viewSettingsPage(page) {
   } else if (page === 'dogs') {
     state.draftDogs = s.dogs;
     body = `<div class="card">${dogsFormHtml(s.dogs)}</div>`;
+  } else if (page === 'home') {
+    body = `<p class="screen-sub">Tippst du beim Planen in Start oder Ziel, steht „Zuhause“ ganz oben – ein Tipp, und die Adresse ist drin.</p>
+      <div class="card">${placeField('home', 'Zuhause', s.home, 'Ort oder Adresse')}</div>
+      ${s.home ? `<button class="btn btn-secondary block" type="button" id="homeClear" style="margin-top:12px">${icon('trash-2')} Zuhause entfernen</button>` : ''}`;
   } else if (page === 'charging') {
     body = `<div class="card">${chargingFormHtml(s.charging)}</div>`;
   } else {
@@ -103,6 +109,10 @@ export function viewSettingsPage(page) {
 export function bindSettingsPage(root, page) {
   const s = state.settings;
   const saved = rerender => { save(); toast('Gespeichert'); if (rerender) render(); };
+  if (page === 'home') {
+    bindPlace(root, 'home', place => { s.home = place; saved(true); });
+    $('#homeClear', root)?.addEventListener('click', () => { s.home = null; saved(true); });
+  }
   if (page === 'vehicle') {
     bindVehicleForm(root, s.vehicle, saved);
     $('#vehiclePhoto', root)?.addEventListener('change', async e => {

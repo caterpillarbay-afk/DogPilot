@@ -64,7 +64,7 @@ export function loadHint(load) {
 export function placeField(id, label, value, placeholder) {
   return `<div class="place" data-place="${id}">
     <label class="sr-only" for="${id}">${label}</label>
-    <span class="input-wrap">${icon(id === 'from' ? 'map-pin' : 'flag')}
+    <span class="input-wrap">${icon(id === 'from' ? 'map-pin' : id === 'home' ? 'house' : 'flag')}
       <input class="input" id="${id}" type="text" autocomplete="off" spellcheck="false" placeholder="${placeholder}" value="${esc(value?.label || state.form.draft?.[id] || '')}"
         role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="${id}-list">
     </span>
@@ -126,16 +126,17 @@ export function viewPlan() {
     ${trip() ? `<button class="list list-row" type="button" data-href="#/trip" style="margin-top:12px">${icon('calendar-clock')}<span class="grow">Letzte Fahrt<br><span class="muted small">${esc(trip().from.label)} → ${esc(trip().to.label)}</span></span>${icon('chevron-right', 'chev')}</button>` : ''}`;
 }
 
-export function bindPlace(root, id) {
+// onPick(ort): gewählten Ort übernehmen – Standard: ins Planungsformular (Start bzw. Ziel)
+export function bindPlace(root, id, onPick = place => { state.form[id] = place; state.error = null; }) {
   const inp = $('#' + id, root), list = $('#' + id + '-list', root);
   let results = [], active = -1, timer, seq = 0, noHits = false, searching = false;   // noHits: Suche lief, aber ohne Treffer
   const close = () => { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); active = -1; };
   const choose = r => {
-    state.form[id] = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
-    inp.value = state.form[id].label;
+    const place = { label: r.sub ? `${r.main}, ${r.sub}` : r.main, lat: r.lat, lon: r.lon };
+    inp.value = place.label;
     if (state.form.draft) delete state.form.draft[id];
     close();
-    state.error = null;
+    onPick(place);
   };
   const show = () => {
     const opts = [...results];
@@ -143,7 +144,7 @@ export function bindPlace(root, id) {
     const tip = !opts.length && searching ? `<div class="suggest-empty">${icon('loader-circle', 'sm spin')}<span class="sub">Suche läuft …</span></div>`
       : !opts.length && noHits ? `<div class="suggest-empty">${icon('search', 'sm')}<span><span class="main">Nichts gefunden</span><br><span class="sub">Tipp: In Google Maps lange auf den Ort tippen, die Koordinaten oben antippen (kopiert) und hier einfügen.</span></span></div>` : '';
     list.innerHTML = tip + opts.map((r, i) => `<button type="button" role="option" data-i="${i}" class="${i === active ? 'active' : ''}">
-      ${icon(r.here ? 'locate' : 'map-pin', 'sm')}<span><span class="main">${esc(r.main)}</span>${r.sub ? `<br><span class="sub">${esc(r.sub)}</span>` : ''}</span></button>`).join('');
+      ${icon(r.here ? 'locate' : r.home || r.setHome ? 'house' : 'map-pin', 'sm')}<span><span class="main">${esc(r.main)}</span>${r.sub ? `<br><span class="sub">${esc(r.sub)}</span>` : ''}</span></button>`).join('');
     // Antwort kommt erst, wenn das Feld schon verlassen ist: Liste nicht mehr aufklappen (würde andere Knöpfe verdecken)
     list.hidden = (!opts.length && !tip) || document.activeElement !== inp;
     inp.setAttribute('aria-expanded', String(!list.hidden));
@@ -152,6 +153,8 @@ export function bindPlace(root, id) {
   const pick = i => {
     const r = results[i];
     if (!r) return;
+    if (r.setHome) { close(); go('#/settings/home'); return; }
+    if (r.home) { const h = state.settings.home; choose({ main: h.label, sub: '', lat: h.lat, lon: h.lon }); return; }
     if (!r.here) { choose(r); return; }
     if (!navigator.geolocation) { toast('Ortung wird nicht unterstützt'); return; }
     inp.value = 'Standort wird ermittelt …';
@@ -164,16 +167,22 @@ export function bindPlace(root, id) {
       () => { inp.value = ''; toast('Standort nicht verfügbar'); },
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
   };
-  const here = { here: true, main: 'Aktueller Standort', sub: '' };
-  inp.addEventListener('focus', () => { if (!inp.value) { results = [here]; show(); } else inp.select(); });
+  // Schnellauswahl beim Antippen: Zuhause (oder Hinweis zum Festlegen) und aktueller Standort
+  const quick = () => {
+    const h = state.settings.home;
+    if (id === 'home') return [{ here: true, main: 'Aktueller Standort', sub: '' }];
+    return [h ? { home: true, main: 'Zuhause', sub: h.label } : { setHome: true, main: 'Zuhause festlegen', sub: 'Einmal eintragen, dann hier mit einem Tipp übernehmen' },
+      { here: true, main: 'Aktueller Standort', sub: '' }];
+  };
+  inp.addEventListener('focus', () => { if (inp.value) inp.select(); results = quick(); active = -1; noHits = false; show(); });
   inp.addEventListener('blur', () => setTimeout(close, 150));
   inp.addEventListener('input', () => {
-    state.form[id] = null;
+    if (id in state.form) state.form[id] = null;
     state.form.draft = { ...state.form.draft, [id]: inp.value };
     noHits = false;
     clearTimeout(timer);
     const q = inp.value;
-    if (q.trim().length < 2) { results = q ? [] : [here]; searching = false; show(); return; }
+    if (q.trim().length < 2) { results = q ? [] : quick(); searching = false; show(); return; }
     results = []; searching = true; show();
     timer = setTimeout(async () => {
       const my = ++seq;

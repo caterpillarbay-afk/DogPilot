@@ -58,8 +58,41 @@ test('„Aktueller Standort“ wird als Ort beschriftet', async () => {
   try {
     await onboard(app.page);
     await app.page.click('#from');
-    await app.page.click('#from-list button >> nth=0');
+    await app.page.click('#from-list button:has-text("Aktueller Standort")');
     await app.page.waitForFunction(() => document.querySelector('#from').value.startsWith('Alzey'));
     assert.equal(await app.page.inputValue('#from'), 'Alzey, Carl-Theodor-Straße 12');
+  } finally { await app.close(); }
+});
+
+test('Zuhause: einmal festlegen, dann in Start oder Ziel mit einem Tipp übernehmen', async () => {
+  const app = await openApp(srv.url);
+  const { page } = app;
+  try {
+    await onboard(page);
+    await page.fill('#to', 'Münch');
+    await page.click('#to-list button >> nth=0');
+    // Noch kein Zuhause: Hinweis führt in die Einstellungen
+    await page.focus('#from');
+    await page.click('#from-list button:has-text("Zuhause festlegen")');
+    await page.waitForSelector('#home');
+    await choosePlace(page, 'home', 'Hamb');
+    await page.waitForSelector('#homeClear');
+    assert.equal(await page.inputValue('#home'), 'Hamburg');
+    // Zurück zur Planung: Ziel bleibt, Zuhause steht ganz oben
+    await page.click('#tabbar [data-tab="plan"]');
+    await page.waitForSelector('#from');
+    assert.match(await page.inputValue('#to'), /München/);
+    await page.focus('#from');
+    const first = await page.textContent('#from-list button >> nth=0');
+    assert.match(first, /Zuhause\s*Hamburg/);
+    await page.click('#from-list button >> nth=0');
+    assert.equal(await page.inputValue('#from'), 'Hamburg');
+    // Auch bei gefülltem Feld (z. B. Rückfahrt): antippen → Zuhause
+    await page.click('#swap');
+    await page.focus('#to');
+    await page.click('#to-list button:has-text("Zuhause")');
+    assert.equal(await page.inputValue('#to'), 'Hamburg');
+    await page.click('#planBtn');
+    await page.waitForSelector('.stop-card');
   } finally { await app.close(); }
 });

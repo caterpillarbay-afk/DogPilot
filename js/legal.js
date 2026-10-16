@@ -19,11 +19,11 @@ export const LEGAL = {
     html: `
 <p><b>Verantwortlich:</b> siehe Impressum.</p>
 <p><b>Keine Konten, kein Tracking, keine Cookies.</b> DogPilot setzt keine Analyse- oder Werbedienste ein.</p>
-<p><b>Speicherung auf deinem Gerät:</b> Fahrzeug, Hunde (Name, Foto), Ladevorlieben, optionale Schlüssel und deine letzte Fahrt werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst alles unter Einstellungen → „Alle Daten löschen“ entfernen.</p>
+<p><b>Speicherung auf deinem Gerät:</b> Fahrzeug, Hunde (Name, Foto), deine Zuhause-Adresse (falls eingetragen), Ladevorlieben, optionale Schlüssel und deine letzte Fahrt werden ausschließlich lokal im Browser (IndexedDB) gespeichert und nicht an uns übertragen. Du kannst alles unter Einstellungen → „Alle Daten löschen“ entfernen.</p>
 <p><b>Standort:</b> Nur wenn du „Aktueller Standort“ oder die Ortung auf der Karte nutzt, fragt der Browser nach Erlaubnis. Die Position wird nur für die jeweilige Funktion verwendet.</p>
 <p><b>Fahrt-Modus:</b> Solange er läuft, vergleicht DogPilot deine Position laufend mit der geplanten Route – nur auf deinem Gerät, sie wird nicht übertragen. Die Ansagen erzeugt die Sprachausgabe deines Geräts. Für die Live-Belegung eines Ladestopps werden wie sonst auch nur dessen Koordinaten an MobiData BW gesendet.</p>
 <p><b>Feedback:</b> „Feedback senden“ im Menü öffnet nur dein eigenes Mail-Programm mit einem vorbereiteten Text (App-Version, Gerät, Bildschirmgröße, Start- und Zielort sowie Zeit deiner letzten Fahrt). Übertragen wird erst, was du selbst abschickst – du kannst vorher alles ändern oder löschen.</p>
-<p><b>Sichern und Wiederherstellen:</b> Die Sicherungsdatei unter Einstellungen enthält Fahrzeug, Hunde samt Fotos und deine Vorlieben, aber keine Schlüssel und keine Fahrten. Sie wird nur auf deinem Gerät gespeichert; wohin du sie weitergibst, entscheidest du.</p>
+<p><b>Sichern und Wiederherstellen:</b> Die Sicherungsdatei unter Einstellungen enthält Fahrzeug, Hunde samt Fotos, deine Zuhause-Adresse und deine Vorlieben, aber keine Schlüssel und keine Fahrten. Sie wird nur auf deinem Gerät gespeichert; wohin du sie weitergibst, entscheidest du.</p>
 <p><b>Hosting:</b> Die App wird über Cloudflare (Cloudflare, Inc., USA) ausgeliefert. Dabei verarbeitet Cloudflare technisch notwendige Verbindungsdaten wie IP-Adresse und Zeitpunkt des Abrufs (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <p><b>Externe Dienste:</b> Für ihre Funktionen ruft die App Dienste Dritter direkt von deinem Gerät aus auf. Dabei erhalten diese deine IP-Adresse und die jeweils nötigen Angaben (Art. 6 Abs. 1 lit. b/f DSGVO):</p>
 <ul>

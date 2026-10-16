@@ -11,6 +11,7 @@ const mine = () => {
   s.charging.minChargerKw = 100;
   s.keys.tomtom = 'GEHEIM';
   s.lastTrip = { from: { label: 'Alzey' } };
+  s.home = { label: 'Alzey, Carl-Theodor-Straße 12', lat: 49.75, lon: 8.11 };
   s.onboarded = true;
   return s;
 };
@@ -38,6 +39,7 @@ test('Wiederherstellen auf neuem Gerät übernimmt alles, behält eigenen Schlü
   assert.equal(s.charging.reserveSoc, DEFAULT_SETTINGS.charging.reserveSoc);
   assert.equal(s.keys.tomtom, 'NEU');
   assert.equal(s.lastTrip, null);
+  assert.deepEqual(s.home, { label: 'Alzey, Carl-Theodor-Straße 12', lat: 49.75, lon: 8.11 });
   assert.equal(s.onboarded, true);
   assert.equal(fresh.vehicle.make, '', 'Eingabe bleibt unverändert');
 });
@@ -47,10 +49,11 @@ test('Wiederherstellen lehnt fremde und kaputte Dateien verständlich ab', () =>
   assert.throws(() => restoreBackup('kein json', cur), /keine DogPilot-Sicherung/);
   assert.throws(() => restoreBackup('{"foo":1}', cur), /keine DogPilot-Sicherung/);
   assert.throws(() => restoreBackup(JSON.stringify({ kind: 'dogpilot-backup', version: 9, settings: {} }), cur), /neueren DogPilot-Version/);
-  const bad = { kind: 'dogpilot-backup', version: 1, settings: { dogs: [{ name: 'X', photo: 'javascript:alert(1)' }, 'quatsch', { photo: 'x' }], vehicle: { photo: 'http://evil' } } };
+  const bad = { kind: 'dogpilot-backup', version: 1, settings: { dogs: [{ name: 'X', photo: 'javascript:alert(1)' }, 'quatsch', { photo: 'x' }], vehicle: { photo: 'http://evil' }, home: { label: 'x', lat: 'a' } } };
   const s = restoreBackup(JSON.stringify(bad), cur);
   assert.deepEqual(s.dogs, [{ name: 'X', id: 'dog0', photo: null }]);
   assert.equal(s.vehicle.photo, null);
+  assert.equal(s.home, null);
 });
 
 test('Feedback-Mail: Version, Gerät, letzte Fahrt nur mit Ortsnamen', () => {

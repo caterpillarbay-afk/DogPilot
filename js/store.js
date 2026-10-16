@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   keys: { tomtom: '' },
   trip: { buffer: 'normal', customBufferMin: 45 },   // Puffer für „Ankunft bis …“
   drive: { breaks: true, charge: true, closures: true, schedule: true },   // Ansagen im Fahrt-Modus
+  home: null,       // Zuhause { label, lat, lon } – erscheint beim Antippen von Start und Ziel ganz oben
   lastTrip: null,
 };
 
