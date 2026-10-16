@@ -18,7 +18,15 @@ test('In der Android-App gehen Ansagen über den Navi-Kanal, auf Wunsch über Me
     assert.deepEqual((await calls()).at(-1), ['speak', 'Das ist eine Testansage von DogPilot. Wenn du mich hörst, passt alles.', 'nav']);
     assert.deepEqual(await page.evaluate(() => window.__said), [], 'Browser-Sprachausgabe bleibt still');
 
+    // Einstellungen sind zugeklappt; Zusammenfassung zeigt den Kanal
+    assert.match(await page.textContent('[data-action="drive-opts"]'), /Alles · über Navi/);
+    assert.equal(await page.isVisible('[data-daudio="media"]'), false);
+    await page.click('[data-action="drive-opts"]');
     await page.click('[data-daudio="media"]');
+    assert.match(await page.textContent('[data-action="drive-opts"]'), /über Medien/);
+    await page.click('[data-dpref="schedule"]');
+    assert.match(await page.textContent('[data-action="drive-opts"]'), /3 von 4/);
+    await page.click('[data-dpref="schedule"]');
     await page.click('[data-action="drive-start"]');
     const c = await calls();
     assert.ok(c.some(x => x[0] === 'speak' && /Fahrt-Modus an/.test(x[1]) && x[2] === 'media'));

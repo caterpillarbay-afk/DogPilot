@@ -157,38 +157,48 @@ export function driveStatus(t) {
 
 export function driveCard(t) {
   const d = state.drive;
-  const chips = `<div class="chips" style="margin-top:10px">${DRIVE_PREFS.map(([k, ic, label]) =>
-    `<button type="button" class="chip ${state.settings.drive[k] ? 'on' : ''}" aria-pressed="${state.settings.drive[k]}" data-dpref="${k}">${icon(ic)} ${label}</button>`).join('')}</div>`;
   if (!d.on) return `<div class="card drive" id="drive" style="margin-top:12px">
     <button class="btn btn-primary block" type="button" data-action="drive-start">${icon('volume-2')} Fahrt-Modus mit Ansagen</button>
-    <p class="muted small" style="margin:8px 0 0">Sagt an, was Google Maps nicht weiß. DogPilot dafür geöffnet lassen, Handy im Halter am Ladekabel.</p>
-    ${chips}${audioRow()}</div>`;
+    <p class="muted small" style="margin:8px 0 0">Sagt an, was Google Maps nicht weiß. DogPilot dafür geöffnet lassen.</p>
+    ${driveOptions()}${appHint()}</div>`;
   return `<div class="card drive on" id="drive" style="margin-top:12px">
     <div class="card-head">${icon('volume-2')} Fahrt-Modus aktiv</div>
     <div class="live" id="drive-status">${driveStatus(t)}</div>
     <p class="small" id="drive-last" style="margin:6px 0 0">${d.last ? `„${esc(d.last)}“` : ''}</p>
-    ${chips}${audioRow()}
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-secondary" type="button" data-action="drive-repeat">${icon('refresh-cw')} Wiederholen</button>
       <button class="btn btn-secondary" type="button" data-action="drive-stop">${icon('x')} Beenden</button>
-    </div></div>`;
+    </div>
+    ${driveOptions()}</div>`;
 }
 
 export const TEST_TEXT = 'Das ist eine Testansage von DogPilot. Wenn du mich hörst, passt alles.';
+const AUDIO_LABEL = { nav: 'über Navi', media: 'über Medien' };
 
-// Ton-Ausgabe: in der Android-App wählbar; im Browser auf Android Hinweis auf die App
-function audioRow() {
-  const a = state.settings.drive.audio || 'nav';
-  const test = `<button type="button" class="chip" data-action="drive-test">${icon('volume-2')} Testansage</button>`;
-  if (native) {
-    const opt = (k, label) => `<button type="button" class="chip ${a === k ? 'on' : ''}" aria-pressed="${a === k}" data-daudio="${k}">${label}</button>`;
-    return `<div class="muted small" style="margin-top:12px">Ansagen über</div>
-      <div class="chips" style="margin-top:6px">${opt('nav', 'Android Auto / Navi')}${opt('media', 'Medien')}${test}</div>
-      <p class="muted small" style="margin:6px 0 0">„Android Auto / Navi“ legt die Ansage wie ein Navi über Radio und Musik.</p>`;
-  }
-  return `<div class="chips" style="margin-top:10px">${test}</div>`
-    + (offerApp() ? `<p class="muted small" style="margin:6px 0 0">Im Auto mit Android Auto still? Im Browser kommen Ansagen nur, wenn Android Auto die Tonquelle ist. Die <a href="${APK_URL}">DogPilot-App für Android</a> spricht wie ein Navi – auch über das Radio.</p>` : '');
+// Was angesagt wird und (in der Android-App) über welchen Kanal – zugeklappt, damit die Karte ruhig bleibt
+function driveOptions() {
+  const p = state.settings.drive, a = p.audio || 'nav';
+  const on = DRIVE_PREFS.filter(([k]) => p[k]).length;
+  const what = on === DRIVE_PREFS.length ? 'Alles' : on ? `${on} von ${DRIVE_PREFS.length}` : 'Nichts';
+  const chips = DRIVE_PREFS.map(([k, ic, label]) =>
+    `<button type="button" class="chip ${p[k] ? 'on' : ''}" aria-pressed="${p[k]}" data-dpref="${k}">${icon(ic)} ${label}</button>`).join('');
+  const opt = (k, label) => `<button type="button" class="chip ${a === k ? 'on' : ''}" aria-pressed="${a === k}" data-daudio="${k}">${label}</button>`;
+  return `<div class="drive-bar">
+      <button type="button" class="btn-ghost" data-action="drive-test">${icon('volume-2')} Testansage</button>
+      <button type="button" class="btn-ghost" data-action="drive-opts" aria-expanded="${!!state.driveOpts}">${icon('sliders-horizontal')} ${what}${native ? ` · ${AUDIO_LABEL[a]}` : ''} ${icon('chevron-down', 'chev')}</button>
+    </div>
+    <div class="drive-opts" ${state.driveOpts ? '' : 'hidden'}>
+      <div class="muted small">Ansagen zu</div>
+      <div class="chips" style="margin-top:6px">${chips}</div>
+      ${native ? `<div class="muted small" style="margin-top:12px">Ton</div>
+      <div class="chips" style="margin-top:6px">${opt('nav', 'Navi (Android Auto)')}${opt('media', 'Medien')}</div>
+      <p class="muted small" style="margin:6px 0 0">„Navi“ legt die Ansage über Radio und Musik.</p>` : ''}
+    </div>`;
 }
+
+// Im Android-Browser: Hinweis auf die App (dort klappt es auch mit Android Auto und Radio)
+const appHint = () => offerApp()
+  ? `<p class="muted small" style="margin:8px 0 0">Mit Android Auto still? Die <a href="${APK_URL}">DogPilot-App für Android</a> spricht wie ein Navi.</p>` : '';
 
 export function updateDriveCard() {
   const t = trip(), st = document.getElementById('drive-status'), last = document.getElementById('drive-last');
@@ -198,20 +208,15 @@ export function updateDriveCard() {
 }
 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+// Einstellungen der Ansagen: Karte neu zeichnen, damit die Zusammenfassung („Alles · über Navi“) stimmt
 document.addEventListener('click', e => {
-  const au = e.target.closest('[data-daudio]');
-  if (au) {
-    state.settings.drive.audio = au.dataset.daudio;
-    save();
-    document.querySelectorAll('[data-daudio]').forEach(x => { const on = x === au; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
-    return;
-  }
-  const b = e.target.closest('[data-dpref]');
-  if (!b) return;
-  state.settings.drive[b.dataset.dpref] = !state.settings.drive[b.dataset.dpref];
-  save();
-  const on = state.settings.drive[b.dataset.dpref];
-  b.classList.toggle('on', on);
-  b.setAttribute('aria-pressed', on);
-  updateDriveCard();
+  const opts = e.target.closest('[data-action="drive-opts"]'), au = e.target.closest('[data-daudio]'), pref = e.target.closest('[data-dpref]');
+  if (!opts && !au && !pref) return;
+  const p = state.settings.drive;
+  if (opts) state.driveOpts = !state.driveOpts;
+  if (au) p.audio = au.dataset.daudio;
+  if (pref) p[pref.dataset.dpref] = !p[pref.dataset.dpref];
+  if (au || pref) save();
+  const card = document.getElementById('drive');
+  if (card) card.outerHTML = driveCard(trip());
 });
