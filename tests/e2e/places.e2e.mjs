@@ -71,6 +71,11 @@ test('Zuhause: einmal festlegen, dann in Start oder Ziel mit einem Tipp überneh
     await onboard(page);
     await page.fill('#to', 'Münch');
     await page.click('#to-list button >> nth=0');
+    // Enter im leeren Feld übernimmt nicht ungefragt die Schnellauswahl
+    await page.focus('#from');
+    await page.keyboard.press('Enter');
+    assert.ok(await page.$('#from'), 'bleibt auf der Planung');
+    assert.equal(await page.inputValue('#from'), '');
     // Noch kein Zuhause: Hinweis führt in die Einstellungen
     await page.focus('#from');
     await page.click('#from-list button:has-text("Zuhause festlegen")');
