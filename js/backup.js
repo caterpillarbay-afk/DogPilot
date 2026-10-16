@@ -3,7 +3,7 @@
 // kommen bewusst nicht in die Datei – sie wird gern weitergegeben.
 
 export const BACKUP_KIND = 'dogpilot-backup';
-const PARTS = ['vehicle', 'dogs', 'charging', 'trip', 'drive'];
+const PARTS = ['vehicle', 'dogs', 'charging', 'trip', 'drive', 'home'];
 
 export function makeBackup(settings, now = new Date()) {
   const data = {};
@@ -27,6 +27,8 @@ export function restoreBackup(text, current) {
     if (isObj(s[k])) out[k] = { ...out[k], ...s[k] };
   }
   if (isObj(s.vehicle?.learned)) out.vehicle.learned = { ...current.vehicle.learned, ...s.vehicle.learned };
+  const okPlace = p => isObj(p) && typeof p.label === 'string' && Number.isFinite(p.lat) && Number.isFinite(p.lon);
+  if (okPlace(s.home)) out.home = { label: s.home.label, lat: s.home.lat, lon: s.home.lon };
   if (Array.isArray(s.dogs)) {
     out.dogs = s.dogs.filter(d => isObj(d) && typeof d.name === 'string')
       .map((d, i) => ({ ...d, id: String(d.id || `dog${i}`), photo: typeof d.photo === 'string' && d.photo.startsWith('data:image/') ? d.photo : null }));
