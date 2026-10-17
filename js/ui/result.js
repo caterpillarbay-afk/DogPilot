@@ -6,6 +6,7 @@ import { FEATURES } from '../data.js';
 import { placeLabel, getLiveStatus } from '../services.js';
 import { prepareTrip, planFromContext, DRIVER_MAX_DRIVE_MIN } from '../trip.js';
 import { learnFactor } from '../energy.js';
+import { googleMapsUrl } from '../navlink.js';
 import { pct } from './forms.js';
 import { LOAD, plan } from './plan.js';
 import { trafficCard } from './traffic.js';
@@ -25,12 +26,6 @@ export function scores(st, dogs = trip()?.withDogs !== false) {
   return `<div class="scores">${dogs ? `<span title="Hund">${icon('paw-print')} Hund ${num(st.dog, 1)}/5</span>` : ''}<span title="Mensch">${icon('coffee')} Mensch ${num(st.human, 1)}/5</span></div>`;
 }
 
-export function googleMapsUrl(t) {
-  const p = x => `${x.lat.toFixed(5)},${x.lon.toFixed(5)}`;
-  const params = new URLSearchParams({ api: '1', origin: p(t.from), destination: p(t.to), travelmode: 'driving' });
-  if (t.stops.length) params.set('waypoints', t.stops.slice(0, 9).map(p).join('|'));
-  return `https://www.google.com/maps/dir/?${params}`;
-}
 
 // „Ankunft bis …“: späteste Abfahrt und verbleibender Puffer (passt sich an, wenn Stopps gewechselt werden)
 export function arrivalPlan(t) {

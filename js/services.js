@@ -118,7 +118,7 @@ function exactHouse(list, query, hn) {
 export function keepHouseNumber(list, hn) {
   if (!hn) return list;
   return list.map(r => r.street && !hasHouse(list, r, hn)
-    ? { ...r, main: `${r.street} ${hn}`, sub: [r.sub, 'Hausnummer nicht in der Karte – Ziel ist die Straße'].filter(Boolean).join(' · ') }
+    ? { ...r, main: `${r.street} ${hn}`, note: 'Hausnummer nicht in der Karte – Ziel ist die Straße' }
     : r);
 }
 
