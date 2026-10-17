@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -26,7 +27,12 @@ import android.widget.Toast;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * DogPilot als Android-App: zeigt die Web-App an und übernimmt, was der Browser nicht kann –
@@ -185,6 +191,36 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String version() { return BuildConfigInfo.version(MainActivity.this); }
+
+        // Deutsche Stimmen der Sprachausgabe, beste zuerst: [{ name, network, quality }]
+        @JavascriptInterface
+        public String voices() {
+            JSONArray out = new JSONArray();
+            if (!ttsReady || tts.getVoices() == null) return out.toString();
+            List<Voice> list = new ArrayList<>();
+            for (Voice v : tts.getVoices()) {
+                if (!"de".equals(v.getLocale().getLanguage())) continue;
+                if (v.getFeatures() != null && v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+                list.add(v);
+            }
+            list.sort((a, b) -> b.getQuality() != a.getQuality() ? b.getQuality() - a.getQuality() : a.getName().compareTo(b.getName()));
+            try {
+                for (Voice v : list) out.put(new JSONObject().put("name", v.getName()).put("network", v.isNetworkConnectionRequired()).put("quality", v.getQuality()));
+            } catch (Exception ignored) { }
+            return out.toString();
+        }
+
+        // Wie speak, zusätzlich Stimme (Name aus voices(), leer = Standard) und Tempo (1 = normal)
+        @JavascriptInterface
+        public void speakWith(String text, String channel, String voice, float rate) {
+            if (!ttsReady) { toast("Sprachausgabe nicht bereit"); return; }
+            Voice chosen = null;
+            if (voice != null && !voice.isEmpty() && tts.getVoices() != null)
+                for (Voice v : tts.getVoices()) if (v.getName().equals(voice)) chosen = v;
+            if (chosen != null) tts.setVoice(chosen); else tts.setLanguage(Locale.GERMANY);
+            tts.setSpeechRate(rate > 0 ? rate : 1f);
+            speak(text, channel);
+        }
 
         // channel: "nav" = Navi-Kanal (Android Auto, über Radio/Musik gelegt), "media" = wie Musik
         @JavascriptInterface

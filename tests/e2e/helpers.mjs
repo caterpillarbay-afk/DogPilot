@@ -92,6 +92,8 @@ export async function openApp(baseUrl, opts = {}) {
     window.__native = [];
     window.DogPilotAndroid = {
       speak: (text, channel) => window.__native.push(['speak', text, channel]), stop: () => window.__native.push(['stop']),
+      speakWith: (text, channel, voice, rate) => window.__native.push(['speak', text, channel, voice, rate]),
+      voices: () => JSON.stringify([{ name: 'de-de-x-nfh-network', network: true, quality: 400 }, { name: 'de-de-x-deb-local', network: false, quality: 300 }]),
       keepScreenOn: on => window.__native.push(['screen', on]), saveFile: (name, mime, content) => window.__native.push(['save', name, mime, content]),
       share: (title, text) => window.__native.push(['share', title, text]), version: () => '1.7', ready: () => true,
     };

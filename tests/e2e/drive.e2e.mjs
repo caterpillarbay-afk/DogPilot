@@ -43,3 +43,29 @@ test('Fahrt-Modus von Hamburg bis München', async () => {
     assert.deepEqual(app.errors, []);
   } finally { await app.close(); }
 });
+
+test('Zeitplan zählt ab der tatsächlichen Abfahrt – App lange offen bzw. später losgefahren', async () => {
+  const app = await openApp(srv.url, { fakeClock: true });
+  const { page, ctx } = app;
+  const said = () => page.evaluate(() => window.__said.join('\n'));
+  try {
+    await onboard(page);
+    // App seit zwei Stunden offen, erst dann geplant: Abfahrt ist „jetzt“, nicht die Zeit beim Öffnen
+    await page.clock.fastForward(2 * 3600000);
+    await planTrip(page);
+    const dep = await page.evaluate(async () => (await import('/js/store.js')).loadSettings().then(s => new Date(s.lastTrip.departure).getTime()));
+    assert.ok(Math.abs(dep - await page.evaluate(() => Date.now())) < 2 * 60000, 'Abfahrt = jetzt');
+    // 80 Minuten später losgefahren: keine Verspätungsansage
+    await page.clock.fastForward(80 * 60000);
+    await page.click('[data-action="drive-start"]');
+    for (let i = 0; i < 40; i += 4) {
+      await ctx.setGeolocation({ latitude: PTS[i][0], longitude: PTS[i][1] });
+      await page.waitForTimeout(60);
+    }
+    assert.doesNotMatch(await said(), /hinter dem Plan/);
+    // Dann 30 Minuten im Stau: das wird angesagt
+    await page.clock.fastForward(30 * 60000);
+    await ctx.setGeolocation({ latitude: PTS[44][0], longitude: PTS[44][1] }); await page.waitForTimeout(300);
+    assert.match(await said(), /Du liegst etwa [1-3]\d Minuten hinter dem Plan/);
+  } finally { await app.close(); }
+});
