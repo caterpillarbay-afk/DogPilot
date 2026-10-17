@@ -308,6 +308,9 @@ export async function plan() {
     render();
     return;
   }
+  // Abfahrtszeit stammt vom Öffnen des Formulars (die App läuft oft stundenlang im Hintergrund) – liegt sie
+  // schon zurück, gilt „jetzt“. Sonst wäre man laut Plan von Anfang an weit „hinter der Zeit“.
+  if (f.timeMode !== 'arrive' && !f.replan && f.departure < Date.now()) f.departure = new Date();
   const setProgress = text => { state.computing = text; if (['plan', 'trip'].includes(route().name)) render(); };
   try {
     setProgress('Daten werden geladen …');

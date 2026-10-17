@@ -14,13 +14,18 @@ import { state, toast, save, trip, placeName, render } from './core.js';
 // DogPilot bleibt im Vordergrund (Handy im Halter am Kabel, Google Maps läuft über Android Auto):
 // Bildschirm wach halten, GPS verfolgen, Ansagen per Sprachausgabe des Browsers.
 export const DRIVE_PREFS = [['breaks', 'paw-print', 'Pausen'], ['charge', 'zap', 'Ladestopps'], ['closures', 'octagon-x', 'Sperrungen'], ['schedule', 'clock', 'Zeitplan']];
-export const OFF_ROUTE_KM = 1.5, OFF_ROUTE_MS = 90000;
+export const OFF_ROUTE_KM = 1.5, OFF_ROUTE_MS = 90000, START_KM = 3;
 
 export function speak(text) {
   state.drive.last = text;
   state.drive.lastAt = Date.now();
   // Android-App: über den Navi-Kanal (Android Auto legt die Ansage über Radio und Musik)
-  if (native) { native.speak(text, state.settings.drive.audio || 'nav'); return; }
+  if (native) {
+    const p = state.settings.drive;
+    if (native.speakWith) native.speakWith(text, p.audio || 'nav', p.voice || '', p.rate || 1);
+    else native.speak(text, p.audio || 'nav');   // ältere App-Version ohne Stimmenwahl
+    return;
+  }
   if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'de-DE';
@@ -104,6 +109,10 @@ export async function onDrivePosition(pos) {
   if (d.offSaid && now - d.lastAt > 10 * 60000) d.offSaid = false;
   const km = hit.alongKm * scale;
   d.km = km;
+  // Zeitplan ab der tatsächlichen Abfahrt: Beim ersten GPS-Punkt nahe am Start wird der Plan auf „jetzt“
+  // verschoben (geplant für 7:50, losgefahren um 8:10 → nicht 20 min „hinter der Zeit“).
+  // Später eingeschaltet (schon unterwegs): mit dem ursprünglichen Plan vergleichen.
+  d.offsetMs ??= km < START_KM ? now - plannedAt(km).getTime() : 0;
   const s = state.traffic[t.roads?.length ? trafficKey(t) : ''];
   const events = s?.items ? tripEvents(t) : [];
   for (const a of dueAnnouncements({ stops: t.stops, events, km, minPerKm, prefs, done: d.done })) {
@@ -119,10 +128,10 @@ export async function onDrivePosition(pos) {
   // Zeitplan: nur während der Fahrt vergleichen (beim Laden oder an der Pause steht man ohnehin)
   const speedKmh = pos.coords.speed != null ? pos.coords.speed * 3.6 : null;
   if (prefs.schedule && (speedKmh == null || speedKmh > 30)) {
-    const delay = (now - plannedAt(km)) / 60000;
+    const delay = (now - plannedAt(km).getTime() - d.offsetMs) / 60000;
     const step = delayStep(delay, d.level);
     d.level = step.level;
-    if (step.announce) speak(delayText(delay, new Date(new Date(t.arrivalAt).getTime() + delay * 60000), t.arriveBy ? new Date(t.arriveBy) : null));
+    if (step.announce) speak(delayText(delay, new Date(new Date(t.arrivalAt).getTime() + d.offsetMs + delay * 60000), t.arriveBy ? new Date(t.arriveBy) : null));
   }
   updateDriveCard();
 }
@@ -192,8 +201,28 @@ function driveOptions() {
       <div class="chips" style="margin-top:6px">${chips}</div>
       ${native ? `<div class="muted small" style="margin-top:12px">Ton</div>
       <div class="chips" style="margin-top:6px">${opt('nav', 'Navi (Android Auto)')}${opt('media', 'Medien')}</div>
-      <p class="muted small" style="margin:6px 0 0">„Navi“ legt die Ansage über Radio und Musik.</p>` : ''}
+      <p class="muted small" style="margin:6px 0 0">„Navi“ legt die Ansage über Radio und Musik.</p>${voiceOptions()}` : ''}
     </div>`;
+}
+
+export const VOICE_SAMPLE = 'In etwa 10 Minuten Gassi-Pause: Rastanlage Am Hockenheimring. Dort gibt es eine Hundewiese.';
+const RATES = [[0.9, 'Ruhig'], [1, 'Normal'], [1.1, 'Zügig']];
+
+// Stimme und Tempo (nur in der Android-App mit Stimmenwahl): online-Stimmen klingen deutlich natürlicher
+function voiceOptions() {
+  if (!native?.voices) return '';
+  let list = [];
+  try { list = JSON.parse(native.voices()); } catch { /* keine Liste */ }
+  const p = state.settings.drive;
+  const label = (v, i) => `Stimme ${i + 1}${v.network ? ' · online, natürlicher' : ''}`;
+  const rate = (r, l) => `<button type="button" class="chip ${(p.rate || 1) === r ? 'on' : ''}" aria-pressed="${(p.rate || 1) === r}" data-drate="${r}">${l}</button>`;
+  return `<div class="muted small" style="margin-top:12px">Stimme</div>
+    <select class="input" id="driveVoice" style="margin-top:6px">
+      <option value="">Standard des Handys</option>
+      ${list.map((v, i) => `<option value="${esc(v.name)}" ${v.name === p.voice ? 'selected' : ''}>${label(v, i)}</option>`).join('')}
+    </select>
+    <div class="chips" style="margin-top:8px">${RATES.map(([r, l]) => rate(r, l)).join('')}</div>
+    <p class="muted small" style="margin:6px 0 0">Beim Wechseln spricht DogPilot eine Probe.${list.length ? '' : ' Keine deutschen Stimmen gefunden – in den Android-Einstellungen unter „Sprachausgabe“ die Google-Sprachausgabe wählen.'}</p>`;
 }
 
 // Im Android-Browser: Hinweis auf die App (dort klappt es auch mit Android Auto und Radio)
@@ -207,16 +236,24 @@ export function updateDriveCard() {
   if (last) last.innerHTML = state.drive.last ? `„${esc(state.drive.last)}“` : '';
 }
 
+document.addEventListener('change', e => {
+  if (e.target.id !== 'driveVoice') return;
+  state.settings.drive.voice = e.target.value;
+  save();
+  speak(VOICE_SAMPLE);
+});
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 // Einstellungen der Ansagen: Karte neu zeichnen, damit die Zusammenfassung („Alles · über Navi“) stimmt
 document.addEventListener('click', e => {
-  const opts = e.target.closest('[data-action="drive-opts"]'), au = e.target.closest('[data-daudio]'), pref = e.target.closest('[data-dpref]');
-  if (!opts && !au && !pref) return;
+  const opts = e.target.closest('[data-action="drive-opts"]'), au = e.target.closest('[data-daudio]'), pref = e.target.closest('[data-dpref]'), rate = e.target.closest('[data-drate]');
+  if (!opts && !au && !pref && !rate) return;
   const p = state.settings.drive;
   if (opts) state.driveOpts = !state.driveOpts;
   if (au) p.audio = au.dataset.daudio;
   if (pref) p[pref.dataset.dpref] = !p[pref.dataset.dpref];
-  if (au || pref) save();
+  if (rate) p.rate = Number(rate.dataset.drate);
+  if (au || pref || rate) save();
+  if (rate) speak(VOICE_SAMPLE);
   const card = document.getElementById('drive');
   if (card) card.outerHTML = driveCard(trip());
 });

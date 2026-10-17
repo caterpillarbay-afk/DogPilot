@@ -15,7 +15,7 @@ test('In der Android-App gehen Ansagen über den Navi-Kanal, auf Wunsch über Me
     await onboard(page);
     await planTrip(page);
     await page.click('[data-action="drive-test"]');
-    assert.deepEqual((await calls()).at(-1), ['speak', 'Das ist eine Testansage von DogPilot. Wenn du mich hörst, passt alles.', 'nav']);
+    assert.deepEqual((await calls()).at(-1), ['speak', 'Das ist eine Testansage von DogPilot. Wenn du mich hörst, passt alles.', 'nav', '', 1]);
     assert.deepEqual(await page.evaluate(() => window.__said), [], 'Browser-Sprachausgabe bleibt still');
 
     // Einstellungen sind zugeklappt; Zusammenfassung zeigt den Kanal
@@ -27,6 +27,12 @@ test('In der Android-App gehen Ansagen über den Navi-Kanal, auf Wunsch über Me
     await page.click('[data-dpref="schedule"]');
     assert.match(await page.textContent('[data-action="drive-opts"]'), /3 von 4/);
     await page.click('[data-dpref="schedule"]');
+    // Stimme und Tempo: Auswahl spricht eine Probe mit genau dieser Stimme
+    assert.match(await page.textContent('#driveVoice'), /Stimme 1 · online, natürlicher/);
+    await page.selectOption('#driveVoice', 'de-de-x-nfh-network');
+    assert.deepEqual((await calls()).at(-1).slice(2), ['media', 'de-de-x-nfh-network', 1]);
+    await page.click('[data-drate="1.1"]');
+    assert.deepEqual((await calls()).at(-1).slice(2), ['media', 'de-de-x-nfh-network', 1.1]);
     await page.click('[data-action="drive-start"]');
     const c = await calls();
     assert.ok(c.some(x => x[0] === 'speak' && /Fahrt-Modus an/.test(x[1]) && x[2] === 'media'));
